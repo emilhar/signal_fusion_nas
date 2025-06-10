@@ -1,0 +1,67 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# PyTorch artifacts
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+weights/
+
+# TensorBoard / logging
+runs/
+logs/
+tensorboard_logs/
+*.tfevents.*
+
+# Weights & Biases
+wandb/
+
+# Experiment outputs
+experiments/
+results/
+
+# Data folders (raw / processed)
+data/raw/
+data/processed/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.user
+*.userprefs
+
+# macOS
+.DS_Store
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Misc
+*.log
