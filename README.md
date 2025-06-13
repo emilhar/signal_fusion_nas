@@ -1,6 +1,10 @@
 # Signal Fusion NAS Framework
 
-A lightweight framework for evolving PyTorch neural networks using the DEAP genetic algorithm library.
+A framework for evolving PyTorch neural networks using the DEAP genetic algorithm library.
+
+![logo](images/logo.png)
+
+Developed at Reykjavik University.
 
 ---
 
