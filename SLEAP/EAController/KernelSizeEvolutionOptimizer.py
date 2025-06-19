@@ -169,23 +169,26 @@ class KernelSizeEvolutionaryOptimizer:
 
         if champion:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_full_dataset()
+            batch_size = EvolutionSettings.TOC_BATCH_SIZE
         else:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
+            batch_size = self.batch_size
 
         # Things marked with # come from the SDL
         new_model = TrainedModelMaker(
             left_kernel_sizes=left_kernel_sizes, #
             right_kernel_sizes=right_kernel_sizes, #
-            name=f"{left_kernel_sizes} :-: {right_kernel_sizes}, sleepstage: {self.sleepstage}, {self.batch_size}batch, {self.epochs}epochs",
+            name=f"{left_kernel_sizes} :-: {right_kernel_sizes}, sleepstage: {self.sleepstage}, {batch_size}batch, {self.epochs}epochs",
             sleepstage = self.sleepstage,
             signal_type=self.signal_type,
-            batch_size= self.batch_size,
+            batch_size= batch_size,
             train_loader = individual_training_set,
             test_loader = individual_test_set,
             epochs= self.epochs,
             verbose= self.verbose,
             N_SAMPLES= n_samples, #
-            pos_weight= pos_weight) #
+            pos_weight= pos_weight,
+            champion=champion) #
 
         return new_model.model_performance
 

@@ -1,6 +1,8 @@
 """
 These names are used by many classes, good idea to keep them global
 """
+# Available batch sizes for all models
+BATCH_SIZE_OPTIONS = [2, 4, 8, 16, 32, 64, 128]
 
 class Sleepstage:
     WAKE = "wake"
@@ -24,8 +26,7 @@ class Signal:
 
 class ModelSettings:
     # Base
-    _potential_batch_sizes = [2, 4, 8, 16, 32, 64, 128]
-    BATCH_SIZE = _potential_batch_sizes[4]
+    BATCH_SIZE = 32  # Default batch size (from BATCH_SIZE_OPTIONS)
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 4
     DATASET_FRACTION: float = 0.3
     VERBOSE = True
@@ -62,6 +63,7 @@ class EvolutionSettings:
     TOC_ON = True
     TOC_GENERATIONS_BETWEEN = 5
     TOC_TOURNAMENT_SIZE = 0.20
+    TOC_BATCH_SIZE = 128  # Tournament batch size (from BATCH_SIZE_OPTIONS)
 
 class DataSettings:
     class DatasetNames:

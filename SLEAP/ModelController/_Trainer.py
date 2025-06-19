@@ -11,7 +11,7 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 import datetime # For max training time
 from Globals import ModelSettings
 
-def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1, verbose=False):
+def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1, verbose=False, champion = False):
 
     training_time_start = datetime.datetime.now()
 
@@ -83,11 +83,12 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
             best_f1 = f1
             best_epoch = epoch+1
 
-        elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
-        if elapsed > ModelSettings.MAX_TIME_SPENT_TRAINING:
-            if verbose:
-                print(f"Stopping training: elapsed time {elapsed:.1f}s > max {ModelSettings.MAX_TIME_SPENT_TRAINING}s")
-            break
+        if not champion:
+            elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
+            if elapsed > ModelSettings.MAX_TIME_SPENT_TRAINING:
+                if verbose:
+                    print(f"Stopping training: elapsed time {elapsed:.1f}s > max {ModelSettings.MAX_TIME_SPENT_TRAINING}s")
+                break
 
 
     output = {"Epoch": epoch,
