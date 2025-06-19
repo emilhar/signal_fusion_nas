@@ -24,7 +24,8 @@ class Signal:
 
 class ModelSettings:
     # Base
-    BATCH_SIZE = 32
+    _potential_batch_sizes = [2, 4, 8, 16, 32, 64, 128]
+    BATCH_SIZE = _potential_batch_sizes[4]
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 4
     DATASET_FRACTION: float = 0.3
     VERBOSE = True
@@ -43,8 +44,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 2
-    GENERATIONS: int = 3
+    POPULATION_SIZE: int = 20
+    GENERATIONS: int = 15
     TOURNAMENT_SIZE = 3
     HALL_OF_FAME_MEMBERS = 3
     LOGGING = True
@@ -60,7 +61,7 @@ class EvolutionSettings:
     # Tournament of Champion settings
     TOC_ON = True
     TOC_GENERATIONS_BETWEEN = 5
-    TOC_TOURNAMENT_SIZE = 0.30
+    TOC_TOURNAMENT_SIZE = 0.20
 
 class DataSettings:
     class DatasetNames:

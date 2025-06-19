@@ -64,6 +64,7 @@ class LogManager:
             "tournament_size": EvolutionSettings.TOURNAMENT_SIZE,
             "min_kernel_size": ModelSettings.MIN_KERNEL_SIZE,
             "max_kernel_size": max_kernel_size,
+            "data_points_per_individual": EvolutionSettings.DATA_POINTS_PER_INDIVIUAL,
             "best": best,
             "second_best": second_best,
             "third_best": third_best,

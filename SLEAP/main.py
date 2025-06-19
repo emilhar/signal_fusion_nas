@@ -164,9 +164,7 @@ class SLEAP:
 def main():
     """Main entry point"""
     sleap = SLEAP()
-    
     sleap.run_interactive()
-    
     return sleap
 
 
