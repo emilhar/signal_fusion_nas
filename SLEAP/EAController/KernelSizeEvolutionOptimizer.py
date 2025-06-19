@@ -4,7 +4,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings
+from Globals import Signal, ModelSettings, EvolutionSettings
 
 from EAController.ModifiedEASimple import ModifiedEASimple
 from Logs.LogManager import LogManager
@@ -193,8 +193,11 @@ class KernelSizeEvolutionaryOptimizer:
         return new_model.model_performance
 
     def calculate_fitness(self, model_performance):
-        f1_score = model_performance.get("F1", 0.0)
-        return f1_score
+        if EvolutionSettings.FITNESS_FUNCTION == "F1":
+            f1_score = model_performance.get("F1", 0.0)
+            return f1_score
+        else:
+            raise "No fitness function chosen"
     
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists"""

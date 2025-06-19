@@ -21,11 +21,38 @@ class SleepDataLoader:
 
         self.verbose = verbose
         
+        try:
+            train_file_path = self.get_filepath(SLEAP=True, data_type="Training")            
+            self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True) # could fail if filepath is wrong
 
-        self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=f'SLEAP/Data/{DataSettings.DATASET}/TrainingData/{self.signal_type}_train.npz', training=True)
-        self.test_loader, _, _ = self._load_data(filepath=f'SLEAP/Data/{DataSettings.DATASET}/TestingData/{self.signal_type}_test.npz', training=False)
+            test_file_path = self.get_filepath(SLEAP=True, data_type="Testing")
+
+        except FileNotFoundError:
+            train_file_path = self.get_filepath(SLEAP=False, data_type="Training") # try other filepath
+            self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
+            
+            test_file_path = self.get_filepath(SLEAP=False, data_type="Testing")
+        
+        self.test_loader, _, _ = self._load_data(filepath=test_file_path, training=False)
 
 
+
+    def get_filepath(self, SLEAP, data_type):
+        
+        if SLEAP:
+            beginning = "SLEAP/"
+        else:
+            beginning = ""
+
+        if data_type == "Training":
+            ending = "train"
+        elif data_type == "Testing":
+            ending = "test"
+
+        filepath = f"{beginning}Data/{DataSettings.DATASET}/{data_type}Data/{self.signal_type}_{ending}.npz"
+
+        return filepath
+        
     def _load_data(self, filepath, training):
 
         if self.verbose: 

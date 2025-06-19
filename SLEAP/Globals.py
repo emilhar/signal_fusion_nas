@@ -45,11 +45,13 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 20
-    GENERATIONS: int = 13
+    POPULATION_SIZE: int = 2
+    GENERATIONS: int = 5
     TOURNAMENT_SIZE = 3
     HALL_OF_FAME_MEMBERS = 3
     LOGGING = True
+
+    FITNESS_FUNCTION = "F1"
 
     # Individual settings
     DATA_POINTS_PER_INDIVIUAL = 3000
@@ -74,5 +76,4 @@ class DataSettings:
     DATASET = _datasets[0]
 
 class LoggingSettings:
-    FITNESS_NEEDED_FOR_LOG = 0.40
     LOG_INDIVIDUALS = False # Champions always get logged

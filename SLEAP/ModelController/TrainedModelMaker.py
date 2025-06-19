@@ -5,7 +5,7 @@ Most important file, this connects to main.
 # Base Imports
 import torch
 from torch.utils.data import DataLoader
-from Globals import ModelSettings, EvolutionSettings
+from Globals import ModelSettings
 
 # Model and Training imports
 from ModelController._Trainer import train_model

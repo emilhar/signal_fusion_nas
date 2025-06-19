@@ -1,7 +1,3 @@
-EXPERIMENT_STATS_LOG_PATH = "SLEAP/Logs/ExperimentStatsLog.csv"
-GENERATION_STATS_LOG_PATH = "SLEAP/Logs/GenerationStatsLog.csv"
-INDIVIDUAL_STATS_LOG_PATH = "SLEAP/Logs/IndividualLog.csv"
-
 import csv
 import os
 from datetime import datetime
@@ -33,10 +29,9 @@ class LogManager:
     def _get_experiment_id(self):
         """Get the next experiment ID based on the CSV log"""
 
-        if not os.path.isfile(EXPERIMENT_STATS_LOG_PATH):
-            return 0
+        filepath = self._get_filepath(filetype="Experiment")
 
-        with open(EXPERIMENT_STATS_LOG_PATH, mode='r', newline='') as csvfile:
+        with open(filepath, mode='r', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             experiment_ids = [int(row["experiment_id"]) for row in reader if "experiment_id" in row and row["experiment_id"].isdigit()]
             
@@ -44,6 +39,38 @@ class LogManager:
                 return 0
             
             return  max(experiment_ids) + 1
+
+    def _write_with_config(self, filetype, config):
+        
+        filepath = self._get_filepath(filetype=filetype)
+
+        with open(filepath, mode='a', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=config.keys())
+
+            writer.writerow(config)
+
+    def _get_filepath(self, filetype):
+
+        if filetype == "Experiment":
+            inner_path = "Logs/ExperimentStatsLog.csv"
+        elif filetype == "Generation":
+            inner_path = "Logs/GenerationStatsLog.csv"
+        elif filetype == "Individual":
+            inner_path = "Logs/IndividualLog.csv"
+        else:
+            raise ValueError(f"Unknown filetype: {filetype}")
+        
+        SLEAP_path = f"SLEAP/{inner_path}"
+
+        check_sleep_path = os.path.isfile(SLEAP_path)
+        if check_sleep_path:
+            return SLEAP_path
+        
+        check_inner_path = os.path.isfile(inner_path)
+        if check_inner_path:
+            return inner_path
+                
+        raise FileNotFoundError(f"Could not find file: {SLEAP_path}")
 
     def log_experiment(self, sleepstage, signal_type, max_kernel_size, best, second_best, third_best):
         """Log the experiment configuration"""
@@ -72,18 +99,34 @@ class LogManager:
             "toc_on": EvolutionSettings.TOC_ON,
             "toc_generations_between": EvolutionSettings.TOC_GENERATIONS_BETWEEN,
             "toc_tournament_size": EvolutionSettings.TOC_TOURNAMENT_SIZE,
-            "dataset_name": DataSettings.DATASET
+            "dataset_name": DataSettings.DATASET,
+            "max_time_spent_training": ModelSettings.MAX_TIME_SPENT_TRAINING,
+            "toc_batch_size": EvolutionSettings.TOC_BATCH_SIZE,
+            "fitness_function": EvolutionSettings.FITNESS_FUNCTION
         }
-        
-        file_exists = os.path.isfile(EXPERIMENT_STATS_LOG_PATH)
 
-        with open(EXPERIMENT_STATS_LOG_PATH, mode='a', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=config.keys())
+        self._write_with_config(filetype="Experiment", config=config)
 
-            if not file_exists:
-                writer.writeheader()
+    def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, tournament_of_champions: bool = False):
 
-            writer.writerow(config)
+        self.current_generation_id = generation
+
+        generation_configs = {
+            "experiment_id": self.experiment_id,
+            "generation": self.current_generation_id,
+            "population_size": population_size,
+            "fitness_mean": mean,
+            "fitness_std": std_deviation,
+            "fitness_median": median,
+            "fitness_min": min,
+            "fitness_max": fit_max,
+            "best_individual_id": str(self.best_individual_in_generation),
+            "tournament_of_champions": tournament_of_champions}
+
+        self._write_with_config(filetype="Generation", config=generation_configs)
+
+        self.current_individual_id = -1
+        self.current_generation_id = generation + 1
 
     def check_for_best_in_gen(self, individual, fitness, champion, train_loss, test_loss, precision, recall, f1, accuracy):
 
@@ -138,43 +181,4 @@ class LogManager:
                 "champion": champion,
         }
         
-        # Write entry
-        file_exists = os.path.exists(INDIVIDUAL_STATS_LOG_PATH)
-        
-        with open(INDIVIDUAL_STATS_LOG_PATH, 'a', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=individual_log_entry.keys())
-            
-            if not file_exists:
-                writer.writeheader()
-            
-            writer.writerow(individual_log_entry)
-
-    def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, tournament_of_champions: bool = False):
-
-        self.current_generation_id = generation
-
-        generation_configs = {
-            "experiment_id": self.experiment_id,
-            "generation": self.current_generation_id,
-            "population_size": population_size,
-            "fitness_mean": mean,
-            "fitness_std": std_deviation,
-            "fitness_median": median,
-            "fitness_min": min,
-            "fitness_max": fit_max,
-            "best_individual_id": str(self.best_individual_in_generation),
-            "tournament_of_champions": tournament_of_champions}
-        
-
-        file_exists = os.path.exists(GENERATION_STATS_LOG_PATH)
-        
-        with open(GENERATION_STATS_LOG_PATH, 'a', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=generation_configs.keys())
-            
-            if not file_exists:
-                writer.writeheader()
-            
-            writer.writerow(generation_configs)
-
-        self.current_individual_id = -1
-        self.current_generation_id = generation + 1
+        self._write_with_config(filetype="Individual", config=individual_log_entry)

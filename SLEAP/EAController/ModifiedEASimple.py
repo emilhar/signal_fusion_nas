@@ -111,8 +111,6 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
             want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
             print(" ".join(want_to_print))
 
-
-
         if (EvolutionSettings.TOC_ON) and (gen % EvolutionSettings.TOC_GENERATIONS_BETWEEN == 0):
             population = tournament_of_champions(population, toolbox, verbose)
             tournament_of_champions_happened = True
