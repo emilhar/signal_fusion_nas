@@ -1,6 +1,6 @@
-EXPERIMENT_STATS_LOG_PATH = "Logs/ExperimentStatsLog.csv"
-GENERATION_STATS_LOG_PATH = "Logs/GenerationStatsLog.csv"
-INDIVIDUAL_STATS_LOG_PATH = "Logs/IndividualLog.csv"
+EXPERIMENT_STATS_LOG_PATH = "SLEAP/Logs/ExperimentStatsLog.csv"
+GENERATION_STATS_LOG_PATH = "SLEAP/Logs/GenerationStatsLog.csv"
+INDIVIDUAL_STATS_LOG_PATH = "SLEAP/Logs/IndividualLog.csv"
 
 import csv
 import os

@@ -21,8 +21,9 @@ class SleepDataLoader:
 
         self.verbose = verbose
         
-        self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=f'Data/{DataSettings.DATASET}/TrainingData/{self.signal_type}_train.npz', training=True)
-        self.test_loader, _, _ = self._load_data(filepath=f'Data/{DataSettings.DATASET}/TestingData/{self.signal_type}_test.npz', training=False)
+
+        self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=f'SLEAP/Data/{DataSettings.DATASET}/TrainingData/{self.signal_type}_train.npz', training=True)
+        self.test_loader, _, _ = self._load_data(filepath=f'SLEAP/Data/{DataSettings.DATASET}/TestingData/{self.signal_type}_test.npz', training=False)
 
 
     def _load_data(self, filepath, training):
