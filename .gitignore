@@ -65,6 +65,7 @@ htmlcov/
 
 # Misc
 *.log
+!SLEAP/Logs/*
 
 #SLEAP
 ./Data/*
