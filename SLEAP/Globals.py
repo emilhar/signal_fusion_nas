@@ -46,7 +46,7 @@ class EvolutionSettings:
 
     # Overview settings
     POPULATION_SIZE: int = 20
-    GENERATIONS: int = 15
+    GENERATIONS: int = 13
     TOURNAMENT_SIZE = 3
     HALL_OF_FAME_MEMBERS = 3
     LOGGING = True
@@ -55,7 +55,7 @@ class EvolutionSettings:
     DATA_POINTS_PER_INDIVIUAL = 3000
     CX_PROB: float = 0.7
     MUTATION_PROB: float = 0.2
-    OFFSPRING_VARIATION = 3     # When crossover happens, how different are the children from their parents?
+    OFFSPRING_VARIATION = 5     # When crossover happens, how different are the children from their parents?
     LAYERS_OF_CNN = 3
     RANDOM_KERNELS_PER_BRANCH = 1
 

@@ -59,6 +59,7 @@ class LogManager:
             "dataset_fraction":  ModelSettings.DATASET_FRACTION,
             "population_size": EvolutionSettings.POPULATION_SIZE,
             "generations": EvolutionSettings.GENERATIONS,
+            "offspring_variation": EvolutionSettings.OFFSPRING_VARIATION,
             "crossover_prob": EvolutionSettings.CX_PROB,
             "mutation_prob": EvolutionSettings.MUTATION_PROB,
             "tournament_size": EvolutionSettings.TOURNAMENT_SIZE,

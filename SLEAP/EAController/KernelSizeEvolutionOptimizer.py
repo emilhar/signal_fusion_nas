@@ -215,10 +215,11 @@ class KernelSizeEvolutionaryOptimizer:
         left_diff = abs(left1_head - left2_head)
         right_diff = abs(right1_head - right2_head)
 
-
+        # Only right side of normal curve centered on 0, going down to 10
         random_val = min( int(np.floor(np.abs(np.random.normal(loc=0, scale=4.12)))) , 10)
         percentage = random_val / 100.0
 
+        # Modify parents
         left1[0] = max( abs(int(left_choice + (percentage * left_diff))), self.min_kernel_size )
         left2[0] = max( abs(int(left_choice - (percentage * left_diff))), self.min_kernel_size )
 
