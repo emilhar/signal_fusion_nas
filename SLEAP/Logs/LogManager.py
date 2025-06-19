@@ -155,7 +155,7 @@ class LogManager:
         best = self.best_individual_in_generation
         generation = self.current_generation_id
         
-        if (not champion and best["fitness"] <= fitness):
+        if (best["fitness"] <= fitness):
 
             self.best_individual_in_generation = {
                 "experiment_id": self.experiment_id,
