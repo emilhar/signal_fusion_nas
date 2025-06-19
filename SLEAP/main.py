@@ -6,6 +6,8 @@ from Globals import Sleepstage, Signal
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
 from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings
 
+import subprocess
+
 class SLEAP:
     """
     Sleep
@@ -32,24 +34,35 @@ class SLEAP:
         # Get user configuration
         if run_all_experiment_configs:
             print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")
-            # configs = self._generate_all_configs()
+            configs = self._generate_all_configs()
 
-            # for config in configs:
+            for config in configs:
+                self.sleepstage = config[0]
+                self.signal_type = config[1]
 
-            #     print("\n" + "="*68)
-            #     print(f"🚀 Starting experiment for {config['sleepstage']} stage with {config['signal_type']} signal")
-            #     print("="*68)
+                print("\n" + "="*68)
+                print(f"🚀 Starting experiment for {self.sleepstage} stage with {self.signal_type} signal")
+                print("="*68)
 
-            #     self._create_optimizer(config)
-            #     self.optimizer.run_evolution()
-            #     self.optimizer.log_results()
+                self._create_optimizer()
+                self.optimizer.run_evolution()
+                self.optimizer.log_results()
 
+                try:
+                    commit_message = f"Add results: {self.sleepstage} + {self.signal_type}"
+                    subprocess.run(["git", "add", "SLEAP/Logs"])
+                    subprocess.run(["git", "add", "Logs"])
+                    subprocess.run(["git", "commit", "-m", commit_message], check=True)
+                    print(f"✅ Committed experiment: {commit_message}")
+
+                except subprocess.CalledProcessError as e:
+                    print(f"❌ Git commit failed: {e}")
 
         else:
-            config = self._get_user_configuration()
-        
+            self._get_user_configuration()
+
             # Create optimizer with user settings
-            self._create_optimizer(config)
+            self._create_optimizer()
             
             # Run evolution
             self.optimizer.run_evolution()
@@ -62,7 +75,6 @@ class SLEAP:
     
     def _get_user_configuration(self):
         """Get configuration from user input"""
-        config = {}
         
         # Sleep stage selection
         print("\n📊 Available Sleep Stages:")
@@ -80,7 +92,7 @@ class SLEAP:
             try:
                 choice = int(input("\nSelect sleep stage (1-4): "))
                 if 1 <= choice <= 4:
-                    config['sleepstage'] = sleep_options[choice-1][0]
+                    self.sleepstage = sleep_options[choice-1][0]
                     break
                 print("❌ Please enter a number between 1-4")
             except ValueError:
@@ -89,7 +101,7 @@ class SLEAP:
         # Signal type selection
         if ModelSettings.SMALLER_FILES:
             print("\nWARNING: YOU ARE USING SMALLER FILES, file 'smaller_EEG_Fpz_CZ' automatically chosen")
-            config['signal_type'] = f"smaller_{Signal.EEG.Fpz_Cz}"
+            self.signal_type = f"smaller_{Signal.EEG.Fpz_Cz}"
         
         else:
             print("\n🔌 Available Signal Types:")
@@ -107,7 +119,7 @@ class SLEAP:
                 try:
                     choice = int(input("\nSelect signal type (1-4): "))
                     if 1 <= choice <= 4:
-                        config['signal_type'] = signal_options[choice-1][0]
+                        self.signal_type = signal_options[choice-1][0]
                         break
                     print("❌ Please enter a number between 1-4")
                 except ValueError:
@@ -116,19 +128,37 @@ class SLEAP:
         self._print_experiment_settings()
         
         input("OK? ")
-
-        return config
     
-    def _create_optimizer(self, config):
-        """Create the evolutionary optimizer with given configuration"""
-        print(f"\n🔧 Creating optimizer for {config['sleepstage']} stage with {config['signal_type']} signal...")
+    def _generate_all_configs(self):
+        configs = []
         
-        self.sleepstage = config['sleepstage']
-        self.signal_type = config['signal_type']
+        sleep_options = [
+            Sleepstage.WAKE,
+            Sleepstage.LIGHT_SLEEP,
+            Sleepstage.DEEP_SLEEP,
+            Sleepstage.REM,
+        ]
+
+        signal_options = [
+            Signal.EEG.Fpz_Cz,
+            Signal.EEG.Pz_Oz,
+            Signal.EOG.HORIZONTAL,
+            Signal.EMG.SUBMENTAL,
+        ]
+
+        for sleep_type in sleep_options:
+            for signal_type in signal_options:
+                configs.append( (sleep_type, signal_type) )
+
+        return configs
+
+    def _create_optimizer(self):
+        """Create the evolutionary optimizer with given configuration"""
+        print(f"\n🔧 Creating optimizer for {self.sleepstage} stage with {self.signal_type} signal...")
         
         self.optimizer = KernelSizeEvolutionaryOptimizer(
-            sleepstage=config['sleepstage'],
-            signal_type=config['signal_type'],
+            sleepstage=self.sleepstage,
+            signal_type=self.signal_type,
         )
 
     def _print_experiment_settings(self):
@@ -181,7 +211,8 @@ class SLEAP:
 def main():
     """Main entry point"""
     sleap = SLEAP()
-    sleap.run_experiment()
+    # STEPS TIL AÐ RUN MEGA EXPERIMENT:
+    sleap.run_experiment(run_all_experiment_configs=True)
 
 
 if __name__ == "__main__":
