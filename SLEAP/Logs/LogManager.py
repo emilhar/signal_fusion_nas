@@ -14,16 +14,19 @@ class LogManager:
         self.current_individual_id = -1
 
         self.best_individual_in_generation = {
-            "generation": -1,
-            "fitness": -1,
-            "individual": None,
-            "champion": False,
-            'train_loss': 0, 
-            'test_loss': 0,
-            'precision':0,
-            'recall': 0, 
-            'f1': 0,
-            'accuracy': 0}
+                "experiment_id": 0,
+                "generation": 0,
+                "individual_id": 0,
+                "individual": 0,
+                "Train Loss": 0,
+                "Test Loss": 0,
+                "Precision": 0,
+                "Recall": 0,
+                "F1": 0,
+                "Accuracy": 0,
+                "fitness": 0,
+                "champion": 0,
+        }
     
     def _get_experiment_id(self):
         """Get the next experiment ID based on the CSV log"""
@@ -119,25 +122,30 @@ class LogManager:
             "fitness_median": median,
             "fitness_min": min,
             "fitness_max": fit_max,
-            "best_individual_id": str(self.best_individual_in_generation),
+            "best_individual_id": f"(exp:{self.experiment_id},gen:{self.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{self.best_individual_in_generation["fitness"]}, kernels:{str(self.best_individual_in_generation["individual"])}",
             "tournament_of_champions": tournament_of_champions}
 
         self._write_with_config(filetype="Generation", config=generation_configs)
+
+        self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
 
         self.current_generation_id = generation + 1
         self.current_individual_id = -1
 
         self.best_individual_in_generation = {
-            "generation": -1,
-            "fitness": -1,
-            "individual": None,
-            "champion": False,
-            'train_loss': 0, 
-            'test_loss': 0,
-            'precision':0,
-            'recall': 0, 
-            'f1': 0,
-            'accuracy': 0}
+                "experiment_id": 0,
+                "generation": 0,
+                "individual_id": 0,
+                "individual": 0,
+                "Train Loss": 0,
+                "Test Loss": 0,
+                "Precision": 0,
+                "Recall": 0,
+                "F1": 0,
+                "Accuracy": 0,
+                "fitness": 0,
+                "champion": 0,
+        }
 
     def check_for_best_in_gen(self, individual, fitness, champion, train_loss, test_loss, precision, recall, f1, accuracy):
 
@@ -147,21 +155,22 @@ class LogManager:
         best = self.best_individual_in_generation
         generation = self.current_generation_id
         
-        if (not champion and 
-            best["generation"] == generation and best["fitness"] <= fitness):
+        if (not champion and best["fitness"] <= fitness):
 
             self.best_individual_in_generation = {
+                "experiment_id": self.experiment_id,
                 "generation": generation,
+                "individual_id": self.current_individual_id,
+                "individual": str(individual),
+                "Train Loss": train_loss,
+                "Test Loss": test_loss,
+                "Precision": precision,
+                "Recall": recall,
+                "F1": f1,
+                "Accuracy": accuracy,
                 "fitness": fitness,
-                "individual": individual,
                 "champion": champion,
-                'train_loss': train_loss, 
-                'test_loss': test_loss,
-                'precision': precision,
-                'recall': recall, 
-                'f1': f1,
-                'accuracy': accuracy
-            }
+        }
 
         if (champion):
             self.log_individual_stats(individual, fitness, train_loss, test_loss, precision, recall, f1, accuracy, champion)

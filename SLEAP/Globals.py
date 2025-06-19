@@ -45,8 +45,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 2
-    GENERATIONS: int = 5
+    POPULATION_SIZE: int = 3
+    GENERATIONS: int = 6
     TOURNAMENT_SIZE = 3
     HALL_OF_FAME_MEMBERS = 3
     LOGGING = True
@@ -54,7 +54,7 @@ class EvolutionSettings:
     FITNESS_FUNCTION = "F1"
 
     # Individual settings
-    DATA_POINTS_PER_INDIVIUAL = 3000
+    DATA_POINTS_PER_INDIVIUAL = 1000
     CX_PROB: float = 0.7
     MUTATION_PROB: float = 0.2
     OFFSPRING_VARIATION = 5     # When crossover happens, how different are the children from their parents?

@@ -211,8 +211,7 @@ class SLEAP:
 def main():
     """Main entry point"""
     sleap = SLEAP()
-    # STEPS TIL AÐ RUN MEGA EXPERIMENT:
-    sleap.run_experiment(run_all_experiment_configs=True)
+    sleap.run_experiment(run_all_experiment_configs=False)
 
 
 if __name__ == "__main__":
