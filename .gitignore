@@ -65,3 +65,15 @@ htmlcov/
 
 # Misc
 *.log
+
+#SLEAP
+./Data/*
+.Data/*
+.Data
+Data
+
+#General
+.__pycache__
+./__pycache__
+./__pycache__/*
+__pycache__
