@@ -17,7 +17,6 @@ class KernelSizeEvolutionaryOptimizer:
                  signal_type: str,
                  batch_size: int = ModelSettings.BATCH_SIZE,
                  epochs_per_individual: int = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
-                 dataset_fraction: float = ModelSettings.DATASET_FRACTION,
                  
                  # Evolution parameters
                  population_size: int = EvolutionSettings.POPULATION_SIZE,
@@ -36,7 +35,6 @@ class KernelSizeEvolutionaryOptimizer:
         self.sleepstage = sleepstage
         self.signal_type = signal_type
         self.batch_size = batch_size
-        self.dataset_fraction = dataset_fraction
         self.epochs = epochs_per_individual
         
         # Evolution parameters
@@ -60,7 +58,6 @@ class KernelSizeEvolutionaryOptimizer:
         self.SDL = SleepDataLoader(verbose=self.verbose, 
         signal_type=self.signal_type, 
         sleepstage=self.sleepstage,
-        dataset_fraction=self.dataset_fraction,
         batch_size=self.batch_size)
 
         self.LogManager = LogManager()
@@ -170,9 +167,11 @@ class KernelSizeEvolutionaryOptimizer:
         if champion:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_full_dataset()
             batch_size = EvolutionSettings.TOC_BATCH_SIZE
+            epochs = EvolutionSettings.TOC_EPOCHS
         else:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
             batch_size = self.batch_size
+            epochs = self.epochs
 
         # Things marked with # come from the SDL
         new_model = TrainedModelMaker(
@@ -184,7 +183,7 @@ class KernelSizeEvolutionaryOptimizer:
             batch_size= batch_size,
             train_loader = individual_training_set,
             test_loader = individual_test_set,
-            epochs= self.epochs,
+            epochs= epochs,
             verbose= self.verbose,
             N_SAMPLES= n_samples, #
             pos_weight= pos_weight,

@@ -29,7 +29,6 @@ class TrainedModelMaker:
 
                  batch_size:int = ModelSettings.BATCH_SIZE,
                  epochs:int = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
-                 dataset_fraction:float = ModelSettings.DATASET_FRACTION,
 
                  champion:bool = False,
                  verbose:bool = ModelSettings.VERBOSE
@@ -37,7 +36,6 @@ class TrainedModelMaker:
         
         self.STAGE = sleepstage
         self.EXG_SIGNAL = signal_type
-        self.DATASET_FRACTION = dataset_fraction
 
         # Get Stage Map
         self.BATCH_SIZE = batch_size

@@ -169,7 +169,6 @@ class SLEAP:
         print("\n📦 Model Settings")
         print(f"{'Batch size:':30} {ModelSettings.BATCH_SIZE}")
         print(f"{'Epochs per individual:':30} {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}")
-        print(f"{'Dataset fraction:':30} {ModelSettings.DATASET_FRACTION}")
         print(f"{'Max training time (sec):':30} {ModelSettings.MAX_TIME_SPENT_TRAINING}")
         print(f"{'Kernel sizes:':30} {ModelSettings.KERNEL}")
         print(f"{'Min kernel size:':30} {ModelSettings.MIN_KERNEL_SIZE}")

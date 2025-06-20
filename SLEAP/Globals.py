@@ -28,7 +28,6 @@ class ModelSettings:
     # Base
     BATCH_SIZE = 32  # Default batch size (from BATCH_SIZE_OPTIONS)
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 4
-    DATASET_FRACTION: float = 0.3
     VERBOSE = True
     MAX_TIME_SPENT_TRAINING = 3
 
@@ -45,8 +44,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 3
-    GENERATIONS: int = 6
+    POPULATION_SIZE: int = 20
+    GENERATIONS: int = 15
     TOURNAMENT_SIZE = 3
     HALL_OF_FAME_MEMBERS = 3
     LOGGING = True
@@ -54,7 +53,7 @@ class EvolutionSettings:
     FITNESS_FUNCTION = "F1"
 
     # Individual settings
-    DATA_POINTS_PER_INDIVIUAL = 1000
+    DATA_POINTS_PER_INDIVIUAL = 3000
     CX_PROB: float = 0.7
     MUTATION_PROB: float = 0.2
     OFFSPRING_VARIATION = 5     # When crossover happens, how different are the children from their parents?
@@ -65,7 +64,8 @@ class EvolutionSettings:
     TOC_ON = True
     TOC_GENERATIONS_BETWEEN = 5
     TOC_TOURNAMENT_SIZE = 0.20
-    TOC_BATCH_SIZE = 128  # Tournament batch size (from BATCH_SIZE_OPTIONS)
+    TOC_BATCH_SIZE = 128
+    TOC_EPOCHS = 30
 
 class DataSettings:
     class DatasetNames:

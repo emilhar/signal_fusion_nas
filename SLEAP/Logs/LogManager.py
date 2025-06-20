@@ -59,6 +59,8 @@ class LogManager:
             inner_path = "Logs/GenerationStatsLog.csv"
         elif filetype == "Individual":
             inner_path = "Logs/IndividualLog.csv"
+        elif filetype == "HallOfFame":
+            inner_path = "Logs/HallOfFameLog.csv"
         else:
             raise ValueError(f"Unknown filetype: {filetype}")
         
@@ -85,7 +87,6 @@ class LogManager:
             "signal_type": signal_type,
             "batch_size": ModelSettings.BATCH_SIZE,
             "epochs_per_individual": ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
-            "dataset_fraction":  ModelSettings.DATASET_FRACTION,
             "population_size": EvolutionSettings.POPULATION_SIZE,
             "generations": EvolutionSettings.GENERATIONS,
             "offspring_variation": EvolutionSettings.OFFSPRING_VARIATION,
@@ -108,6 +109,15 @@ class LogManager:
         }
 
         self._write_with_config(filetype="Experiment", config=config)
+
+    def log_hall_of_fame(self, hall_of_fame_list):
+        config = {"experiment_id": self.experiment_id}
+
+        for i, member in enumerate(hall_of_fame_list):
+            config[f"Nr.{i+1}"] = member
+
+        self._write_with_config(filetype="HallOfFame", config=config)
+
 
     def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, tournament_of_champions: bool = False):
 

@@ -9,14 +9,13 @@ from Globals import Sleepstage, EvolutionSettings, DataSettings
 
 
 class SleepDataLoader:
-    def __init__(self, verbose, signal_type, sleepstage, dataset_fraction, batch_size):
+    def __init__(self, verbose, signal_type, sleepstage, batch_size):
         self.sleepstage = sleepstage
         self.signal_type = signal_type
 
         if DataSettings.DATASET == DataSettings.DatasetNames.TELEMETRY:
             self.signal_type = f"telemetry_{signal_type}"
 
-        self.dataset_fraction = dataset_fraction
         self.batch_size = batch_size
 
         self.verbose = verbose
