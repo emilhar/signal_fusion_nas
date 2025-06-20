@@ -69,3 +69,5 @@ htmlcov/
 
 #SLEAP
 Data/
+*.csv
+*.png
