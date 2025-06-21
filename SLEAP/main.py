@@ -48,15 +48,15 @@ class SLEAP:
                 self.optimizer.run_evolution()
                 self.optimizer.log_results()
 
-                try:
-                    commit_message = f"Add results: {self.sleepstage} + {self.signal_type}"
-                    subprocess.run(["git", "add", "SLEAP/Logs"])
-                    subprocess.run(["git", "add", "Logs"])
-                    subprocess.run(["git", "commit", "-m", commit_message], check=True)
-                    print(f"✅ Committed experiment: {commit_message}")
+                # try:
+                #     commit_message = f"Add results: {self.sleepstage} + {self.signal_type}"
+                #     subprocess.run(["git", "add", "SLEAP/Logs"])
+                #     subprocess.run(["git", "add", "Logs"])
+                #     subprocess.run(["git", "commit", "-m", commit_message], check=True)
+                #     print(f"✅ Committed experiment: {commit_message}")
 
-                except subprocess.CalledProcessError as e:
-                    print(f"❌ Git commit failed: {e}")
+                # except subprocess.CalledProcessError as e:
+                #     print(f"❌ Git commit failed: {e}")
 
         else:
             self._get_user_configuration()
@@ -192,8 +192,9 @@ class SLEAP:
         print("\n🏆 Tournament of Champions")
         print(f"{'Enabled:':30} {EvolutionSettings.TOC_ON}")
         print(f"{'Generations between:':30} {EvolutionSettings.TOC_GENERATIONS_BETWEEN}")
-        print(f"{'Tournament size:':30} {EvolutionSettings.TOC_TOURNAMENT_SIZE}")
+        print(f"{'TOC tournament size:':30} {EvolutionSettings.TOC_TOURNAMENT_SIZE}")
         print(f"{'TOC batch size:':30} {EvolutionSettings.TOC_BATCH_SIZE}")
+        print(f"{'TOC epochs per champion:':30} {EvolutionSettings.TOC_EPOCHS}")
 
         # Dataset info
         print("\n📁 Data Settings")

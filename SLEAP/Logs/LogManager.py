@@ -102,9 +102,10 @@ class LogManager:
             "toc_on": EvolutionSettings.TOC_ON,
             "toc_generations_between": EvolutionSettings.TOC_GENERATIONS_BETWEEN,
             "toc_tournament_size": EvolutionSettings.TOC_TOURNAMENT_SIZE,
+            "toc_training_epochs":EvolutionSettings.TOC_EPOCHS,
+            "toc_batch_size": EvolutionSettings.TOC_BATCH_SIZE,
             "dataset_name": DataSettings.DATASET,
             "max_time_spent_training": ModelSettings.MAX_TIME_SPENT_TRAINING,
-            "toc_batch_size": EvolutionSettings.TOC_BATCH_SIZE,
             "fitness_function": EvolutionSettings.FITNESS_FUNCTION
         }
 

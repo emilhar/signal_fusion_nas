@@ -3,9 +3,14 @@ import matplotlib.pyplot as plt
 import os
 
 # Load logs
-exp_stats = pd.read_csv("Logs/ExperimentStatsLog.csv")
-gen_stats = pd.read_csv("Logs/GenerationStatsLog.csv")
-individuals = pd.read_csv("Logs/IndividualLog.csv")
+try:
+    exp_stats = pd.read_csv("Logs/ExperimentStatsLog.csv")
+    gen_stats = pd.read_csv("Logs/GenerationStatsLog.csv")
+    individuals = pd.read_csv("Logs/IndividualLog.csv")
+except FileNotFoundError:
+    exp_stats = pd.read_csv("SLEAP/Logs/ExperimentStatsLog.csv")
+    gen_stats = pd.read_csv("SLEAP/Logs/GenerationStatsLog.csv")
+    individuals = pd.read_csv("SLEAP/Logs/IndividualLog.csv") 
 
 colors = plt.cm.tab10.colors
 
@@ -45,7 +50,10 @@ def main():
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(f"Logs/Plots/Exp{exp_id}.png")
+    try:
+        plt.savefig(f"Logs/Plots/Exp{exp_id}.png")
+    except FileNotFoundError:
+        plt.savefig(f"SLEAP/Logs/Plots/Exp{exp_id}.png")
 
     # Gather all y-values for dynamic scaling
     all_accuracies = []
