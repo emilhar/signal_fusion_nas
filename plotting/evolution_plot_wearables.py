@@ -8,8 +8,8 @@ plt.rc('mathtext', fontset='cm')
 
 # Settings
 generations = np.arange(1, 51)
-col_titles = ['Wake', 'Light', 'Deep', 'REM']
-row_labels = ['Temp', 'EDA', 'ACC', 'BVP']
+row_labels = ['Wake', 'Light', 'Deep', 'REM']
+col_titles = ['Temp', 'EDA', 'ACC', 'BVP']
 
 # Create subplots with a 4x4 inch figure size
 fig, axes = plt.subplots(4, 4, figsize=(4, 4), sharex=True, sharey=True)

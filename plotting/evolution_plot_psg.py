@@ -8,19 +8,19 @@ plt.rc('mathtext', fontset='cm')
 
 # Settings
 generations = np.arange(1, 51)
-col_titles = ['Wake', 'N1', 'N2', 'N3', 'REM']
-row_labels = ['EEG1', 'EEG2', 'EOG', 'EMG']
+row_labels = ['Wake', 'N1', 'N2', 'N3', 'REM']
+col_titles = ['EEG1', 'EEG2', 'EOG', 'EMG']
 
 # Create subplots with a 4x4 inch figure size
-fig, axes = plt.subplots(4, 5, figsize=(4, 4), sharex=True, sharey=True)
+fig, axes = plt.subplots(5, 4, figsize=(4, 5), sharex=True, sharey=True)
 
 # Uniform font sizes
 title_fs = 10
 label_fs = 10
 tick_fs = 8
 
-for i in range(4):
-    for j in range(5):
+for i in range(5):
+    for j in range(4):
         ax = axes[i, j]
         # Simulate data
         avg_accuracy = 68 + 25 * (1 - np.exp(-generations / 15)) + np.random.randn(50) * 0.7
