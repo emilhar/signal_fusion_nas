@@ -48,16 +48,6 @@ class SLEAP:
                 self.optimizer.run_evolution()
                 self.optimizer.log_results()
 
-                # try:
-                #     commit_message = f"Add results: {self.sleepstage} + {self.signal_type}"
-                #     subprocess.run(["git", "add", "SLEAP/Logs"])
-                #     subprocess.run(["git", "add", "Logs"])
-                #     subprocess.run(["git", "commit", "-m", commit_message], check=True)
-                #     print(f"✅ Committed experiment: {commit_message}")
-
-                # except subprocess.CalledProcessError as e:
-                #     print(f"❌ Git commit failed: {e}")
-
         else:
             self._get_user_configuration()
 
@@ -67,7 +57,7 @@ class SLEAP:
             # Run evolution
             self.optimizer.run_evolution()
             
-            if EvolutionSettings.LOGGING:
+            if LoggingSettings.LOGGING:
                 self.optimizer.log_results()
 
             # Show results

@@ -4,7 +4,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelSettings, EvolutionSettings
+from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings
 
 from EAController.ModifiedEASimple import ModifiedEASimple
 from Logs.LogManager import LogManager
@@ -149,7 +149,7 @@ class KernelSizeEvolutionaryOptimizer:
         if self.verbose:
             print(f"Fitness: {fitness_value}")
 
-        if EvolutionSettings.LOGGING:
+        if LoggingSettings.LOGGING:
 
             train_loss = model_performance.get("Train Loss", 0.0),
             test_loss = model_performance.get("Test Loss", 0.0),

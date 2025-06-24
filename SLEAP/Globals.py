@@ -46,13 +46,12 @@ class EvolutionSettings:
 
     # Overview settings
     POPULATION_SIZE: int = 20
-    GENERATIONS: int = 5
+    GENERATIONS: int = 20
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
     FITNESS_FUNCTION = "F1"
 
-    LOGGING = True
-
+    
     # Data split
     DATA_POINTS_PER_INDIVIUAL = 4300
     DATA_SPLIT_TRAINING = 0.7
@@ -67,7 +66,7 @@ class EvolutionSettings:
     RANDOM_KERNELS_PER_BRANCH = 1
 
     # Tournament of Champion settings
-    TOC_ON = True
+    TOC_ON = False
     TOC_GENERATIONS_BETWEEN = 3
     TOC_TOURNAMENT_SIZE = 0.20
     TOC_BATCH_SIZE = 128
@@ -83,4 +82,5 @@ class DataSettings:
     DATASET = _datasets[0]
 
 class LoggingSettings:
+    LOGGING = False
     LOG_INDIVIDUALS = False # Champions always get logged

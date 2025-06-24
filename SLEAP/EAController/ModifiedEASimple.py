@@ -10,7 +10,7 @@ We then create a new population from those individuals.
 import random
 from math import ceil
 
-from Globals import EvolutionSettings
+from Globals import EvolutionSettings, LoggingSettings
 
 def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=None,
              halloffame=None, verbose=__debug__):
@@ -27,7 +27,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
 
     record = stats.compile(invalid_ind) if stats else {}
 
-    if EvolutionSettings.LOGGING:
+    if LoggingSettings.LOGGING:
         # Log the generation
         LogManager.log_generation_stats(0, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'], tournament_of_champions=False)
 
@@ -69,7 +69,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
         # Append the current generation statistics to the logbook
         record = stats.compile(invalid_ind) if stats else {}
 
-        if EvolutionSettings.LOGGING:
+        if LoggingSettings.LOGGING:
             # Log the generation
             LogManager.log_generation_stats(gen, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'], tournament_of_champions_happened)
 
