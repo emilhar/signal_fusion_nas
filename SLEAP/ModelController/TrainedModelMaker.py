@@ -29,6 +29,7 @@ class TrainedModelMaker:
 
                  batch_size:int = ModelSettings.BATCH_SIZE,
                  epochs:int = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
+                 learning_rate:int = ModelSettings.LEARNING_RATE,
 
                  champion:bool = False,
                  verbose:bool = ModelSettings.VERBOSE
@@ -36,6 +37,7 @@ class TrainedModelMaker:
         
         self.STAGE = sleepstage
         self.EXG_SIGNAL = signal_type
+        self.lr = learning_rate
 
         # Get Stage Map
         self.BATCH_SIZE = batch_size
@@ -53,5 +55,5 @@ class TrainedModelMaker:
         if verbose: 
             print(f"\n\nTraining model: {left_kernel_sizes=}, {right_kernel_sizes=}")
 
-        self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, lr=5e-5, epochs=epochs, verbose=verbose, champion=champion)
+        self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, self.lr, epochs=epochs, verbose=verbose, champion=champion)
 

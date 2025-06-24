@@ -28,7 +28,7 @@ def main():
 
     # Handle single or all
     if selection.lower() == "all":
-        title = "Validation Accuracy over Generations (All Experiments)"
+        title = "Fitness over Generations (All Experiments)"
         for i, exp_id in enumerate(exp_stats["experiment_id"].unique()):
             plot_experiment(exp_id, i, plot_all=True)
         exp_id="All"
@@ -45,7 +45,7 @@ def main():
 
     # Finalize plot
     plt.xlabel("Generation")
-    plt.ylabel("Validation Accuracy (%)")
+    plt.ylabel("Fitness (%)")
     plt.title(title)
     plt.legend()
     plt.grid(True)
@@ -79,7 +79,7 @@ def get_experiment_title(exp_id):
     exp_row = exp_stats[exp_stats["experiment_id"] == exp_id].iloc[0]
     sleepstage = exp_row["sleepstage"]
     signal_type = exp_row["signal_type"]
-    title = f"Exp {exp_id}: {sleepstage}, {signal_type}\nValidation Accuracy over Generations"
+    title = f"Exp {exp_id}: {sleepstage}, {signal_type}\nFitness over Generations"
 
     return title
 

@@ -92,7 +92,7 @@ class LogManager:
             "offspring_variation": EvolutionSettings.OFFSPRING_VARIATION,
             "crossover_prob": EvolutionSettings.CX_PROB,
             "mutation_prob": EvolutionSettings.MUTATION_PROB,
-            "tournament_size": EvolutionSettings.TOURNAMENT_SIZE,
+            "tournament_size": EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
             "min_kernel_size": ModelSettings.MIN_KERNEL_SIZE,
             "max_kernel_size": max_kernel_size,
             "data_points_per_individual": EvolutionSettings.DATA_POINTS_PER_INDIVIUAL,

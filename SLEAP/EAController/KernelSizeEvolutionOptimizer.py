@@ -23,7 +23,7 @@ class KernelSizeEvolutionaryOptimizer:
                  generations: int = EvolutionSettings.GENERATIONS,
                  cx_prob: float = EvolutionSettings.CX_PROB,
                  mut_prob: float = EvolutionSettings.MUTATION_PROB,
-                 tournament_size: int = EvolutionSettings.TOURNAMENT_SIZE,
+                 tournament_size: int = EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
                  
                  # Kernel size constraints
                  min_kernel_size: int = ModelSettings.MIN_KERNEL_SIZE,
@@ -168,10 +168,12 @@ class KernelSizeEvolutionaryOptimizer:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_full_dataset()
             batch_size = EvolutionSettings.TOC_BATCH_SIZE
             epochs = EvolutionSettings.TOC_EPOCHS
+            learning_rate = ModelSettings.LEARNING_RATE * EvolutionSettings.TOC_LEARNING_RATE_MULTIPLIER
         else:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
             batch_size = self.batch_size
             epochs = self.epochs
+            learning_rate = ModelSettings.LEARNING_RATE
 
         # Things marked with # come from the SDL
         new_model = TrainedModelMaker(
@@ -184,6 +186,7 @@ class KernelSizeEvolutionaryOptimizer:
             train_loader = individual_training_set,
             test_loader = individual_test_set,
             epochs= epochs,
+            learning_rate=learning_rate,
             verbose= self.verbose,
             N_SAMPLES= n_samples, #
             pos_weight= pos_weight,

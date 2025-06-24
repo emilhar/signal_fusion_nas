@@ -24,7 +24,7 @@ class SLEAP:
         self.sleepstage = None
         self.signal_type = None
         
-    def run_experiment(self, run_all_experiment_configs = False):
+    def run_experiment(self, run_omega = False):
         """Run the setup and evolution process"""
         print("\n" + "="*68)
         print("🧠 SLEAP - Sleep Labeling using Evolutionary Algorithms and PyTorch")
@@ -32,7 +32,7 @@ class SLEAP:
         
 
         # Get user configuration
-        if run_all_experiment_configs:
+        if run_omega:
             print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")
             configs = self._generate_all_configs()
 
@@ -133,10 +133,10 @@ class SLEAP:
         configs = []
         
         sleep_options = [
-            Sleepstage.WAKE,
             Sleepstage.LIGHT_SLEEP,
             Sleepstage.DEEP_SLEEP,
             Sleepstage.REM,
+            Sleepstage.WAKE,
         ]
 
         signal_options = [
@@ -180,13 +180,15 @@ class SLEAP:
         print("\n🧬 Evolution Settings")
         print(f"{'Population size:':30} {EvolutionSettings.POPULATION_SIZE}")
         print(f"{'Generations:':30} {EvolutionSettings.GENERATIONS}")
-        print(f"{'Tournament size:':30} {EvolutionSettings.TOURNAMENT_SIZE}")
+        print(f"{'Tournament size:':30} {EvolutionSettings.SELECTION_TOURNAMENT_SIZE}")
         print(f"{'Crossover probability:':30} {EvolutionSettings.CX_PROB}")
         print(f"{'Mutation probability:':30} {EvolutionSettings.MUTATION_PROB}")
         print(f"{'Offspring variation:':30} {EvolutionSettings.OFFSPRING_VARIATION}")
         print(f"{'Layers of CNN:':30} {EvolutionSettings.LAYERS_OF_CNN}")
         print(f"{'Random kernels per branch:':30} {EvolutionSettings.RANDOM_KERNELS_PER_BRANCH}")
         print(f"{'Data points per individual:':30} {EvolutionSettings.DATA_POINTS_PER_INDIVIUAL}")
+        print(f"{'Data for training:':30} {EvolutionSettings.DATA_SPLIT_TRAINING}")
+        print(f"{'Data for testing:':30} {EvolutionSettings.DATA_SPLIT_TESTING}")
 
         # Tournament of Champions
         print("\n🏆 Tournament of Champions")
@@ -211,7 +213,7 @@ class SLEAP:
 def main():
     """Main entry point"""
     sleap = SLEAP()
-    sleap.run_experiment(run_all_experiment_configs=False)
+    sleap.run_experiment(run_omega=False)
 
 
 if __name__ == "__main__":

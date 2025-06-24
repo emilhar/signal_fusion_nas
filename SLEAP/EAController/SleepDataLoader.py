@@ -3,6 +3,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import torch
 import gc
 from random import sample
+from sklearn.model_selection import StratifiedShuffleSplit
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from Globals import Sleepstage, EvolutionSettings, DataSettings
@@ -110,6 +111,11 @@ class SleepDataLoader:
     def get_random_subset(self):
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset
+
+        # if not EvolutionSettings.VALID_DATA_SPLIT:
+        #     raise (ValueError, f"Invalid data split. {EvolutionSettings.DATA_SPLIT_TRAINING} + {EvolutionSettings.DATA_SPLIT_TESTING} != 1")
+
+        StratifiedShuffleSplit()
 
         training_subset = sample(list(train_dataset), EvolutionSettings.DATA_POINTS_PER_INDIVIUAL)
         testing_subset = sample(list(test_dataset), EvolutionSettings.DATA_POINTS_PER_INDIVIUAL)
