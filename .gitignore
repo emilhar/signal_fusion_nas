@@ -71,3 +71,6 @@ htmlcov/
 Data/
 *.csv
 *.png
+
+# Plotting
+*.pdf
