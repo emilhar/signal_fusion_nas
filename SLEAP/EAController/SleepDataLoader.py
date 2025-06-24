@@ -1,8 +1,8 @@
 import numpy as np
 from torch.utils.data import TensorDataset, DataLoader, Subset
-from sklearn.model_selection import StratifiedShuffleSplit
 import torch
 import gc
+from random import sample
 
 from math import ceil
 
@@ -63,16 +63,32 @@ class SleepDataLoader:
             if self.verbose: print("Data split.")
 
             loader, pos_weight, n_samples = self._prepare(X, y, training)
+            
+        if training:
+            self.training_indices_class_0 = []
+            self.training_indices_class_1 = []
+
+            for i, (_, label) in enumerate(loader.dataset):
+                if label == 0:
+                    self.training_indices_class_0.append(i)
+                elif label == 1:
+                    self.training_indices_class_1.append(i)
+
+        else:
+            self.testing_indices_class_0 = []
+            self.testing_indices_class_1 = []
+
+            for i, (_, label) in enumerate(loader.dataset):
+                if label == 0:
+                    self.testing_indices_class_0.append(i)
+                elif label == 1:
+                    self.testing_indices_class_1.append(i)
+
 
         del data
         gc.collect()
 
         if self.verbose: print("Getting targets")
-
-        if training:
-            self.training_targets = [label for _, label in loader.dataset]
-        else:
-            self.testing_targets = [label for _, label in loader.dataset]
 
         return loader, pos_weight, n_samples
 
@@ -119,8 +135,8 @@ class SleepDataLoader:
         if not EvolutionSettings.VALID_DATA_SPLIT:
             raise (ValueError, f"Invalid data split. {EvolutionSettings.DATA_SPLIT_TRAINING} + {EvolutionSettings.DATA_SPLIT_TESTING} != 1")
 
-        training_subset = self.get_stratified_subset(train_dataset, training=True)
-        testing_subset = self.get_stratified_subset(test_dataset, training=False)
+        training_subset = self.get_balanced_subset(train_dataset, training=True)
+        testing_subset = self.get_balanced_subset(test_dataset, training=False)
 
         train_loader_subset = DataLoader(training_subset, batch_size=self.batch_size, shuffle=True)
         test_loader_subset = DataLoader(testing_subset, batch_size=self.batch_size, shuffle=False)
@@ -128,28 +144,38 @@ class SleepDataLoader:
         return train_loader_subset, test_loader_subset, self.n_samples, self.pos_weight
     
 
-    def get_stratified_subset(self, dataset, training:bool):
 
+    def get_balanced_subset(self, dataset, training: bool):
         if training:
-            targets = self.training_targets
-            data_amount = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TRAINING)
+            indices_class_0 = self.training_indices_class_0
+            indices_class_1 = self.training_indices_class_1
+            total_data_points = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TRAINING)
         else:
-            targets = self.testing_targets
-            data_amount = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TESTING)
+            indices_class_0 = self.testing_indices_class_0
+            indices_class_1 = self.testing_indices_class_1
+            total_data_points = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TESTING)
+
+        samples_per_class = min(len(indices_class_0), len(indices_class_1), total_data_points // 2)
+
+        if samples_per_class == 0:
+            raise ValueError("Not enough samples in one or both classes to create a balanced subset.")
+
+        subset_idx_class_0 = sample(indices_class_0, samples_per_class)
+        subset_idx_class_1 = sample(indices_class_1, samples_per_class)
+
+        combined_subset_idx = subset_idx_class_0 + subset_idx_class_1
+
+        np.random.shuffle(combined_subset_idx)
+
+        balanced_subset = Subset(dataset, combined_subset_idx)
+
+        self.see_dataset_breakdown(balanced_subset)
+
+        return balanced_subset
+
     
-
-        splitter = StratifiedShuffleSplit(test_size=data_amount)
-
-        # Perform stratified split
-        _, subset_idx = next(splitter.split(np.zeros(len(dataset)), targets))
-        a =  Subset(dataset, subset_idx)
-
-        #self.tfunc(a.dataset)
-
-        return a
-    
-    def tfunc(self, dataset):
-        labels = [dataset[i][1] for i in range(len(dataset))]  # Collect all y values
+    def see_dataset_breakdown(self, dataset):
+        labels = [dataset[i][1] for i in range(len(dataset))]
 
         s = {}
         ylen = len(labels)
@@ -160,7 +186,7 @@ class SleepDataLoader:
             s[label] += 1
 
         for label in s:
-            print(f"{label}: {round(s[label]/ylen * 100, 2)}%")
+            print(f"{label}: {round(s[label]/ylen * 100, 2)}%. {s[label]}")
 
     def get_full_dataset(self):
         return self.train_loader, self.test_loader, self.n_samples, self.pos_weight
