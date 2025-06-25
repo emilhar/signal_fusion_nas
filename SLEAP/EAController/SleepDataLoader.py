@@ -60,10 +60,11 @@ class SleepDataLoader:
             X = (data['X']).astype(np.float32)
             y = data['y']
 
-            if self.verbose: print("Data split.")
+            if self.verbose: print("Data split. Preparing data")
 
             loader, pos_weight, n_samples = self._prepare(X, y, training)
             
+        if self.verbose: print("Acquiring targets")
         if training:
             self.training_indices_class_0 = []
             self.training_indices_class_1 = []
@@ -88,7 +89,6 @@ class SleepDataLoader:
         del data
         gc.collect()
 
-        if self.verbose: print("Getting targets")
 
         return loader, pos_weight, n_samples
 
@@ -121,8 +121,9 @@ class SleepDataLoader:
     def _get_stage_map(self):
         STAGE_MAP = {
             CNN_BinaryClassifier.WAKE: 1 if self.sleepstage == Sleepstage.WAKE else 0,
-            CNN_BinaryClassifier.LIGHT_SLEEP: 1 if self.sleepstage == Sleepstage.LIGHT_SLEEP else 0,
-            CNN_BinaryClassifier.DEEP_SLEEP: 1 if self.sleepstage == Sleepstage.DEEP_SLEEP else 0,
+            CNN_BinaryClassifier.N1: 1 if self.sleepstage == Sleepstage.N1 else 0,
+            CNN_BinaryClassifier.N2: 1 if self.sleepstage == Sleepstage.N2 else 0,
+            CNN_BinaryClassifier.N3: 1 if self.sleepstage == Sleepstage.N3 else 0,
             CNN_BinaryClassifier.REM: 1 if self.sleepstage == Sleepstage.REM else 0
         }
 
@@ -135,14 +136,13 @@ class SleepDataLoader:
         if not EvolutionSettings.VALID_DATA_SPLIT:
             raise (ValueError, f"Invalid data split. {EvolutionSettings.DATA_SPLIT_TRAINING} + {EvolutionSettings.DATA_SPLIT_TESTING} != 1")
 
-        training_subset = self.get_balanced_subset(train_dataset, training=True)
-        testing_subset = self.get_balanced_subset(test_dataset, training=False)
+        training_subset = sample(list(train_dataset), EvolutionSettings.DATA_POINTS_PER_INDIVIUAL) # self.get_balanced_subset(train_dataset, training=True)
+        testing_subset = sample(list(test_dataset), EvolutionSettings.DATA_POINTS_PER_INDIVIUAL) #self.get_balanced_subset(test_dataset, training=False)
 
         train_loader_subset = DataLoader(training_subset, batch_size=self.batch_size, shuffle=True)
         test_loader_subset = DataLoader(testing_subset, batch_size=self.batch_size, shuffle=False)
 
         return train_loader_subset, test_loader_subset, self.n_samples, self.pos_weight
-    
 
 
     def get_balanced_subset(self, dataset, training: bool):
@@ -169,7 +169,7 @@ class SleepDataLoader:
 
         balanced_subset = Subset(dataset, combined_subset_idx)
 
-        self.see_dataset_breakdown(balanced_subset)
+        #self.see_dataset_breakdown(balanced_subset)
 
         return balanced_subset
 

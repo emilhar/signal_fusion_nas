@@ -68,12 +68,7 @@ class SLEAP:
         
         # Sleep stage selection
         print("\n📊 Available Sleep Stages:")
-        sleep_options = [
-            (Sleepstage.WAKE, "Wake"),
-            (Sleepstage.LIGHT_SLEEP, "Light Sleep"),
-            (Sleepstage.DEEP_SLEEP, "Deep Sleep"),
-            (Sleepstage.REM, "REM Sleep")
-        ]
+        sleep_options = [(stage, str(stage)) for stage in Sleepstage.ALL_STAGES]
         
         for i, (stage, name) in enumerate(sleep_options, 1):
             print(f"  {i}. {name}")
@@ -122,12 +117,7 @@ class SLEAP:
     def _generate_all_configs(self):
         configs = []
         
-        sleep_options = [
-            Sleepstage.LIGHT_SLEEP,
-            Sleepstage.DEEP_SLEEP,
-            Sleepstage.REM,
-            Sleepstage.WAKE,
-        ]
+        sleep_options = Sleepstage.ALL_STAGES
 
         signal_options = [
             Signal.EEG.Fpz_Cz,
@@ -194,6 +184,7 @@ class SLEAP:
 
         # Logging settings
         print("\n📝 Logging Settings")
+        print(f"{'Logging:':30} {LoggingSettings.LOGGING}")
         print(f"{'Log all individuals:':30} {LoggingSettings.LOG_INDIVIDUALS}")
 
         print("\n" + "=" * 40 + "\n")

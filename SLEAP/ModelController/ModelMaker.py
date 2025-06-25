@@ -71,9 +71,10 @@ class CNN_BinaryClassifier(nn.Module):
     model = SleepstageClassifier(**model_args)
     """
     WAKE = 0
-    LIGHT_SLEEP = 1
-    DEEP_SLEEP = 2
-    REM = 3
+    N1 = 1
+    N2 = 2
+    N3 = 3
+    REM = 4
 
     def __init__(self, name, n_samples, branch_configs):
         super().__init__()

@@ -6,9 +6,12 @@ BATCH_SIZE_OPTIONS = [2, 4, 8, 16, 32, 64, 128]
 
 class Sleepstage:
     WAKE = "wake"
-    LIGHT_SLEEP = "light-sleep"
-    DEEP_SLEEP = "deep-sleep"
+    N3 = "N3"
+    N2 = "N2"
+    N1 = "N1"
     REM = "REM"
+
+    ALL_STAGES = [WAKE, N3, N2, N1, REM]
 
 class Signal:
     class EEG:
@@ -33,7 +36,7 @@ class ModelSettings:
     LEARNING_RATE = 5e-5
 
     # Base kernel sizes
-    KERNEL = [400, 8, 8]
+    KERNEL = [400, 1, 1]
 
     # Kernel size constraints
     MIN_KERNEL_SIZE = 1
@@ -63,14 +66,14 @@ class EvolutionSettings:
     MUTATION_PROB: float = 0.4
     OFFSPRING_VARIATION = 5     # When crossover happens, how different are the children from their parents?
     LAYERS_OF_CNN = 3
-    RANDOM_KERNELS_PER_BRANCH = 1
+    RANDOM_KERNELS_PER_BRANCH = 2
 
     # Tournament of Champion settings
-    TOC_ON = False
-    TOC_GENERATIONS_BETWEEN = 3
-    TOC_TOURNAMENT_SIZE = 0.20
+    TOC_ON = True
+    TOC_GENERATIONS_BETWEEN = 16
+    TOC_TOURNAMENT_SIZE = 0.30
     TOC_BATCH_SIZE = 128
-    TOC_EPOCHS = 5
+    TOC_EPOCHS = 2
     TOC_LEARNING_RATE_MULTIPLIER = 10
 
 class DataSettings:
@@ -78,8 +81,8 @@ class DataSettings:
         TELEMETRY = "telemetry"
         SLEEPEDFX = "sleepEDFX"
 
-    _datasets = ["sleepEDFX", "telnet"]
-    DATASET = _datasets[0]
+    _datasets = [DatasetNames.SLEEPEDFX, DatasetNames.TELEMETRY]
+    DATASET = _datasets[1]
 
 class LoggingSettings:
     LOGGING = False

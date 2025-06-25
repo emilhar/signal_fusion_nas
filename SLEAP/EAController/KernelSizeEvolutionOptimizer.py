@@ -117,6 +117,11 @@ class KernelSizeEvolutionaryOptimizer:
 
         left_kernels += ModelSettings.KERNEL[ (EvolutionSettings.LAYERS_OF_CNN - EvolutionSettings.RANDOM_KERNELS_PER_BRANCH) - 1 :]
         right_kernels += ModelSettings.KERNEL[ (EvolutionSettings.LAYERS_OF_CNN - EvolutionSettings.RANDOM_KERNELS_PER_BRANCH) - 1 :]
+
+        left_kernels, right_kernels = self.make_left_head_smaller(left_kernels, right_kernels)
+
+        left_kernels = [1, 1, 1]
+        right_kernels = [1, 1, 1]
         
         # Individual format: [left_branch_length, *left_kernels, right_branch_length, *right_kernels]
         individual = [EvolutionSettings.LAYERS_OF_CNN] + left_kernels + [EvolutionSettings.LAYERS_OF_CNN] + right_kernels
@@ -231,27 +236,43 @@ class KernelSizeEvolutionaryOptimizer:
         right1[0] = max( abs(int(right_choice + (percentage * right_diff))), self.min_kernel_size )
         right2[0] = max( abs(int(right_choice - (percentage * right_diff))), self.min_kernel_size )
 
+        left1, right1 = self.make_left_head_smaller(left1, right1)
+        left2, right2 = self.make_left_head_smaller(left2, right2)
+
+        left1 = [1, 1, 1]
+        right1 = [1, 1, 1]
+        left2 = [1, 1, 1]
+        right2 = [1, 1, 1]
+        
         # Reconstruct individuals
         ind1[:] = [len(left1)] + left1 + [len(right1)] + right1
         ind2[:] = [len(left2)] + left2 + [len(right2)] + right2
+
 
         return ind1, ind2
 
     def mutate(self, individual):
         """Custom mutation for kernel sizes and branch lengths"""
-        left_kernels, right_kernels = self.decode_individual(individual)
+        # left_kernels, right_kernels = self.decode_individual(individual)
         
-        branch = random.choice(['left', 'right'])      
-        target_branch = left_kernels if branch == 'left' else right_kernels
+        # branch = random.choice(['left', 'right'])      
+        # target_branch = left_kernels if branch == 'left' else right_kernels
         
-        # Mutate a kernel size value
-        target_branch[0] = random.randint(self.min_kernel_size, self.max_kernel_size)
+        # target_branch[0] = random.randint(self.min_kernel_size, self.max_kernel_size)
 
-        # Reconstruct individual
-        individual[:] = [len(left_kernels)] + left_kernels + [len(right_kernels)] + right_kernels
+        # left_kernels, right_kernels = self.make_left_head_smaller(left_kernels, right_kernels)
+
+        # # Reconstruct individual
+        # individual[:] = [len(left_kernels)] + left_kernels + [len(right_kernels)] + right_kernels
         
         return individual,
     
+    def make_left_head_smaller(self, left, right):
+        if left[0] > right[0]:
+            left[0], right[0] = right[0], left[0]
+
+        return left, right
+
     def run_evolution(self):
         """Run the evolutionary algorithm"""
         if self.verbose:
