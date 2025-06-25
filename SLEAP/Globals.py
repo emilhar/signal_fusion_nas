@@ -11,7 +11,7 @@ class Sleepstage:
     N1 = "N1"
     REM = "REM"
 
-    ALL_STAGES = [WAKE, N3, N2, N1, REM]
+    ALL_STAGES = [WAKE, N1, N2, N3, REM]
 
 class Signal:
     class EEG:
@@ -29,16 +29,16 @@ class Signal:
 
 class ModelSettings:
     # Base
+    NUMBER_OF_BRANCHES = 1
     BATCH_SIZE = 32  # Default batch size (from BATCH_SIZE_OPTIONS)
-    TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
+    TRAINING_EPOCHS_PER_INDIVIDUAL: int = 1
+    RANDOM_KERNELS_PER_BRANCH = 3
     VERBOSE = True
     MAX_TIME_SPENT_TRAINING = 3
     LEARNING_RATE = 5e-5
 
-    # Base kernel sizes
-    KERNEL = [400, 1, 1]
-
     # Kernel size constraints
+    SORT_KERNELS = True
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = None
 
@@ -48,13 +48,12 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 20
-    GENERATIONS: int = 20
+    POPULATION_SIZE: int = 30
+    GENERATIONS: int = 10
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
     FITNESS_FUNCTION = "F1"
 
-    
     # Data split
     DATA_POINTS_PER_INDIVIUAL = 4300
     DATA_SPLIT_TRAINING = 0.7
@@ -66,7 +65,6 @@ class EvolutionSettings:
     MUTATION_PROB: float = 0.4
     OFFSPRING_VARIATION = 5     # When crossover happens, how different are the children from their parents?
     LAYERS_OF_CNN = 3
-    RANDOM_KERNELS_PER_BRANCH = 2
 
     # Tournament of Champion settings
     TOC_ON = True
@@ -85,5 +83,5 @@ class DataSettings:
     DATASET = _datasets[1]
 
 class LoggingSettings:
-    LOGGING = False
-    LOG_INDIVIDUALS = False # Champions always get logged
+    LOGGING = True
+    LOG_INDIVIDUALS = True # Champions always get logged

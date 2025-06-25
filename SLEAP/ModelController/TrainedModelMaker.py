@@ -15,8 +15,7 @@ from ModelController.BranchSettings import get_branch_configs
 class TrainedModelMaker:
 
     def __init__(self, 
-                 left_kernel_sizes:list [int], 
-                 right_kernel_sizes:list[int],
+                 branches:list[list[int]],
                  name:str, 
                  
                  sleepstage:str, 
@@ -48,12 +47,12 @@ class TrainedModelMaker:
         self.train_loader = train_loader
         self.test_loader = test_loader
 
-        model_args = get_branch_configs(left_kernel_sizes, right_kernel_sizes, name, self.n_samples) # See ModelSettings
+        model_args = get_branch_configs(branches, name, self.n_samples) # See ModelSettings
 
         model = CNN_BinaryClassifier(**model_args).to(self.device)
 
         if verbose: 
-            print(f"\n\nTraining model: {left_kernel_sizes=}, {right_kernel_sizes=}")
+            print(f"\n\nTraining model: {branches=}")
 
         self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, self.lr, epochs=epochs, verbose=verbose, champion=champion)
 

@@ -71,15 +71,15 @@ class SLEAP:
         sleep_options = [(stage, str(stage)) for stage in Sleepstage.ALL_STAGES]
         
         for i, (stage, name) in enumerate(sleep_options, 1):
-            print(f"  {i}. {name}")
+            print(f"  {i-1}. {name}")
         
         while True:
             try:
-                choice = int(input("\nSelect sleep stage (1-4): "))
-                if 1 <= choice <= 4:
-                    self.sleepstage = sleep_options[choice-1][0]
+                choice = int(input("\nSelect sleep stage (1-5): "))
+                if 0 <= choice <= 4:
+                    self.sleepstage = sleep_options[choice][0]
                     break
-                print("❌ Please enter a number between 1-4")
+                print("❌ Please enter a number between 1-5")
             except ValueError:
                 print("❌ Please enter a valid number")
         
@@ -146,11 +146,13 @@ class SLEAP:
         print("=" * 40)
 
         # Model settings
+        print(self.sleepstage)
+        print(self.signal_type, '\n\n')
         print("\n📦 Model Settings")
         print(f"{'Batch size:':30} {ModelSettings.BATCH_SIZE}")
         print(f"{'Epochs per individual:':30} {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}")
         print(f"{'Max training time (sec):':30} {ModelSettings.MAX_TIME_SPENT_TRAINING}")
-        print(f"{'Kernel sizes:':30} {ModelSettings.KERNEL}")
+        print(f"{'Random kernels per branch:':30} {ModelSettings.RANDOM_KERNELS_PER_BRANCH}")
         print(f"{'Min kernel size:':30} {ModelSettings.MIN_KERNEL_SIZE}")
         print(f"{'Max kernel size:':30} {ModelSettings.MAX_KERNEL_SIZE}")
         print(f"{'Smaller files:':30} {ModelSettings.SMALLER_FILES}")
@@ -165,7 +167,6 @@ class SLEAP:
         print(f"{'Mutation probability:':30} {EvolutionSettings.MUTATION_PROB}")
         print(f"{'Offspring variation:':30} {EvolutionSettings.OFFSPRING_VARIATION}")
         print(f"{'Layers of CNN:':30} {EvolutionSettings.LAYERS_OF_CNN}")
-        print(f"{'Random kernels per branch:':30} {EvolutionSettings.RANDOM_KERNELS_PER_BRANCH}")
         print(f"{'Data points per individual:':30} {EvolutionSettings.DATA_POINTS_PER_INDIVIUAL}")
         print(f"{'Data for training:':30} {EvolutionSettings.DATA_SPLIT_TRAINING}")
         print(f"{'Data for testing:':30} {EvolutionSettings.DATA_SPLIT_TESTING}")

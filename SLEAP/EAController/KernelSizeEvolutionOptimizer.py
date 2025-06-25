@@ -110,44 +110,33 @@ class KernelSizeEvolutionaryOptimizer:
         self.hall_of_fame = tools.HallOfFame(EvolutionSettings.HALL_OF_FAME_MEMBERS)
     
     def generate_individual(self):
-        """Generate a random individual with left and right kernel branches"""
+        """Generate a random individual with kernel branches"""
 
-        left_kernels = [random.randint(self.min_kernel_size, self.max_kernel_size) for _ in range(EvolutionSettings.RANDOM_KERNELS_PER_BRANCH)]
-        right_kernels = [random.randint(self.min_kernel_size, self.max_kernel_size) for _ in range(EvolutionSettings.RANDOM_KERNELS_PER_BRANCH)]
+        branches = []
 
-        left_kernels += ModelSettings.KERNEL[ (EvolutionSettings.LAYERS_OF_CNN - EvolutionSettings.RANDOM_KERNELS_PER_BRANCH) - 1 :]
-        right_kernels += ModelSettings.KERNEL[ (EvolutionSettings.LAYERS_OF_CNN - EvolutionSettings.RANDOM_KERNELS_PER_BRANCH) - 1 :]
+        for _ in range( ModelSettings.NUMBER_OF_BRANCHES ):
 
-        left_kernels, right_kernels = self.make_left_head_smaller(left_kernels, right_kernels)
+            kernel =  [random.randint(self.min_kernel_size, self.max_kernel_size) for _ in range(ModelSettings.RANDOM_KERNELS_PER_BRANCH)]
+            if ModelSettings.SORT_KERNELS:
+                kernel.sort(reverse=True)
+            branches.append(kernel)
 
-        left_kernels = [1, 1, 1]
-        right_kernels = [1, 1, 1]
-        
-        # Individual format: [left_branch_length, *left_kernels, right_branch_length, *right_kernels]
-        individual = [EvolutionSettings.LAYERS_OF_CNN] + left_kernels + [EvolutionSettings.LAYERS_OF_CNN] + right_kernels
-        
+        # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
+
+        individual = []
+
+        for branch in branches:
+            individual.append(branch)
+
         return creator.Individual(individual)
-    
-    def decode_individual(self, individual):
-        """Decode individual into left and right kernel lists"""
-        left_length = individual[0]
-        left_kernels = individual[1:1+left_length]
-        
-        right_start = 1 + left_length
-        right_length = individual[right_start]
-        right_kernels = individual[right_start+1:right_start+1+right_length]
-        
-        return left_kernels, right_kernels
-    
+
     def evaluate_individual(self, individual, champion=False):
         """Evaluate an individual by training a model
         arg: individual
         arg: champion Bool, if individual is partaking in a tournament of champions, then they train on the full dataset"""
-
-        left_kernels, right_kernels = self.decode_individual(individual)
         
         # Train model and get performance
-        model_performance = self.create_individual(left_kernels, right_kernels, champion)
+        model_performance = self.create_individual(individual, champion)
         
         fitness_value = self.calculate_fitness(model_performance)
         
@@ -167,7 +156,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         return (fitness_value,)
     
-    def create_individual(self, left_kernel_sizes:list[int], right_kernel_sizes: list[int], champion=False):
+    def create_individual(self, branches: list[list[int]], champion=False):
 
         if champion:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_full_dataset()
@@ -180,11 +169,11 @@ class KernelSizeEvolutionaryOptimizer:
             epochs = self.epochs
             learning_rate = ModelSettings.LEARNING_RATE
 
+
         # Things marked with # come from the SDL
         new_model = TrainedModelMaker(
-            left_kernel_sizes=left_kernel_sizes, #
-            right_kernel_sizes=right_kernel_sizes, #
-            name=f"{left_kernel_sizes} :-: {right_kernel_sizes}, sleepstage: {self.sleepstage}, {batch_size}batch, {self.epochs}epochs",
+            branches = branches,
+            name=f"{branches}, sleepstage: {self.sleepstage}, {batch_size}batch, {self.epochs}epochs",
             sleepstage = self.sleepstage,
             signal_type=self.signal_type,
             batch_size= batch_size,
@@ -207,71 +196,63 @@ class KernelSizeEvolutionaryOptimizer:
             raise "No fitness function chosen"
     
     def crossover(self, ind1, ind2):
-        """Custom crossover for variable-length kernel lists"""
+        """Custom crossover for variable-length kernel lists with multiple branches"""
 
-        left1, right1 = self.decode_individual(ind1)
-        left2, right2 = self.decode_individual(ind2)
+        num_branches = len(ind1)
+        assert len(ind2) == num_branches, "Both individuals must have the same number of branches"
 
-        left1_head = left1[0]
-        left2_head = left2[0]
+        for i in range(num_branches):
+            branch1 = ind1[i]
+            branch2 = ind2[i]
 
-        right1_head = right1[0]
-        right2_head = right2[0]
+            if not branch1 or not branch2:
+                continue  # Skip empty branches
 
-        # Pick a favorite parent
-        left_choice = random.choice([left1_head, left2_head])
-        right_choice = random.choice([right1_head, right2_head])
+            # Choose "head" values
+            head1 = branch1[0]
+            head2 = branch2[0]
 
-        left_diff = abs(left1_head - left2_head)
-        right_diff = abs(right1_head - right2_head)
+            favorite = random.choice([head1, head2])
+            diff = abs(head1 - head2)
 
-        # Only right side of normal curve centered on 0, going down to 10
-        random_val = min( int(np.floor(np.abs(np.random.normal(loc=0, scale=4.12)))) , 10)
-        percentage = random_val / 100.0
+            # Gaussian noise
+            random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
+            percentage = random_val / 100.0
 
-        # Modify parents
-        left1[0] = max( abs(int(left_choice + (percentage * left_diff))), self.min_kernel_size )
-        left2[0] = max( abs(int(left_choice - (percentage * left_diff))), self.min_kernel_size )
+            new_head1 = max(int(favorite + percentage * diff), self.min_kernel_size)
+            new_head2 = max(int(favorite - percentage * diff), self.min_kernel_size)
 
-        right1[0] = max( abs(int(right_choice + (percentage * right_diff))), self.min_kernel_size )
-        right2[0] = max( abs(int(right_choice - (percentage * right_diff))), self.min_kernel_size )
+            branch1[0] = new_head1
+            branch2[0] = new_head2
 
-        left1, right1 = self.make_left_head_smaller(left1, right1)
-        left2, right2 = self.make_left_head_smaller(left2, right2)
+            if ModelSettings.SORT_KERNELS:
+                branch1.sort(reverse=True)
+                branch2.sort(reverse=True)
 
-        left1 = [1, 1, 1]
-        right1 = [1, 1, 1]
-        left2 = [1, 1, 1]
-        right2 = [1, 1, 1]
-        
-        # Reconstruct individuals
-        ind1[:] = [len(left1)] + left1 + [len(right1)] + right1
-        ind2[:] = [len(left2)] + left2 + [len(right2)] + right2
-
+            # Update branches
+            ind1[i] = branch1
+            ind2[i] = branch2
 
         return ind1, ind2
 
     def mutate(self, individual):
         """Custom mutation for kernel sizes and branch lengths"""
-        # left_kernels, right_kernels = self.decode_individual(individual)
-        
-        # branch = random.choice(['left', 'right'])      
-        # target_branch = left_kernels if branch == 'left' else right_kernels
-        
-        # target_branch[0] = random.randint(self.min_kernel_size, self.max_kernel_size)
 
-        # left_kernels, right_kernels = self.make_left_head_smaller(left_kernels, right_kernels)
+        mutation_range = 0.2
 
-        # # Reconstruct individual
-        # individual[:] = [len(left_kernels)] + left_kernels + [len(right_kernels)] + right_kernels
-        
+        for branch in individual:
+            for i in range(len(branch)):
+                top_of_range = max(2, round(branch[i] * mutation_range))
+                delta = random.randint(1, top_of_range)
+
+                if random.random() < 0.5:
+                    delta = -delta
+
+                new_value = branch[i] + delta
+                new_value = max(self.min_kernel_size, min(self.max_kernel_size, new_value))
+                branch[i] = new_value
+
         return individual,
-    
-    def make_left_head_smaller(self, left, right):
-        if left[0] > right[0]:
-            left[0], right[0] = right[0], left[0]
-
-        return left, right
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
@@ -300,8 +281,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         def get_hall_of_fame_format(i):
             individual = self.hall_of_fame[i]
-            left, right = self.decode_individual(individual)
-            return f"{i+1}. Left={left}, Right={right}, Fitness={individual.fitness.values[0]:.4f}"
+            return f"{i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}"
 
         self.LogManager.log_experiment(
             sleepstage= self.sleepstage,
@@ -320,5 +300,4 @@ class KernelSizeEvolutionaryOptimizer:
         
         print(f"\nHall of Fame (Top {len(self.hall_of_fame)}):")
         for i, individual in enumerate(self.hall_of_fame):
-            left, right = self.decode_individual(individual)
-            print(f"  {i+1}. Left={left}, Right={right}, Fitness={individual.fitness.values[0]:.4f}")
+            print(f"  {i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}")

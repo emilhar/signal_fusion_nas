@@ -1,7 +1,7 @@
 import csv
 import os
 from datetime import datetime
-from Globals import ModelSettings, EvolutionSettings, DataSettings
+from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
@@ -137,7 +137,6 @@ class LogManager:
             "tournament_of_champions": tournament_of_champions}
 
         self._write_with_config(filetype="Generation", config=generation_configs)
-
         self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
 
         self.current_generation_id = generation + 1
@@ -183,7 +182,7 @@ class LogManager:
                 "champion": champion,
         }
 
-        if (champion):
+        if (champion or LoggingSettings.LOG_INDIVIDUALS):
             self.log_individual_stats(individual, fitness, train_loss, test_loss, precision, recall, f1, accuracy, champion)
             return
 
