@@ -32,7 +32,7 @@ class ModelSettings:
     NUMBER_OF_BRANCHES = 1
     BATCH_SIZE = 32  # Default batch size (from BATCH_SIZE_OPTIONS)
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 1
-    RANDOM_KERNELS_PER_BRANCH = 3
+    KERNELS_PER_BRANCH = 3
     VERBOSE = True
     MAX_TIME_SPENT_TRAINING = 3
     LEARNING_RATE = 5e-5
@@ -52,13 +52,18 @@ class EvolutionSettings:
     GENERATIONS: int = 10
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
-    FITNESS_FUNCTION = "F1"
+    # 'F1' or 'F1 + Unique'
+    FITNESS_FUNCTION = "F1 + Unique"
 
     # Data split
     DATA_POINTS_PER_INDIVIUAL = 4300
     DATA_SPLIT_TRAINING = 0.7
     DATA_SPLIT_TESTING = 0.3
     VALID_DATA_SPLIT = (DATA_SPLIT_TRAINING + DATA_SPLIT_TESTING == 1)
+
+    # Fitness Settings:
+    alpha = 1
+    beta = 1
 
     # Evolution settings
     CX_PROB: float = 0.7
@@ -67,12 +72,12 @@ class EvolutionSettings:
     LAYERS_OF_CNN = 3
 
     # Tournament of Champion settings
-    TOC_ON = True
-    TOC_GENERATIONS_BETWEEN = 16
-    TOC_TOURNAMENT_SIZE = 0.30
-    TOC_BATCH_SIZE = 128
-    TOC_EPOCHS = 2
-    TOC_LEARNING_RATE_MULTIPLIER = 10
+    TDB_ON = True
+    TDB_GENERATIONS_BETWEEN = 16
+    TDB_TOURNAMENT_SIZE = 0.30
+    TDB_BATCH_SIZE = 128
+    TDB_EPOCHS = 2
+    TDB_LEARNING_RATE_MULTIPLIER = 10
 
 class DataSettings:
     class DatasetNames:

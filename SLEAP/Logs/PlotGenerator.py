@@ -103,11 +103,11 @@ def plot_experiment(exp_id, color_idx=0,plot_all=False): ## ALL [signal type]
     plt.plot(gen_df["generation"], gen_df["fitness_max"] * 100,
              label=f"Best {label_suffix}", color=color_dark, linewidth=2)
 
-    # Mark ToC generations and champion dots
-    toc_generations = gen_df[gen_df["tournament_of_champions"]]["generation"]
+    # Mark TDB generations and champion dots
+    TDB_generations = gen_df[gen_df["tournament_of_champions"]]["generation"]
 
     if not plot_all:
-        for gen in toc_generations:
+        for gen in TDB_generations:
             plt.axvline(x=gen, color='#d62728', linestyle="--", linewidth=2, alpha=0.6)
 
             # Get champion(s) from this generation
@@ -117,7 +117,7 @@ def plot_experiment(exp_id, color_idx=0,plot_all=False): ## ALL [signal type]
                 best_row = champions_in_gen.loc[champions_in_gen["fitness"].idxmax()]
                 acc = best_row["fitness"]*100
                 plt.scatter(gen, acc, color='#d62728', edgecolor='black', zorder=5, s=80,
-                            label="Best Champion (ToC)" if gen == toc_generations.iloc[0] else "")  # Avoid duplicate label
+                            label="Best Champion (TDB)" if gen == TDB_generations.iloc[0] else "")  # Avoid duplicate label
 
 
     for gen in gen_df[gen_df["tournament_of_champions"]]["generation"]:

@@ -135,9 +135,12 @@ class SleepDataLoader:
 
         if not EvolutionSettings.VALID_DATA_SPLIT:
             raise (ValueError, f"Invalid data split. {EvolutionSettings.DATA_SPLIT_TRAINING} + {EvolutionSettings.DATA_SPLIT_TESTING} != 1")
+        
+        train_data_amount = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TRAINING)
+        test_data_amount = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TESTING)
 
-        training_subset = sample(list(train_dataset), EvolutionSettings.DATA_POINTS_PER_INDIVIUAL) # self.get_balanced_subset(train_dataset, training=True)
-        testing_subset = sample(list(test_dataset), EvolutionSettings.DATA_POINTS_PER_INDIVIUAL) #self.get_balanced_subset(test_dataset, training=False)
+        training_subset = sample(list(train_dataset), train_data_amount) # self.get_balanced_subset(train_dataset, training=True)
+        testing_subset = sample(list(test_dataset), test_data_amount) #self.get_balanced_subset(test_dataset, training=False)
 
         train_loader_subset = DataLoader(training_subset, batch_size=self.batch_size, shuffle=True)
         test_loader_subset = DataLoader(testing_subset, batch_size=self.batch_size, shuffle=False)

@@ -2,6 +2,7 @@ import random
 import numpy as np
 from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
+from math import sqrt
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings
@@ -116,7 +117,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         for _ in range( ModelSettings.NUMBER_OF_BRANCHES ):
 
-            kernel =  [random.randint(self.min_kernel_size, self.max_kernel_size) for _ in range(ModelSettings.RANDOM_KERNELS_PER_BRANCH)]
+            kernel =  [random.randint(self.min_kernel_size, self.max_kernel_size) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
             if ModelSettings.SORT_KERNELS:
                 kernel.sort(reverse=True)
             branches.append(kernel)
@@ -138,7 +139,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Train model and get performance
         model_performance = self.create_individual(individual, champion)
         
-        fitness_value = self.calculate_fitness(model_performance)
+        fitness_value = self.calculate_fitness(individual, model_performance)
         
         if self.verbose:
             print(f"Fitness: {fitness_value}")
@@ -188,12 +189,35 @@ class KernelSizeEvolutionaryOptimizer:
 
         return new_model.model_performance
 
-    def calculate_fitness(self, model_performance):
+    def calculate_fitness(self, individual, model_performance):
         if EvolutionSettings.FITNESS_FUNCTION == "F1":
             f1_score = model_performance.get("F1", 0.0)
             return f1_score
+
+        elif EvolutionSettings.FITNESS_FUNCTION == "F1 + Unique":
+            f1_score = model_performance.get("F1", 0.0)
+            current = individual[0]
+
+            population = [ind[0] for ind in self.toolbox.population(n=self.population_size)]
+
+            # Compute average distance to others
+            distances = [
+                self._distance(current, other)
+                for other in population
+                if other != current
+            ]
+            uniqueness = sum(distances) / len(distances) if distances else 0.0
+            uniqueness /= self.max_kernel_size * sqrt(ModelSettings.KERNELS_PER_BRANCH)
+
+            print(round(uniqueness, 5))
+
+            return EvolutionSettings.alpha * f1_score + EvolutionSettings.beta * uniqueness
+
         else:
-            raise "No fitness function chosen"
+            raise ValueError("No valid fitness function chosen")
+
+    def _distance(self, a, b):
+                return sum(abs(x - y) for x, y in zip(a, b))
     
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""

@@ -99,11 +99,11 @@ class LogManager:
             "best": best,
             "second_best": second_best,
             "third_best": third_best,
-            "toc_on": EvolutionSettings.TOC_ON,
-            "toc_generations_between": EvolutionSettings.TOC_GENERATIONS_BETWEEN,
-            "toc_tournament_size": EvolutionSettings.TOC_TOURNAMENT_SIZE,
-            "toc_training_epochs":EvolutionSettings.TOC_EPOCHS,
-            "toc_batch_size": EvolutionSettings.TOC_BATCH_SIZE,
+            "TDB_on": EvolutionSettings.TDB_ON,
+            "TDB_generations_between": EvolutionSettings.TDB_GENERATIONS_BETWEEN,
+            "TDB_tournament_size": EvolutionSettings.TDB_TOURNAMENT_SIZE,
+            "TDB_training_epochs":EvolutionSettings.TDB_EPOCHS,
+            "TDB_batch_size": EvolutionSettings.TDB_BATCH_SIZE,
             "dataset_name": DataSettings.DATASET,
             "max_time_spent_training": ModelSettings.MAX_TIME_SPENT_TRAINING,
             "fitness_function": EvolutionSettings.FITNESS_FUNCTION
@@ -120,7 +120,7 @@ class LogManager:
         self._write_with_config(filetype="HallOfFame", config=config)
 
 
-    def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, tournament_of_champions: bool = False):
+    def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
 
         self.current_generation_id = generation
 
@@ -134,7 +134,7 @@ class LogManager:
             "fitness_min": min,
             "fitness_max": fit_max,
             "best_individual_id": f"(exp:{self.experiment_id},gen:{self.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{self.best_individual_in_generation["fitness"]}, kernels:{str(self.best_individual_in_generation["individual"])}",
-            "tournament_of_champions": tournament_of_champions}
+            "tournament_of_champions": test_the_best}
 
         self._write_with_config(filetype="Generation", config=generation_configs)
         self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)

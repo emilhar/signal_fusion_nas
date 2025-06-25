@@ -152,7 +152,7 @@ class SLEAP:
         print(f"{'Batch size:':30} {ModelSettings.BATCH_SIZE}")
         print(f"{'Epochs per individual:':30} {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}")
         print(f"{'Max training time (sec):':30} {ModelSettings.MAX_TIME_SPENT_TRAINING}")
-        print(f"{'Random kernels per branch:':30} {ModelSettings.RANDOM_KERNELS_PER_BRANCH}")
+        print(f"{'Random kernels per branch:':30} {ModelSettings.KERNELS_PER_BRANCH}")
         print(f"{'Min kernel size:':30} {ModelSettings.MIN_KERNEL_SIZE}")
         print(f"{'Max kernel size:':30} {ModelSettings.MAX_KERNEL_SIZE}")
         print(f"{'Smaller files:':30} {ModelSettings.SMALLER_FILES}")
@@ -173,11 +173,11 @@ class SLEAP:
 
         # Tournament of Champions
         print("\n🏆 Tournament of Champions")
-        print(f"{'Enabled:':30} {EvolutionSettings.TOC_ON}")
-        print(f"{'Generations between:':30} {EvolutionSettings.TOC_GENERATIONS_BETWEEN}")
-        print(f"{'TOC tournament size:':30} {EvolutionSettings.TOC_TOURNAMENT_SIZE}")
-        print(f"{'TOC batch size:':30} {EvolutionSettings.TOC_BATCH_SIZE}")
-        print(f"{'TOC epochs per champion:':30} {EvolutionSettings.TOC_EPOCHS}")
+        print(f"{'Enabled:':30} {EvolutionSettings.TDB_ON}")
+        print(f"{'Generations between:':30} {EvolutionSettings.TDB_GENERATIONS_BETWEEN}")
+        print(f"{'TDB tournament size:':30} {EvolutionSettings.TDB_TOURNAMENT_SIZE}")
+        print(f"{'TDB batch size:':30} {EvolutionSettings.TDB_BATCH_SIZE}")
+        print(f"{'TDB epochs per champion:':30} {EvolutionSettings.TDB_EPOCHS}")
 
         # Dataset info
         print("\n📁 Data Settings")

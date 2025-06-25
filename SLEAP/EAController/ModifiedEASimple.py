@@ -17,6 +17,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
     """See: DEAP/Algorithms"""
 
     # Evaluate the individuals with an invalid fitness
+    previous_the_best_fitness = None
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
     for ind, fit in zip(invalid_ind, fitnesses):
@@ -29,7 +30,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
 
     if LoggingSettings.LOGGING:
         # Log the generation
-        LogManager.log_generation_stats(0, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'], tournament_of_champions=False)
+        LogManager.log_generation_stats(0, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'], test_the_best=False)
 
 
     # Begin the generational process
@@ -41,11 +42,11 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
             want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
             print(" ".join(want_to_print))
 
-        if (EvolutionSettings.TOC_ON) and (gen % EvolutionSettings.TOC_GENERATIONS_BETWEEN == 0):
-            population = tournament_of_champions(population, toolbox, verbose)
-            tournament_of_champions_happened = True
+        if (EvolutionSettings.TDB_ON) and (gen % EvolutionSettings.TDB_GENERATIONS_BETWEEN == 0):
+            population = test_the_best(population, toolbox, previous_the_best_fitness, verbose)
+            test_the_best_happened = True
         else:
-            tournament_of_champions_happened = False
+            test_the_best_happened = False
 
         # Select the next generation individuals
         offspring = toolbox.select(population, len(population))
@@ -71,73 +72,33 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
 
         if LoggingSettings.LOGGING:
             # Log the generation
-            LogManager.log_generation_stats(gen, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'], tournament_of_champions_happened)
+            LogManager.log_generation_stats(gen, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'], test_the_best_happened)
 
     return population
 
-def tournament_of_champions(population, toolbox, verbose=False):
+def test_the_best(population, toolbox, previous_the_best_fitness, verbose=False):
     """
-    Tournament of Champions: Every N generations, the top M% individuals are
-    retrained on 100% of the dataset. From those, the top 50% are chosen along
-    with a random 50% from the rest of the population to form a new population.
-    
-    Args:
-        population: Current population of individuals
-        toolbox: DEAP toolbox with evaluate_full_dataset method
-        verbose:
-    
-    Returns:
-        New population after tournament of champions
+    Test the Best makes sure the top individuals are also scoring well on the full dataset.
     """
     if verbose:
-        print(f"\n=== 🔥🔥🏆 TOURNAMENT OF CHAMPIONS 🏆🔥🔥 ===")
+        print(f"\n=== 🔥🔥🏆 TEST THE BEST 🏆🔥🔥 ===")
     
-    # Sort population by fitness (descending order for maximization)
-    sorted_population = sorted(population, key=lambda x: x.fitness.values[0], reverse=True)
-    
-    # Calculate number of top individuals to retrain
-    tournament_size = ceil(len(population) * EvolutionSettings.TOC_TOURNAMENT_SIZE)
-    top_individuals = sorted_population[:tournament_size]
+    the_best = sorted(population, key=lambda x: x.fitness.values[0], reverse=True)[0]
     
     if verbose:
-        print(f"Retraining top {tournament_size} individuals on full dataset...")
-    
-    # Retrain top individuals on full dataset
-    full_dataset_fitnesses = toolbox.map(toolbox.evaluate_champion, top_individuals)
-    for ind, fit in zip(top_individuals, full_dataset_fitnesses):
-        ind.fitness.values = fit
-    
-    # Sort retrained individuals by their new fitness
-    retrained_sorted = sorted(top_individuals, key=lambda x: x.fitness.values[0], reverse=True)
-    
-    # Select top 50% of retrained individuals
-    champions_count = ceil(len(retrained_sorted) * 0.5)
-    champions = retrained_sorted[:champions_count]
-    
-    # Get remaining individuals from the rest of the population
-    rest_of_population = sorted_population[tournament_size:]
-    
-    # Calculate how many random individuals we need to complete the population
-    remaining_slots = len(population) - len(champions)
-    
-    # Randomly sample from the rest of the population
-    if len(rest_of_population) >= remaining_slots:
-        random_individuals = random.sample(rest_of_population, remaining_slots)
+        print(f"Best individual in population={the_best}, fitness={the_best.fitness.values[0]}")
+
+    the_best_fitness = toolbox.evaluate_champion(the_best)
+    the_best.fitness.values = the_best_fitness
+
+    if the_best_fitness > previous_the_best_fitness:
+        if verbose: print("New representative")
+
     else:
-        # If we don't have enough individuals, sample with replacement
-        random_individuals = random.choices(rest_of_population, k=remaining_slots)
-    
-    # Create new population
-    new_population = champions + random_individuals
-    
-    # Clone individuals to ensure independence
-    new_population = [toolbox.clone(ind) for ind in new_population]
-    
-    if verbose:
-        print(f"New population created with {len(champions)} champions and {len(random_individuals)} random individuals")
-        print(f"Champion fitness range: {champions[-1].fitness.values[0]:.4f} - {champions[0].fitness.values[0]:.4f}")
-        print("=== END TOURNAMENT OF CHAMPIONS ===\n")
-    
+        pass
+
+    new_population = population
+
     return new_population
 
 def varAnd(population, toolbox, cxpb, mutpb):

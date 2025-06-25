@@ -20,6 +20,7 @@ def get_branch_configs(branches:list[list[int]], name:str, sample_count:int):
 
       branch_configs[f"branch_{i}"] = {
           "num_kernels": [32, 64, 64],
+          #"num_kernels": [16, 32, 32],
           "kernel_sizes": branch,
           "paddings": _kernel_to_pad(branch),
           "strides": [conv_stride, 1, 1],
