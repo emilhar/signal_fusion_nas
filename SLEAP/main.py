@@ -109,7 +109,15 @@ class SLEAP:
                     print("❌ Please enter a number between 1-4")
                 except ValueError:
                     print("❌ Please enter a valid number")
+
+        print("\n📝 Logging")
+        LoggingSettings.LOGGING = input("Do you want to be logging (y/n)?: ").lower().startswith('y')
         
+        if LoggingSettings.LOGGING:
+            LoggingSettings.LOG_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')
+        else:
+            LoggingSettings.LOG_INDIVIDUALS = False
+                    
         self._print_experiment_settings()
         
         input("OK? ")

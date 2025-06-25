@@ -2,7 +2,6 @@ import random
 import numpy as np
 from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
-from math import sqrt
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings
@@ -11,6 +10,7 @@ from EAController.ModifiedEASimple import ModifiedEASimple
 from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
+
     def __init__(self, 
                  
                  # Base
@@ -62,7 +62,8 @@ class KernelSizeEvolutionaryOptimizer:
         batch_size=self.batch_size)
 
         self.LogManager = LogManager()
-        
+
+        self.chosen=[]
 
         self.setup_deap()
     
@@ -87,7 +88,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", tools.selTournament, tournsize=self.tournament_size)
+        self.toolbox.register("select", self.select, tournsize=self.tournament_size)
 
         # Create wrapper functions for evaluation
         def evaluate_normal(individual):
@@ -139,7 +140,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Train model and get performance
         model_performance = self.create_individual(individual, champion)
         
-        fitness_value = self.calculate_fitness(individual, model_performance)
+        fitness_value = self.calculate_fitness(model_performance)
         
         if self.verbose:
             print(f"Fitness: {fitness_value}")
@@ -189,35 +190,56 @@ class KernelSizeEvolutionaryOptimizer:
 
         return new_model.model_performance
 
-    def calculate_fitness(self, individual, model_performance):
-        if EvolutionSettings.FITNESS_FUNCTION == "F1":
+    def calculate_fitness(self, model_performance):
+        if EvolutionSettings.FITNESS_FUNCTION.startswith("F1"):
             f1_score = model_performance.get("F1", 0.0)
             return f1_score
-
-        elif EvolutionSettings.FITNESS_FUNCTION == "F1 + Unique":
-            f1_score = model_performance.get("F1", 0.0)
-            current = individual[0]
-
-            population = [ind[0] for ind in self.toolbox.population(n=self.population_size)]
-
-            # Compute average distance to others
-            distances = [
-                self._distance(current, other)
-                for other in population
-                if other != current
-            ]
-            uniqueness = sum(distances) / len(distances) if distances else 0.0
-            uniqueness /= self.max_kernel_size * sqrt(ModelSettings.KERNELS_PER_BRANCH)
-
-            print(round(uniqueness, 5))
-
-            return EvolutionSettings.alpha * f1_score + EvolutionSettings.beta * uniqueness
-
         else:
             raise ValueError("No valid fitness function chosen")
 
+    def select(self, individuals, k, tournsize):
+        self.chosen = []
+        for _ in range(k):
+            print(self.chosen)
+            aspirants = [random.choice(individuals) for _ in range(tournsize)]
+            next_up = max(aspirants, key=lambda x: self._selection_criteria(x))
+            self.chosen.append(next_up)
+
+        return self.chosen
+    
+
+
+    def _selection_criteria(self, individual):
+        f1_score = individual.fitness.values[0]
+        
+        # Skip uniqueness if no comparisons available
+        if not self.chosen or EvolutionSettings.FITNESS_FUNCTION == "F1":
+            return f1_score
+            
+        # Calculate max possible Manhattan distance
+        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
+            self.max_kernel_size - self.min_kernel_size
+        )
+        
+        # Compute average distance to existing individuals
+        distances = [
+            self._distance(individual[0], other[0])  # Compare branches
+            for other in self.chosen
+        ]
+        avg_distance = sum(distances) / len(distances)
+        
+        # Normalize uniqueness to [0,1]
+        uniqueness = avg_distance / max_possible_dist if max_possible_dist > 0 else 0.0
+        
+        # Balanced combination (F1 and uniqueness now comparable)
+        return (EvolutionSettings.alpha * f1_score + 
+                EvolutionSettings.beta * uniqueness)
+
+
+
+
     def _distance(self, a, b):
-                return sum(abs(x - y) for x, y in zip(a, b))
+        return sum(abs(x - y) for x, y in zip(a, b))
     
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
@@ -243,8 +265,8 @@ class KernelSizeEvolutionaryOptimizer:
             random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
             percentage = random_val / 100.0
 
-            new_head1 = max(int(favorite + percentage * diff), self.min_kernel_size)
-            new_head2 = max(int(favorite - percentage * diff), self.min_kernel_size)
+            new_head1 = max(self.min_kernel_size, min(int(favorite + percentage * diff), self.max_kernel_size))
+            new_head2 = max(self.min_kernel_size, min(int(favorite - percentage * diff), self.max_kernel_size))
 
             branch1[0] = new_head1
             branch2[0] = new_head2
