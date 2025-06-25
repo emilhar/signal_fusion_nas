@@ -49,6 +49,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
             test_the_best_happened = False
 
         # Select the next generation individuals
+        toolbox.reset_next_generation()
         offspring = toolbox.select(population, len(population))
 
         # Vary the pool of individuals

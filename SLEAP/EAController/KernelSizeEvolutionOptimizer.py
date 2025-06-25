@@ -62,7 +62,8 @@ class KernelSizeEvolutionaryOptimizer:
         batch_size=self.batch_size)
 
         self.LogManager = LogManager()
-        
+
+        self.next_generation=[]
 
         self.setup_deap()
     
@@ -87,7 +88,8 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", tools.selTournament, tournsize=self.tournament_size)
+        self.toolbox.register("select", self.select, tournsize=self.tournament_size)
+        self.toolbox.register("reset_next_generation", self.reset_population)
 
         # Create wrapper functions for evaluation
         def evaluate_normal(individual):
@@ -139,7 +141,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Train model and get performance
         model_performance = self.create_individual(individual, champion)
         
-        fitness_value = self.calculate_fitness(individual, model_performance)
+        fitness_value = self.calculate_fitness(model_performance)
         
         if self.verbose:
             print(f"Fitness: {fitness_value}")
@@ -189,36 +191,51 @@ class KernelSizeEvolutionaryOptimizer:
 
         return new_model.model_performance
 
-    def calculate_fitness(self, individual, model_performance):
-        if EvolutionSettings.FITNESS_FUNCTION == "F1":
+    def calculate_fitness(self, model_performance):
+        if EvolutionSettings.FITNESS_FUNCTION.startswith("F1"):
             f1_score = model_performance.get("F1", 0.0)
             return f1_score
+        else:
+            raise ValueError("No valid fitness function chosen")
 
-        elif EvolutionSettings.FITNESS_FUNCTION == "F1 + Unique":
-            f1_score = model_performance.get("F1", 0.0)
+    def select(self, individuals, k, tournsize):
+        chosen = []
+        for _ in range(k):
+            aspirants = [random.choice(individuals) for _ in range(tournsize)]
+            next_up = max(aspirants, key=lambda x: self._selection_criteria(x))
+            self.next_generation.append(next_up)
+            chosen.append(next_up)
+
+        return chosen
+    
+    def _selection_criteria(self, individual):
+        if EvolutionSettings.FITNESS_FUNCTION == "F1":
+            f1_score = individual.fitness.values[0]
+            return f1_score
+
+        if EvolutionSettings.FITNESS_FUNCTION == "F1 + Unique":
+            f1_score = individual.fitness.values[0]
             current = individual[0]
 
-            population = [ind[0] for ind in self.toolbox.population(n=self.population_size)]
-
-            # Compute average distance to others
+            if self.next_generation == []:
+                return f1_score
+            
             distances = [
-                self._distance(current, other)
-                for other in population
-                if other != current
+                self._distance(current, other[0])
+                for other in self.next_generation
             ]
+            
             uniqueness = sum(distances) / len(distances) if distances else 0.0
             uniqueness /= self.max_kernel_size * sqrt(ModelSettings.KERNELS_PER_BRANCH)
 
-            print(round(uniqueness, 5))
-
             return EvolutionSettings.alpha * f1_score + EvolutionSettings.beta * uniqueness
-
-        else:
-            raise ValueError("No valid fitness function chosen")
 
     def _distance(self, a, b):
                 return sum(abs(x - y) for x, y in zip(a, b))
     
+    def reset_population(self):
+        self.next_generation = []
+
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
 
