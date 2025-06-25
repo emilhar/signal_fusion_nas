@@ -260,8 +260,8 @@ class KernelSizeEvolutionaryOptimizer:
             random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
             percentage = random_val / 100.0
 
-            new_head1 = max(int(favorite + percentage * diff), self.min_kernel_size)
-            new_head2 = max(int(favorite - percentage * diff), self.min_kernel_size)
+            new_head1 = max(self.min_kernel_size, min(int(favorite + percentage * diff), self.max_kernel_size))
+            new_head2 = max(self.min_kernel_size, min(int(favorite - percentage * diff), self.max_kernel_size))
 
             branch1[0] = new_head1
             branch2[0] = new_head2
