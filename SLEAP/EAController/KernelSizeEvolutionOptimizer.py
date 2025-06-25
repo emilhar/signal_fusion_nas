@@ -2,7 +2,6 @@ import random
 import numpy as np
 from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
-from math import sqrt
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings
@@ -11,6 +10,7 @@ from EAController.ModifiedEASimple import ModifiedEASimple
 from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
+
     def __init__(self, 
                  
                  # Base
@@ -63,7 +63,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         self.LogManager = LogManager()
 
-        self.next_generation=[]
+        self.chosen=[]
 
         self.setup_deap()
     
@@ -89,7 +89,6 @@ class KernelSizeEvolutionaryOptimizer:
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
         self.toolbox.register("select", self.select, tournsize=self.tournament_size)
-        self.toolbox.register("reset_next_generation", self.reset_population)
 
         # Create wrapper functions for evaluation
         def evaluate_normal(individual):
@@ -199,43 +198,49 @@ class KernelSizeEvolutionaryOptimizer:
             raise ValueError("No valid fitness function chosen")
 
     def select(self, individuals, k, tournsize):
-        chosen = []
+        self.chosen = []
         for _ in range(k):
+            print(self.chosen)
             aspirants = [random.choice(individuals) for _ in range(tournsize)]
             next_up = max(aspirants, key=lambda x: self._selection_criteria(x))
-            self.next_generation.append(next_up)
-            chosen.append(next_up)
+            self.chosen.append(next_up)
 
-        return chosen
+        return self.chosen
     
+
+
     def _selection_criteria(self, individual):
-        if EvolutionSettings.FITNESS_FUNCTION == "F1":
-            f1_score = individual.fitness.values[0]
+        f1_score = individual.fitness.values[0]
+        
+        # Skip uniqueness if no comparisons available
+        if not self.chosen or EvolutionSettings.FITNESS_FUNCTION == "F1":
             return f1_score
-
-        if EvolutionSettings.FITNESS_FUNCTION == "F1 + Unique":
-            f1_score = individual.fitness.values[0]
-            current = individual[0]
-
-            if self.next_generation == []:
-                return f1_score
             
-            distances = [
-                self._distance(current, other[0])
-                for other in self.next_generation
-            ]
-            
-            uniqueness = sum(distances) / len(distances) if distances else 0.0
-            uniqueness /= self.max_kernel_size * sqrt(ModelSettings.KERNELS_PER_BRANCH)
+        # Calculate max possible Manhattan distance
+        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
+            self.max_kernel_size - self.min_kernel_size
+        )
+        
+        # Compute average distance to existing individuals
+        distances = [
+            self._distance(individual[0], other[0])  # Compare branches
+            for other in self.chosen
+        ]
+        avg_distance = sum(distances) / len(distances)
+        
+        # Normalize uniqueness to [0,1]
+        uniqueness = avg_distance / max_possible_dist if max_possible_dist > 0 else 0.0
+        
+        # Balanced combination (F1 and uniqueness now comparable)
+        return (EvolutionSettings.alpha * f1_score + 
+                EvolutionSettings.beta * uniqueness)
 
-            return EvolutionSettings.alpha * f1_score + EvolutionSettings.beta * uniqueness
+
+
 
     def _distance(self, a, b):
-                return sum(abs(x - y) for x, y in zip(a, b))
+        return sum(abs(x - y) for x, y in zip(a, b))
     
-    def reset_population(self):
-        self.next_generation = []
-
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
 
