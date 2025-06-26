@@ -124,7 +124,7 @@ class LogManager:
             "fitness_median": median,
             "fitness_min": min,
             "fitness_max": fit_max,
-            "best_individual_id": f"(exp:{self.experiment_id},gen:{self.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{self.best_individual_in_generation["fitness"]}, kernels:{str(self.best_individual_in_generation["individual"])}",
+            "best_individual_id": f"(exp:{self.experiment_id},gen:{self.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{round(self.best_individual_in_generation["fitness"], 7)}, kernels:{str(self.best_individual_in_generation["individual"])}",
             "tournament_of_champions": test_the_best}
 
         self._write_with_config(filetype="Generation", config=generation_configs)
@@ -163,12 +163,12 @@ class LogManager:
                 "generation": generation,
                 "individual_id": self.current_individual_id,
                 "individual": str(individual),
-                "Train Loss": train_loss,
-                "Test Loss": test_loss,
-                "Precision": precision,
-                "Recall": recall,
-                "F1": f1,
-                "Accuracy": accuracy,
+                "Train Loss": round(train_loss, 4),
+                "Test Loss": round(test_loss, 4),
+                "Precision": round(precision, 4),
+                "Recall": round(recall, 4),
+                "F1": round(f1, 4),
+                "Accuracy": round(accuracy, 4),
                 "fitness": fitness,
                 "champion": champion,
         }
