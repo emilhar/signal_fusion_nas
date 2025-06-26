@@ -119,12 +119,22 @@ class KernelSizeEvolutionaryOptimizer:
 
         branches = []
 
-        for _ in range( ModelSettings.NUMBER_OF_BRANCHES ):
+        if ModelSettings.SORT_KERNELS:
+            k_max = ModelSettings.MAX_KERNEL_SIZE
+            for _ in range(ModelSettings.NUMBER_OF_BRANCHES):
+                branch = []
+                for _ in range(ModelSettings.KERNELS_PER_BRANCH):
+                    kernel = random.randint(self.min_kernel_size, k_max)
+                    branch.append(kernel)
+                    if kernel < k_max:
+                        k_max = kernel
 
-            kernel =  [random.randint(self.min_kernel_size, ModelSettings.MAX_KERNEL_SIZE) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
-            if ModelSettings.SORT_KERNELS:
-                kernel.sort(reverse=True)
-            branches.append(kernel)
+                branches.append(branch)
+
+        else:
+            for _ in range( ModelSettings.NUMBER_OF_BRANCHES ):
+                branch =  [random.randint(self.min_kernel_size, ModelSettings.MAX_KERNEL_SIZE) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
+                branches.append(branch)
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
 

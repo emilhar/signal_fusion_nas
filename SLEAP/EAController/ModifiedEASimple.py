@@ -43,7 +43,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
             print(" ".join(want_to_print))
             print(f"{EvolutionSettings.alpha=}, {EvolutionSettings.beta=}")
 
-        if int(gen) == int(ngen*(3/5)):
+        if int(gen) == int(ngen*(EvolutionSettings.BETA_SWITCH)):
             EvolutionSettings.alpha = 1
             EvolutionSettings.beta = 0
 
