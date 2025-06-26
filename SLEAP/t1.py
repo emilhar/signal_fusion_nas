@@ -5,9 +5,9 @@ import ast
 from Globals import LoggingSettings
 
 def main():
-    
+    # Choose logging ID
     while True:
-        print("\n",LoggingSettings.LOG_IDS)
+        print("\n", LoggingSettings.LOG_IDS)
         potential_log_id = input("Enter logging ID: ").upper().strip()
         if potential_log_id in LoggingSettings.LOG_IDS:
             LoggingSettings.LOGGER_ID = potential_log_id
@@ -15,10 +15,11 @@ def main():
         else:
             print("❌ Please enter valid ID\n")
 
+    # Load dataset
     try:
         df = pd.read_csv(f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv")
     except FileNotFoundError:
-        df = pd.read_csv(f"SLEAP/Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv") 
+        df = pd.read_csv(f"SLEAP/Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv")
 
     experiment_id = input("Enter experiment ID to analyze: ")
     if experiment_id == "":
@@ -26,79 +27,104 @@ def main():
     else:
         df = df[df["experiment_id"] == int(experiment_id)]
 
-    generation = input("gen: ")
-    if generation != "":
-        df = df[df["generation"] == int(generation)]
-
-    df["individual"] = df["individual"].apply(ast.literal_eval)
-    df["individual"] = df["individual"].apply(lambda x: x[0])
-
+    df["individual"] = df["individual"].apply(ast.literal_eval).apply(lambda x: x[0])
     df[["kernel 1", "kernel 2", "kernel 3"]] = pd.DataFrame(df["individual"].tolist(), index=df.index)
 
-    # Normalize fitness for visualization
-    norm_fitness = (df["fitness"] - df["fitness"].min()) / (df["fitness"].max() - df["fitness"].min())
-    df["size"] = 50 + 150 * norm_fitness  # Marker size (50-200 range)
+    generations = sorted(df["generation"].unique())
 
-    #df["size"] = 50 + 300 * norm_fitness
+    # Determine step mode or fixed generation
+    step_mode = False
+    generation_input = input("gen: ")
+    if generation_input == "":
+        step_mode = True
+        start_index = 0
+    else:
+        start_index = generations.index(int(generation_input))
 
-
-    # Create 3D plot
+    # Setup the plot once
     fig = plt.figure(figsize=(14, 10))
     ax = fig.add_subplot(111, projection="3d")
-
-    # Scatter plot with color mapping
-    cmap = "cividis"
-    scatter = ax.scatter(
-        df["kernel 1"], df["kernel 2"], df["kernel 3"],
-        c=df["fitness"], 
-        s=df["size"],
-        cmap=cmap,
-        alpha=0.8,
-        depthshade=True,
-        edgecolor="w",
-        linewidth=0.5
-    )
-
-    if "champion" in df.columns and df["champion"].any():
-        champ = df[df["champion"]]
-        ax.scatter(
-            champ["kernel 1"], champ["kernel 2"], champ["kernel 3"],
-            s=300,  # Larger size
-            c='red',
-            marker='*',
-            edgecolor='gold',
-            linewidth=1.5,
-            label='Champion'
-        )
-
-    ax.set_xlabel('Kernel 1', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Kernel 2', fontsize=12, fontweight='bold')
-    ax.set_zlabel('Kernel 3', fontsize=12, fontweight='bold')
-    ax.set_title(f'Kernel-space with Fitness\nExperiment {experiment_id}', fontsize=16, pad=15)
-
+    scatter = ax.scatter([], [], [], c=[], s=[])
     cbar = fig.colorbar(scatter, ax=ax, pad=0.1)
     cbar.set_label('Fitness Score', fontsize=12, fontweight='bold')
 
-    min_fit, max_fit = df["fitness"].min(), df["fitness"].max()
-    ax.text2D(0.05, 0.95, 
-            f"Marker size represents fitness\n(min: {min_fit:.3f}, max: {max_fit:.3f})",
-            transform=ax.transAxes, fontsize=10,
-            bbox=dict(facecolor='white', alpha=0.8))
+    gen_index = start_index
 
-    ax.grid(True, linestyle='--', alpha=0.7)
-    ax.xaxis.pane.fill = False
-    ax.yaxis.pane.fill = False
-    ax.zaxis.pane.fill = False
-    ax.set_xlim(0, 1500)
-    ax.set_ylim(0, 1500)
-    ax.set_zlim(0, 1500)
-    ax.xaxis.pane.set_edgecolor('w')
-    ax.yaxis.pane.set_edgecolor('w')
-    ax.zaxis.pane.set_edgecolor('w')
-    ax.view_init(elev=25, azim=45)
+    while 0 <= gen_index < len(generations):
+        gen = generations[gen_index]
+        gen_df = df[df["generation"] == gen].copy()
 
-    #plt.tight_layout()
-    plt.show()
+        norm_fitness = (gen_df["fitness"] - gen_df["fitness"].min()) / (gen_df["fitness"].max() - gen_df["fitness"].min())
+        gen_df["size"] = 50 + 150 * norm_fitness
+
+        ax.clear()
+
+        scatter = ax.scatter(
+            gen_df["kernel 1"], gen_df["kernel 2"], gen_df["kernel 3"],
+            c=gen_df["fitness"],
+            s=gen_df["size"],
+            cmap="cividis",
+            alpha=0.8,
+            depthshade=True,
+            edgecolor="w",
+            linewidth=0.5
+        )
+
+        if "champion" in gen_df.columns and gen_df["champion"].any():
+            champ = gen_df[gen_df["champion"]]
+            ax.scatter(
+                champ["kernel 1"], champ["kernel 2"], champ["kernel 3"],
+                s=300,
+                c='red',
+                marker='*',
+                edgecolor='gold',
+                linewidth=1.5,
+                label='Champion'
+            )
+
+        ax.set_xlabel('Kernel 1', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Kernel 2', fontsize=12, fontweight='bold')
+        ax.set_zlabel('Kernel 3', fontsize=12, fontweight='bold')
+        ax.set_title(f'Kernel-space with Fitness\nExperiment {experiment_id}, Generation {gen}', fontsize=16, pad=15)
+
+        ax.set_xlim(0, 1500)
+        ax.set_ylim(0, 1500)
+        ax.set_zlim(0, 1500)
+        ax.view_init(elev=25, azim=45)
+
+        ax.grid(True, linestyle='--', alpha=0.7)
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor('w')
+        ax.yaxis.pane.set_edgecolor('w')
+        ax.zaxis.pane.set_edgecolor('w')
+
+        cbar.update_normal(scatter)
+
+        ax.text2D(0.05, 0.95,
+                  f"Marker size represents fitness\n(min: {gen_df['fitness'].min():.3f}, max: {gen_df['fitness'].max():.3f})",
+                  transform=ax.transAxes, fontsize=10,
+                  bbox=dict(facecolor='white', alpha=0.8))
+
+        plt.draw()
+        plt.pause(0.001)
+
+        # 🚀 Navigation controls
+        user_input = input("➡️  Press [Enter] for next | [p] for previous | [q] to quit: ").strip().lower()
+
+        if user_input == "q":
+            print("👋 Exiting.")
+            break
+        elif user_input == "p":
+            gen_index = max(0, gen_index - 1)
+        else:
+            gen_index += 1
+
+    else:
+        print("✅ Reached beginning or end of generations.")
+        input("Press Enter to exit...")
+
 
 if __name__ == "__main__":
     while True:
