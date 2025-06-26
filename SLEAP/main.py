@@ -122,6 +122,9 @@ class SLEAP:
                     break
                 else:
                     print("❌ Please enter valid ID\n")
+
+        else:
+            LoggingSettings.LOGGER_ID = "None"
         
         if LoggingSettings.LOGGING:
             LoggingSettings.LOG_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')

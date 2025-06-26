@@ -64,12 +64,15 @@ class EvolutionSettings:
     # Fitness Settings:
     alpha = 0
     beta = 1
+    ufunctions = ["manhattan distance", "reverse manhattan distance"]
+    uniqueness_function = ufunctions[0]
 
     # Evolution settings
     CX_PROB: float = 0.7
     MUTATION_PROB: float = 0.4
     OFFSPRING_VARIATION = 5     # When crossover happens, how different are the children from their parents?
     LAYERS_OF_CNN = 3
+
 
     # Tournament of Champion settings
     TDB_ON = True
@@ -92,3 +95,75 @@ class LoggingSettings:
     LOGGER_ID = ""
     LOGGING = True
     LOG_INDIVIDUALS = True # Champions always get logged
+
+
+class UniquenessFunctions:
+    @staticmethod
+    def manhattan_distance(individual, comparisons):
+        if not comparisons:
+            return 1
+
+        def distance(a, b):
+            return sum(abs(x - y) for x, y in zip(a, b))
+    
+        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
+                ModelSettings.MAX_KERNEL_SIZE - ModelSettings.MIN_KERNEL_SIZE
+            )
+
+        uniqueness_scores = [
+            distance(individual[0], other[0])
+            for other in comparisons
+        ]
+
+        avg_distance = sum(uniqueness_scores) / len(uniqueness_scores)
+        
+        # Normalize uniqueness to [0,1]
+        uniqueness = avg_distance / max_possible_dist if max_possible_dist > 0 else 0.0
+        return uniqueness
+    
+    @staticmethod
+    def _reverse_manhattan_distance(individual, comparisons):
+
+        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
+                ModelSettings.MAX_KERNEL_SIZE - ModelSettings.MIN_KERNEL_SIZE
+            )
+
+        def distance(a, b):
+            dist = max_possible_dist - sum(abs(x - y) for x, y in zip(a, b))
+            return dist / max_possible_dist
+
+        uniqueness_scores = [
+            distance(individual[0], other[0])
+            for other in comparisons
+        ]
+        sum_denominator = sum(uniqueness_scores)
+
+        uniqueness = 1 / (1+sum_denominator)
+        return uniqueness
+
+    @staticmethod
+    def punishing_reverse_manhattan(individual, comparisons):
+        if not comparisons:
+            return 1.0
+
+        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
+            ModelSettings.MAX_KERNEL_SIZE - ModelSettings.MIN_KERNEL_SIZE
+        )
+
+        def normalized_distance(a, b):
+            dist = sum(abs(x - y) for x, y in zip(a, b))
+            return dist / max_possible_dist
+
+        # Use inverse-square to punish close neighbors harshly
+        uniqueness_scores = [
+            1 / (normalized_distance(individual[0], other[0]) + 1e-6)**2  # avoid div by 0
+            for other in comparisons
+        ]
+
+        avg_inverse_penalty = sum(uniqueness_scores) / len(uniqueness_scores)
+
+        # Invert so that large penalties -> low uniqueness
+        uniqueness = 1 / (1 + avg_inverse_penalty)
+        return uniqueness
+
+    uniqueness_function = punishing_reverse_manhattan

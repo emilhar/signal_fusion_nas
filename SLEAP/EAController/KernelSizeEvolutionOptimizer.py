@@ -4,7 +4,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings
+from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings, UniquenessFunctions
 
 from EAController.ModifiedEASimple import ModifiedEASimple
 from Logs.LogManager import LogManager
@@ -49,10 +49,10 @@ class KernelSizeEvolutionaryOptimizer:
         self.min_kernel_size = min_kernel_size
         
         if max_kernel_size == None:
-            self.max_kernel_size = self.find_max_kernel_size()
-            if verbose: print(f"Max kernel size set at {self.max_kernel_size}")
+            ModelSettings.MAX_KERNEL_SIZE = self.find_max_kernel_size()
+            if verbose: print(f"Max kernel size set at {ModelSettings.MAX_KERNEL_SIZE}")
         else:
-            self.max_kernel_size = max_kernel_size
+            ModelSettings.MAX_KERNEL_SIZE = max_kernel_size
         
         self.verbose = verbose
 
@@ -61,7 +61,10 @@ class KernelSizeEvolutionaryOptimizer:
         sleepstage=self.sleepstage,
         batch_size=self.batch_size)
 
-        self.LogManager = LogManager()
+        if LoggingSettings.LOGGING:
+            self.LogManager = LogManager()
+        else:
+            self.LogManager = None
 
         self.chosen=[]
 
@@ -118,7 +121,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         for _ in range( ModelSettings.NUMBER_OF_BRANCHES ):
 
-            kernel =  [random.randint(self.min_kernel_size, self.max_kernel_size) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
+            kernel =  [random.randint(self.min_kernel_size, ModelSettings.MAX_KERNEL_SIZE) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
             if ModelSettings.SORT_KERNELS:
                 kernel.sort(reverse=True)
             branches.append(kernel)
@@ -205,40 +208,16 @@ class KernelSizeEvolutionaryOptimizer:
             self.chosen.append(next_up)
 
         return self.chosen
-    
-
 
     def _selection_criteria(self, individual):
-        f1_score = individual.fitness.values[0]
-        
-        # Skip uniqueness if no comparisons available
-        if not self.chosen or EvolutionSettings.FITNESS_FUNCTION == "F1":
-            return f1_score
+        fitness = individual.fitness.values[0]
             
-        # Calculate max possible Manhattan distance
-        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
-            self.max_kernel_size - self.min_kernel_size
-        )
+        to_be_compared = [ind for ind in self.chosen if ind != individual]
         
-        # Compute average distance to existing individuals
-        distances = [
-            self._distance(individual[0], other[0])  # Compare branches
-            for other in self.chosen
-        ]
-        avg_distance = sum(distances) / len(distances)
+        uniqueness = UniquenessFunctions.uniqueness_function(individual, to_be_compared)
         
-        # Normalize uniqueness to [0,1]
-        uniqueness = avg_distance / max_possible_dist if max_possible_dist > 0 else 0.0
-        
-        # Balanced combination (F1 and uniqueness now comparable)
-        return (EvolutionSettings.alpha * f1_score + 
+        return (EvolutionSettings.alpha * fitness + 
                 EvolutionSettings.beta * uniqueness)
-
-
-
-
-    def _distance(self, a, b):
-        return sum(abs(x - y) for x, y in zip(a, b))
     
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
@@ -264,8 +243,8 @@ class KernelSizeEvolutionaryOptimizer:
             random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
             percentage = random_val / 100.0
 
-            new_head1 = max(self.min_kernel_size, min(int(favorite + percentage * diff), self.max_kernel_size))
-            new_head2 = max(self.min_kernel_size, min(int(favorite - percentage * diff), self.max_kernel_size))
+            new_head1 = max(self.min_kernel_size, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+            new_head2 = max(self.min_kernel_size, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
 
             branch1[0] = new_head1
             branch2[0] = new_head2
@@ -294,7 +273,7 @@ class KernelSizeEvolutionaryOptimizer:
                     delta = -delta
 
                 new_value = branch[i] + delta
-                new_value = max(self.min_kernel_size, min(self.max_kernel_size, new_value))
+                new_value = max(self.min_kernel_size, min(ModelSettings.MAX_KERNEL_SIZE, new_value))
                 branch[i] = new_value
 
         return individual,
@@ -303,7 +282,7 @@ class KernelSizeEvolutionaryOptimizer:
         """Run the evolutionary algorithm"""
         if self.verbose:
             print(f"Starting evolution with {self.population_size} individuals for {self.generations} generations")
-        
+
         # Create initial population
         population = self.toolbox.population(n=self.population_size)
         
@@ -331,7 +310,7 @@ class KernelSizeEvolutionaryOptimizer:
         self.LogManager.log_experiment(
             sleepstage= self.sleepstage,
             signal_type= self.signal_type,
-            max_kernel_size= self.max_kernel_size,
+            max_kernel_size= ModelSettings.MAX_KERNEL_SIZE,
             best= get_hall_of_fame_format(0),
             second_best= get_hall_of_fame_format(1),
             third_best= get_hall_of_fame_format(2),
