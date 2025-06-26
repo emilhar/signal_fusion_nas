@@ -4,9 +4,7 @@ Gives IO for SLEAP
 
 from Globals import Sleepstage, Signal
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
-from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings
-
-import subprocess
+from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions
 
 class SLEAP:
     """
@@ -192,14 +190,6 @@ class SLEAP:
         print(f"{'Data for training:':30} {EvolutionSettings.DATA_SPLIT_TRAINING}")
         print(f"{'Data for testing:':30} {EvolutionSettings.DATA_SPLIT_TESTING}")
 
-        # Tournament of Champions
-        print("\n🏆 Tournament of Champions")
-        print(f"{'Enabled:':30} {EvolutionSettings.TDB_ON}")
-        print(f"{'Generations between:':30} {EvolutionSettings.TDB_GENERATIONS_BETWEEN}")
-        print(f"{'TDB tournament size:':30} {EvolutionSettings.TDB_TOURNAMENT_SIZE}")
-        print(f"{'TDB batch size:':30} {EvolutionSettings.TDB_BATCH_SIZE}")
-        print(f"{'TDB epochs per champion:':30} {EvolutionSettings.TDB_EPOCHS}")
-
         # Dataset info
         print("\n📁 Data Settings")
         print(f"{'Dataset:':30} {DataSettings.DATASET}")
@@ -209,6 +199,9 @@ class SLEAP:
         print(f"{'Logging:':30} {LoggingSettings.LOGGING}")
         print(f"{'Logging ID:':30} {LoggingSettings.LOGGER_ID}")
         print(f"{'Log all individuals:':30} {LoggingSettings.LOG_INDIVIDUALS}")
+        
+        print("\n🦠 Uniqueness Settings")
+        print(f"{'Uniqueness function:':30} {UniquenessFunctions.uniqueness_function.__name__}")
 
         print("\n" + "=" * 40 + "\n")
 

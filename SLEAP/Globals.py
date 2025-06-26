@@ -120,26 +120,6 @@ class UniquenessFunctions:
         # Normalize uniqueness to [0,1]
         uniqueness = avg_distance / max_possible_dist if max_possible_dist > 0 else 0.0
         return uniqueness
-    
-    @staticmethod
-    def min_manhattan_distance(individual, comparisons):
-        if not comparisons:
-            return 1
-
-        def distance(a, b):
-            return sum(abs(x - y) for x, y in zip(a, b))
-    
-        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
-                ModelSettings.MAX_KERNEL_SIZE - ModelSettings.MIN_KERNEL_SIZE
-            )
-
-        uniqueness_scores = [
-            distance(individual[0], other[0])
-            for other in comparisons
-        ]
-
-        uniqueness  = min(uniqueness_scores)
-        return uniqueness
 
     @staticmethod
     def _reverse_manhattan_distance(individual, comparisons):
@@ -207,4 +187,5 @@ class UniquenessFunctions:
         return uniqueness
 
 
-    uniqueness_function = KILL
+    uniqueness_function = punishing_reverse_manhattan
+
