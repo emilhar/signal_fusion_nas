@@ -38,7 +38,7 @@ class ModelSettings:
     LEARNING_RATE = 5e-5
 
     # Kernel size constraints
-    SORT_KERNELS = False
+    SORT_KERNELS = True
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = None
 
@@ -48,7 +48,7 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 20
+    POPULATION_SIZE: int = 50
     GENERATIONS: int = 10
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
@@ -64,8 +64,6 @@ class EvolutionSettings:
     # Fitness Settings:
     alpha = 0
     beta = 1
-    ufunctions = ["manhattan distance", "reverse manhattan distance"]
-    uniqueness_function = ufunctions[0]
 
     # Evolution settings
     CX_PROB: float = 0.7
