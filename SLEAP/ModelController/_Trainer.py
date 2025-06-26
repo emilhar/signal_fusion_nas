@@ -22,7 +22,6 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=p, factor=f)
     best_f1 = 0.0
-    best_epoch = -1
 
     train_losses_data, test_losses_data = [], []
 
@@ -72,16 +71,19 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
         scheduler.step(f1)
         current_lr = optimizer.param_groups[0]['lr']
 
+        kernel_sizes = []
+        for branch in model.branches.values():
+            kernel_sizes.append(_get_kernel_sizes(branch))
         if verbose:
             if epoch % output_period == 0 or epoch == epochs-1:
                 print(f"Epoch {epoch+1:2}/{epochs} -> "
                     f"Train Loss: {train_loss:.4f} | Test Loss: {test_loss:2.4f} | "
                     f"Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f} | "
+                    f"Branches: { kernel_sizes} "
                     f"Accuracy: {accuracy:.3f} ---> Learning rate: \x1b[31m{current_lr}\x1b[0m")
 
         if f1 > best_f1:
             best_f1 = f1
-            best_epoch = epoch+1
 
         if not champion:
             elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
@@ -91,6 +93,9 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
                 break
 
 
+    kernel_sizes = []
+    for branch in model.branches.values():
+        kernel_sizes.append(_get_kernel_sizes(branch))
     output = {"Epoch": epoch,
             "Train Loss": train_loss,
             "Test Loss": test_loss,
@@ -98,6 +103,15 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
             "Recall": recall,
             "F1": f1,
             "Accuracy": accuracy,
-            "Learning rate": current_lr}
+            "Learning rate": current_lr,
+            "Branches": kernel_sizes[0]}
 
     return output
+
+def _get_kernel_sizes(branch):
+    kernel_sizes = []
+    for layer in branch.net:
+        if isinstance(layer, nn.Conv1d):
+            # layer.kernel_size is a tuple
+            kernel_sizes.append(layer.kernel_size[0])
+    return kernel_sizes

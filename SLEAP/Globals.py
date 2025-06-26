@@ -205,6 +205,14 @@ class FitnessFunctions:
         fitness = individual_performance.get("Train Loss", 0.0)
         return fitness
     
+    @staticmethod
+    def branch_size(individual_performance):
+        branches = individual_performance.get("Branches", [[]])
+        
+        if sum(branches) < 1000:
+            return 1.0
+        else:
+            return 0.0
 
-    fitness_function = f1
+    fitness_function = branch_size
 

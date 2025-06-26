@@ -228,26 +228,26 @@ class KernelSizeEvolutionaryOptimizer:
             if not branch1 or not branch2:
                 continue  # Skip empty branches
 
-            # Choose "head" values
-            head1 = branch1[0]
-            head2 = branch2[0]
+            for j in range(len(branch1)):
+                head1 = branch1[j]
+                head2 = branch2[j]
 
-            favorite = random.choice([head1, head2])
-            diff = abs(head1 - head2)
+                favorite = random.choice([head1, head2])
+                diff = abs(head1 - head2)
 
-            # Gaussian noise
-            random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
-            percentage = random_val / 100.0
+                # Gaussian noise
+                random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
+                percentage = random_val / 100.0
 
-            new_head1 = max(self.min_kernel_size, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
-            new_head2 = max(self.min_kernel_size, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+                new_head1 = max(self.min_kernel_size, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+                new_head2 = max(self.min_kernel_size, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
 
-            branch1[0] = new_head1
-            branch2[0] = new_head2
+                branch1[0] = new_head1
+                branch2[0] = new_head2
 
-            if ModelSettings.SORT_KERNELS:
-                branch1.sort(reverse=True)
-                branch2.sort(reverse=True)
+                if ModelSettings.SORT_KERNELS:
+                    branch1.sort(reverse=True)
+                    branch2.sort(reverse=True)
 
             # Update branches
             ind1[i] = branch1
