@@ -48,8 +48,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 20
-    GENERATIONS: int = 10
+    POPULATION_SIZE: int = 50
+    GENERATIONS: int = 12
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
     # 'F1' or 'F1 + Unique'
@@ -68,6 +68,7 @@ class EvolutionSettings:
     ALPHA_BETA = [0.3, 0.7]
     alpha = ALPHA_BETA [0]
     beta = ALPHA_BETA[1]
+    BETA_SWITCH = 1/2
 
     # Evolution settings
     CX_PROB: float = 0.7
