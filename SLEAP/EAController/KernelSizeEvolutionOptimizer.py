@@ -4,7 +4,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings, UniquenessFunctions
+from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
 from EAController.ModifiedEASimple import ModifiedEASimple
 from Logs.LogManager import LogManager
@@ -100,7 +100,7 @@ class KernelSizeEvolutionaryOptimizer:
         def evaluate_champion(individual):
             return self.evaluate_individual(individual, champion=True)
         
-        # Genetic operators
+        # Genetic operatorss
         self.toolbox.register("evaluate", evaluate_normal)
         self.toolbox.register("evaluate_champion", evaluate_champion)
         
@@ -194,11 +194,7 @@ class KernelSizeEvolutionaryOptimizer:
         return new_model.model_performance
 
     def calculate_fitness(self, model_performance):
-        if EvolutionSettings.FITNESS_FUNCTION.startswith("F1"):
-            f1_score = model_performance.get("F1", 0.0)
-            return f1_score
-        else:
-            raise ValueError("No valid fitness function chosen")
+        return FitnessFunctions.fitness_function(model_performance)
 
     def select(self, individuals, k, tournsize):
         self.chosen = []

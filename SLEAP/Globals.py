@@ -53,7 +53,6 @@ class EvolutionSettings:
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
     # 'F1' or 'F1 + Unique'
-    FITNESS_FUNCTION = "F1 + Unique"
 
     # Data split
     DATA_POINTS_PER_INDIVIUAL = 4300
@@ -62,8 +61,13 @@ class EvolutionSettings:
     VALID_DATA_SPLIT = (DATA_SPLIT_TRAINING + DATA_SPLIT_TESTING == 1)
 
     # Fitness Settings:
-    alpha = 0
-    beta = 1
+    # alpha and beta are used in the fitness function
+    #   alpha is how much you value F1 score
+    #   beta is how much you value uniqueness
+    # these values change over time as generations come and go
+    ALPHA_BETA = [0.3, 0.7]
+    alpha = ALPHA_BETA [0]
+    beta = ALPHA_BETA[1]
 
     # Evolution settings
     CX_PROB: float = 0.7
@@ -210,3 +214,18 @@ class UniquenessFunctions:
 
 
     uniqueness_function = gargoyle
+
+class FitnessFunctions:
+    @staticmethod
+    def f1(individual_performance):
+        fitness = individual_performance.get("F1", 0.0)
+        return fitness
+    
+    @staticmethod
+    def train_loss(individual_performance):
+        fitness = individual_performance.get("Train Loss", 0.0)
+        return fitness
+    
+
+    fitness_function = f1
+

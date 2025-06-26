@@ -41,6 +41,11 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
             want_to_print = [record['avg'], record['std'], record['med'], record['min'], record['max']]
             want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
             print(" ".join(want_to_print))
+            print(f"{EvolutionSettings.alpha=}, {EvolutionSettings.beta=}")
+
+        if int(gen) == int(ngen*(3/5)):
+            EvolutionSettings.alpha = 1
+            EvolutionSettings.beta = 0
 
         if (EvolutionSettings.TDB_ON) and (gen % EvolutionSettings.TDB_GENERATIONS_BETWEEN == 0):
             population = test_the_best(population, toolbox, previous_the_best_fitness, verbose)
