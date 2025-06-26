@@ -75,11 +75,11 @@ class SLEAP:
         
         while True:
             try:
-                choice = int(input("\nSelect sleep stage (1-5): "))
+                choice = int(input("\nSelect sleep stage (0-4): "))
                 if 0 <= choice <= 4:
                     self.sleepstage = sleep_options[choice][0]
                     break
-                print("❌ Please enter a number between 1-5")
+                print("❌ Please enter a number between 0-4")
             except ValueError:
                 print("❌ Please enter a valid number")
         
@@ -112,6 +112,16 @@ class SLEAP:
 
         print("\n📝 Logging")
         LoggingSettings.LOGGING = input("Do you want to be logging (y/n)?: ").lower().startswith('y')
+
+        if LoggingSettings.LOGGING:
+            while True:
+                print("\n",LoggingSettings.LOG_IDS)
+                potential_log_id = input("Enter logging ID: ").upper().strip()
+                if potential_log_id in LoggingSettings.LOG_IDS:
+                    LoggingSettings.LOGGER_ID = potential_log_id
+                    break
+                else:
+                    print("❌ Please enter valid ID\n")
         
         if LoggingSettings.LOGGING:
             LoggingSettings.LOG_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')
@@ -194,6 +204,7 @@ class SLEAP:
         # Logging settings
         print("\n📝 Logging Settings")
         print(f"{'Logging:':30} {LoggingSettings.LOGGING}")
+        print(f"{'Logging ID:':30} {LoggingSettings.LOGGER_ID}")
         print(f"{'Log all individuals:':30} {LoggingSettings.LOG_INDIVIDUALS}")
 
         print("\n" + "=" * 40 + "\n")

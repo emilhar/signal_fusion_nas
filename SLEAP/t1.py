@@ -2,13 +2,33 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import ast
 
+from Globals import LoggingSettings
 
 def main():
-    experiment_id = int(input("Enter experiment ID to analyze: "))
+    
+    while True:
+        print("\n",LoggingSettings.LOG_IDS)
+        potential_log_id = input("Enter logging ID: ").upper().strip()
+        if potential_log_id in LoggingSettings.LOG_IDS:
+            LoggingSettings.LOGGER_ID = potential_log_id
+            break
+        else:
+            print("❌ Please enter valid ID\n")
 
-    df = pd.read_csv("SLEAP/Logs/IndividualLog.csv")
-    df = df[df["experiment_id"] == experiment_id]
-    #df = df[df["generation"] == 1]
+    try:
+        df = pd.read_csv(f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv")
+    except FileNotFoundError:
+        df = pd.read_csv(f"SLEAP/Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv") 
+
+    experiment_id = input("Enter experiment ID to analyze: ")
+    if experiment_id == "":
+        df = df[df["experiment_id"] == df["experiment_id"].max()]
+    else:
+        df = df[df["experiment_id"] == int(experiment_id)]
+
+    generation = input("gen: ")
+    if generation != "":
+        df = df[df["generation"] == int(generation)]
 
     df["individual"] = df["individual"].apply(ast.literal_eval)
     df["individual"] = df["individual"].apply(lambda x: x[0])

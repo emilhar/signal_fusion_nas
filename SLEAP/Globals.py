@@ -62,7 +62,7 @@ class EvolutionSettings:
     VALID_DATA_SPLIT = (DATA_SPLIT_TRAINING + DATA_SPLIT_TESTING == 1)
 
     # Fitness Settings:
-    alpha = 1
+    alpha = 0
     beta = 1
 
     # Evolution settings
@@ -88,5 +88,7 @@ class DataSettings:
     DATASET = _datasets[1]
 
 class LoggingSettings:
+    LOG_IDS = ['O', 'T']
+    LOGGER_ID = ""
     LOGGING = True
     LOG_INDIVIDUALS = True # Champions always get logged

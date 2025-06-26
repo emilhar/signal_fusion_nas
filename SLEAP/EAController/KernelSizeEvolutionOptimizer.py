@@ -200,7 +200,6 @@ class KernelSizeEvolutionaryOptimizer:
     def select(self, individuals, k, tournsize):
         self.chosen = []
         for _ in range(k):
-            print(self.chosen)
             aspirants = [random.choice(individuals) for _ in range(tournsize)]
             next_up = max(aspirants, key=lambda x: self._selection_criteria(x))
             self.chosen.append(next_up)

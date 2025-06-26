@@ -54,13 +54,12 @@ class LogManager:
     def _get_filepath(self, filetype):
 
         if filetype == "Experiment":
-            inner_path = "Logs/ExperimentStatsLog.csv"
+            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ExperimentStatsLog.csv"
         elif filetype == "Generation":
-            inner_path = "Logs/GenerationStatsLog.csv"
+            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/GenerationStatsLog.csv"
         elif filetype == "Individual":
-            inner_path = "Logs/IndividualLog.csv"
-        elif filetype == "HallOfFame":
-            inner_path = "Logs/HallOfFameLog.csv"
+            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv"
+
         else:
             raise ValueError(f"Unknown filetype: {filetype}")
         
@@ -110,15 +109,6 @@ class LogManager:
         }
 
         self._write_with_config(filetype="Experiment", config=config)
-
-    def log_hall_of_fame(self, hall_of_fame_list):
-        config = {"experiment_id": self.experiment_id}
-
-        for i, member in enumerate(hall_of_fame_list):
-            config[f"Nr.{i+1}"] = member
-
-        self._write_with_config(filetype="HallOfFame", config=config)
-
 
     def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
 

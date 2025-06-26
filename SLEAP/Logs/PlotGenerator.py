@@ -2,19 +2,31 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-# Load logs
-try:
-    exp_stats = pd.read_csv("Logs/ExperimentStatsLog.csv")
-    gen_stats = pd.read_csv("Logs/GenerationStatsLog.csv")
-    individuals = pd.read_csv("Logs/IndividualLog.csv")
-except FileNotFoundError:
-    exp_stats = pd.read_csv("SLEAP/Logs/ExperimentStatsLog.csv")
-    gen_stats = pd.read_csv("SLEAP/Logs/GenerationStatsLog.csv")
-    individuals = pd.read_csv("SLEAP/Logs/IndividualLog.csv") 
+from Globals import LoggingSettings
 
 colors = plt.cm.tab10.colors
 
 def main():
+
+    while True:
+        print("\n",LoggingSettings.LOG_IDS)
+        potential_log_id = input("Enter logging ID: ").upper().strip()
+        if potential_log_id in LoggingSettings.LOG_IDS:
+            LoggingSettings.LOGGER_ID = potential_log_id
+            break
+        else:
+            print("❌ Please enter valid ID\n")
+
+    try:
+        exp_stats = pd.read_csv(f"Logs/{LoggingSettings.LOGGER_ID}Logs/ExperimentStatsLog.csv")
+        gen_stats = pd.read_csv(f"Logs/{LoggingSettings.LOGGER_ID}Logs/GenerationStatsLog.csv")
+        individuals = pd.read_csv(f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv")
+    except FileNotFoundError:
+        exp_stats = pd.read_csv(f"SLEAP/Logs/{LoggingSettings.LOGGER_ID}Logs/ExperimentStatsLog.csv")
+        gen_stats = pd.read_csv(f"SLEAP/Logs/{LoggingSettings.LOGGER_ID}Logs/GenerationStatsLog.csv")
+        individuals = pd.read_csv(f"SLEAP/Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv") 
+
+
     # Display experiment options
     print("\nAvailable Experiments:")
     for idx, row in exp_stats.iterrows():
