@@ -38,7 +38,7 @@ class ModelSettings:
     LEARNING_RATE = 5e-5
 
     # Kernel size constraints
-    SORT_KERNELS = True
+    SORT_KERNELS = False
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = None
 
@@ -166,6 +166,30 @@ class UniquenessFunctions:
         uniqueness = 1 / (1 + avg_inverse_penalty)
         return uniqueness
     
+    staticmethod
+    def gargoyle(individual, comparisons):
+        import math
+        if not comparisons:
+            return 1.0
+
+        min_distance = float("inf")
+
+        for other in comparisons:
+            dist = math.sqrt(
+                (individual[0][0] - other[0][0]) ** 2 +
+                (individual[0][1] - other[0][1]) ** 2 + 
+                (individual[0][2] - other[0][2]) ** 2
+            )
+            if dist < min_distance:
+                min_distance = dist
+
+        steepness = 0.15
+        transition = 40
+
+        return 1 / (1 + math.exp(-steepness * (min_distance - transition)))
+                
+
+    
     @staticmethod
     def KILL(individual, comparisons):
 
@@ -187,5 +211,4 @@ class UniquenessFunctions:
         return uniqueness
 
 
-    uniqueness_function = punishing_reverse_manhattan
-
+    uniqueness_function = gargoyle
