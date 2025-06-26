@@ -1,7 +1,7 @@
 import csv
 import os
 from datetime import datetime
-from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings
+from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
@@ -105,7 +105,8 @@ class LogManager:
             "TDB_batch_size": EvolutionSettings.TDB_BATCH_SIZE,
             "dataset_name": DataSettings.DATASET,
             "max_time_spent_training": ModelSettings.MAX_TIME_SPENT_TRAINING,
-            "fitness_function": EvolutionSettings.FITNESS_FUNCTION
+            "fitness_function": EvolutionSettings.FITNESS_FUNCTION,
+            "uniqueness_function": UniquenessFunctions.uniqueness_function.__name__
         }
 
         self._write_with_config(filetype="Experiment", config=config)

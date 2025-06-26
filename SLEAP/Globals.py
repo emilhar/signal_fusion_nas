@@ -140,6 +140,28 @@ class UniquenessFunctions:
 
         uniqueness = 1 / (1+sum_denominator)
         return uniqueness
+    
+
+    @staticmethod
+    def KILL(individual, comparisons):
+
+        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
+                ModelSettings.MAX_KERNEL_SIZE - ModelSettings.MIN_KERNEL_SIZE
+            )
+
+        def distance(a, b):
+            dist = max_possible_dist - sum(abs(x - y) for x, y in zip(a, b))
+            return dist / max_possible_dist
+
+        uniqueness_scores = [
+            distance(individual[0], other[0])
+            for other in comparisons
+        ]
+        sum_denominator = sum(uniqueness_scores)
+
+        uniqueness = 1 / (1/sum_denominator) if sum_denominator != 0 else 0.0
+        return uniqueness
+
 
     @staticmethod
     def punishing_reverse_manhattan(individual, comparisons):
@@ -166,4 +188,4 @@ class UniquenessFunctions:
         uniqueness = 1 / (1 + avg_inverse_penalty)
         return uniqueness
 
-    uniqueness_function = punishing_reverse_manhattan
+    uniqueness_function = KILL
