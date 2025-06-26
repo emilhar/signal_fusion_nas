@@ -1,7 +1,7 @@
 import csv
 import os
 from datetime import datetime
-from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions
+from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
@@ -105,7 +105,7 @@ class LogManager:
             "TDB_batch_size": EvolutionSettings.TDB_BATCH_SIZE,
             "dataset_name": DataSettings.DATASET,
             "max_time_spent_training": ModelSettings.MAX_TIME_SPENT_TRAINING,
-            "fitness_function": EvolutionSettings.FITNESS_FUNCTION,
+            "fitness_function": FitnessFunctions.fitness_function.__name__,
             "uniqueness_function": UniquenessFunctions.uniqueness_function.__name__
         }
 

@@ -139,24 +139,26 @@ class SleepDataLoader:
         train_data_amount = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TRAINING)
         test_data_amount = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TESTING)
 
-        training_subset = sample(list(train_dataset), train_data_amount) # self.get_balanced_subset(train_dataset, training=True)
-        testing_subset = sample(list(test_dataset), test_data_amount) #self.get_balanced_subset(test_dataset, training=False)
-
+        if DataSettings.EVEN_DATA_SPLIT:
+            training_subset = self.get_balanced_subset(train_dataset, total_data_points=train_data_amount, training=True)
+            testing_subset = self.get_balanced_subset(test_dataset, total_data_points=test_data_amount, training=False)
+        else:
+            training_subset = sample(list(train_dataset), train_data_amount)
+            testing_subset =sample(list(test_dataset), test_data_amount)
+            
         train_loader_subset = DataLoader(training_subset, batch_size=self.batch_size, shuffle=True)
         test_loader_subset = DataLoader(testing_subset, batch_size=self.batch_size, shuffle=False)
 
         return train_loader_subset, test_loader_subset, self.n_samples, self.pos_weight
 
 
-    def get_balanced_subset(self, dataset, training: bool):
+    def get_balanced_subset(self, dataset, total_data_points, training: bool):
         if training:
             indices_class_0 = self.training_indices_class_0
             indices_class_1 = self.training_indices_class_1
-            total_data_points = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TRAINING)
         else:
             indices_class_0 = self.testing_indices_class_0
             indices_class_1 = self.testing_indices_class_1
-            total_data_points = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TESTING)
 
         samples_per_class = min(len(indices_class_0), len(indices_class_1), total_data_points // 2)
 

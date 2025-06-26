@@ -89,6 +89,9 @@ def main():
     ax.xaxis.pane.fill = False
     ax.yaxis.pane.fill = False
     ax.zaxis.pane.fill = False
+    ax.set_xlim(0, 1500)
+    ax.set_ylim(0, 1500)
+    ax.set_zlim(0, 1500)
     ax.xaxis.pane.set_edgecolor('w')
     ax.yaxis.pane.set_edgecolor('w')
     ax.zaxis.pane.set_edgecolor('w')

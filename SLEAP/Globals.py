@@ -48,7 +48,7 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 50
+    POPULATION_SIZE: int = 20
     GENERATIONS: int = 10
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
@@ -91,6 +91,8 @@ class DataSettings:
 
     _datasets = [DatasetNames.SLEEPEDFX, DatasetNames.TELEMETRY]
     DATASET = _datasets[1]
+
+    EVEN_DATA_SPLIT = False
 
 class LoggingSettings:
     LOG_IDS = ['O', 'T']
