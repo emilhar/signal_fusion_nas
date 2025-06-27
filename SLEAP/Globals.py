@@ -47,7 +47,7 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 5
+    POPULATION_SIZE: int = 100
     GENERATIONS: int = 10
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
