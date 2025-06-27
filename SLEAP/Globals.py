@@ -90,7 +90,7 @@ class DataSettings:
         SLEEPEDFX = "sleepEDFX"
 
     _datasets = [DatasetNames.SLEEPEDFX, DatasetNames.TELEMETRY]
-    DATASET = _datasets[1]
+    DATASET = _datasets[0]
 
     EVEN_DATA_SPLIT = False
 

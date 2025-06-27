@@ -7,6 +7,8 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+import os
+import csv
 
 import datetime # For max training time
 from Globals import ModelSettings
@@ -81,6 +83,29 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
                     f"Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f} | "
                     f"Branches: { kernel_sizes} "
                     f"Accuracy: {accuracy:.3f} ---> Learning rate: \x1b[31m{current_lr}\x1b[0m")
+                
+            log_entry = {
+            "epoch": epoch + 1,
+            "train_loss": round(train_loss, 4),
+            "test_loss": round(test_loss, 4),
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+            "f1": round(f1, 4),
+            "accuracy": round(accuracy, 3),
+            "learning_rate": current_lr,
+            "kernel_sizes": kernel_sizes
+            }
+
+            csv_file = "wake_full_train_log.csv"
+            file_exists = os.path.isfile(csv_file)
+
+            with open(csv_file, mode='a', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=log_entry.keys())
+
+                # Write header only if file is new
+                if not file_exists:
+                    writer.writeheader()
+                writer.writerow(log_entry)
 
         if f1 > best_f1:
             best_f1 = f1

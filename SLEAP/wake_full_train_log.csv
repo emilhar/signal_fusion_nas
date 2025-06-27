@@ -1,0 +1,1 @@
+epoch,train_loss,test_loss,precision,recall,f1,accuracy,learning_rate,kernel_sizes
