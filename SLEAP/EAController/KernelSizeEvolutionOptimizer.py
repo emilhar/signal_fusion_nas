@@ -42,7 +42,7 @@ class KernelSizeEvolutionaryOptimizer:
         self.setup_deap()
     
     def find_max_kernel_size(self):
-        return Signal.SIGNAL_COUNT
+        return Signal.SIGNAL_COUNT // 2
 
     def setup_deap(self):
         """Setup DEAP framework"""
