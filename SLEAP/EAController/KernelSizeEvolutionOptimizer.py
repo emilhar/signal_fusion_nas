@@ -227,11 +227,11 @@ class KernelSizeEvolutionaryOptimizer:
                 random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
                 percentage = random_val / 100.0
 
-                new_head1 = max(ModelSettings.min_kernel_size, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
-                new_head2 = max(ModelSettings.min_kernel_size, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+                new_head1 = max(ModelSettings.MIN_KERNEL_SIZE, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+                new_head2 = max(ModelSettings.MIN_KERNEL_SIZE, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
 
-                branch1[0] = new_head1
-                branch2[0] = new_head2
+                branch1[j] = new_head1
+                branch2[j] = new_head2
 
                 if ModelSettings.SORT_KERNELS:
                     branch1.sort(reverse=True)
@@ -257,7 +257,7 @@ class KernelSizeEvolutionaryOptimizer:
                     delta = -delta
 
                 new_value = branch[i] + delta
-                new_value = max(ModelSettings.min_kernel_size, min(ModelSettings.MAX_KERNEL_SIZE, new_value))
+                new_value = max(ModelSettings.MIN_KERNEL_SIZE, min(ModelSettings.MAX_KERNEL_SIZE, new_value))
                 branch[i] = new_value
 
             if ModelSettings.SORT_KERNELS:

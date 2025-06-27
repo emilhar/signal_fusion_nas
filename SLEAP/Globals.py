@@ -47,8 +47,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 8
-    GENERATIONS: int = 10
+    POPULATION_SIZE: int = 5
+    GENERATIONS: int = 2
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
 
@@ -97,8 +97,10 @@ class LoggingSettings:
     LOG_ALL_INDIVIDUALS = True
 
     current_generation_id = 0
-    current_individual_id = -1
+    current_individual_id = 0
     population_size = 0
+
+    experiment_name = "My lovely experiment"
 
 class UniquenessFunctions:
     @staticmethod
@@ -213,5 +215,5 @@ class FitnessFunctions:
         else:
             return 0.0
 
-    fitness_function = f1
+    fitness_function = train_loss
 

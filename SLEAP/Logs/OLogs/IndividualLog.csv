@@ -1,2 +1,1 @@
 experiment_id,generation,individual_id,individual,TrainLoss,TestLoss,Precision,Recall,F1,Accuracy,fitness,champion
-

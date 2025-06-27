@@ -76,6 +76,7 @@ class LogManager:
         """Log the experiment configuration"""
 
         config = {
+            "name": LoggingSettings.experiment_name,
             "experiment_id": self.experiment_id,
             "start_time":  self.start_time,
             "end_time": datetime.now(),
@@ -110,7 +111,6 @@ class LogManager:
     def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
 
         LoggingSettings.current_generation_id = generation
-        LoggingSettings.population_size = population_size
 
         generation_configs = {
             "experiment_id": self.experiment_id,
@@ -128,7 +128,7 @@ class LogManager:
         self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
 
         LoggingSettings.current_generation_id = generation + 1
-        LoggingSettings.current_individual_id = -1
+        LoggingSettings.current_individual_id = 0
 
         self.best_individual_in_generation = {
                 "experiment_id": 0,
@@ -149,7 +149,6 @@ class LogManager:
 
         train_loss, test_loss, precision, recall, f1, accuracy = map(lambda x: x[0], [train_loss, test_loss, precision, recall, f1, accuracy])
 
-        LoggingSettings.current_individual_id += 1
         best = self.best_individual_in_generation
         generation = LoggingSettings.current_generation_id
         
@@ -170,6 +169,7 @@ class LogManager:
                 "champion": champion,
         }
 
+        LoggingSettings.current_individual_id += 1
         if (champion or LoggingSettings.LOG_ALL_INDIVIDUALS):
             self.log_individual_stats(individual, fitness, train_loss, test_loss, precision, recall, f1, accuracy, champion)
             return

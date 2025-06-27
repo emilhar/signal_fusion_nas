@@ -128,6 +128,9 @@ class SLEAP:
             LoggingSettings.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')
         else:
             LoggingSettings.LOG_ALL_INDIVIDUALS = False
+
+        if LoggingSettings.LOGGING:
+            LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
                     
         self._print_experiment_settings()
         

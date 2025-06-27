@@ -19,6 +19,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
     # Evaluate the individuals with an invalid fitness
     previous_the_best_fitness = None
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
+    LoggingSettings.population_size = len(invalid_ind)
     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
     for ind, fit in zip(invalid_ind, fitnesses):
         ind.fitness.values = fit
@@ -61,6 +62,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        LoggingSettings.population_size = len(invalid_ind)
         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
