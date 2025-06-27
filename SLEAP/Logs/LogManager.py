@@ -88,7 +88,6 @@ class LogManager:
             "epochs_per_individual": ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
             "population_size": EvolutionSettings.POPULATION_SIZE,
             "generations": EvolutionSettings.GENERATIONS,
-            "offspring_variation": EvolutionSettings.OFFSPRING_VARIATION,
             "crossover_prob": EvolutionSettings.CX_PROB,
             "mutation_prob": EvolutionSettings.MUTATION_PROB,
             "tournament_size": EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
@@ -98,11 +97,11 @@ class LogManager:
             "best": best,
             "second_best": second_best,
             "third_best": third_best,
-            "TDB_on": EvolutionSettings.TDB_ON,
-            "TDB_generations_between": EvolutionSettings.TDB_GENERATIONS_BETWEEN,
-            "TDB_tournament_size": EvolutionSettings.TDB_TOURNAMENT_SIZE,
-            "TDB_training_epochs":EvolutionSettings.TDB_EPOCHS,
-            "TDB_batch_size": EvolutionSettings.TDB_BATCH_SIZE,
+            "TDB_on": EvolutionSettings.KOTH_ON,
+            "TDB_generations_between": EvolutionSettings.KOTH_GENERATIONS_BETWEEN,
+            "TDB_tournament_size": EvolutionSettings.KOTH_TOURNAMENT_SIZE,
+            "TDB_training_epochs":EvolutionSettings.KOTH_EPOCHS,
+            "TDB_batch_size": EvolutionSettings.KOTH_BATCH_SIZE,
             "dataset_name": DataSettings.DATASET,
             "max_time_spent_training": ModelSettings.MAX_TIME_SPENT_TRAINING,
             "fitness_function": FitnessFunctions.fitness_function.__name__,
@@ -173,7 +172,7 @@ class LogManager:
                 "champion": champion,
         }
 
-        if (champion or LoggingSettings.LOG_INDIVIDUALS):
+        if (champion or LoggingSettings.LOG_ALL_INDIVIDUALS):
             self.log_individual_stats(individual, fitness, train_loss, test_loss, precision, recall, f1, accuracy, champion)
             return
 

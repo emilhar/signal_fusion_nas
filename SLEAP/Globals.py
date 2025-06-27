@@ -1,9 +1,8 @@
 """
 These names are used by many classes, good idea to keep them global
 """
-# Available batch sizes for all models
+
 import math
-BATCH_SIZE_OPTIONS = [2, 4, 8, 16, 32, 64, 128]
 
 class Sleepstage:
     WAKE = "wake"
@@ -25,16 +24,14 @@ class Signal:
     class EMG:
         SUBMENTAL = "EMG_submental"
 
-    EMG_SIGNAL_COUNT = 30
-    NON_EMG_SIGNAL_COUNT = 3000
+    SIGNAL_COUNT = 3000
 
 class ModelSettings:
     # Base
     NUMBER_OF_BRANCHES = 1
-    BATCH_SIZE = 32  # Default batch size (from BATCH_SIZE_OPTIONS)
+    BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 1
     KERNELS_PER_BRANCH = 3
-    VERBOSE = True
     MAX_TIME_SPENT_TRAINING = 3
     LEARNING_RATE = 5e-5
 
@@ -45,6 +42,7 @@ class ModelSettings:
 
     # Misc
     SMALLER_FILES = False
+    VERBOSE = True
 
 class EvolutionSettings:
 
@@ -73,16 +71,14 @@ class EvolutionSettings:
     # Evolution settings
     CX_PROB: float = 0.7
     MUTATION_PROB: float = 0.4
-    OFFSPRING_VARIATION = 5     # When crossover happens, how different are the children from their parents?
-    LAYERS_OF_CNN = 3
 
-    # Tournament of Champion settings
-    TDB_ON = True
-    TDB_GENERATIONS_BETWEEN = 16
-    TDB_TOURNAMENT_SIZE = 0.30
-    TDB_BATCH_SIZE = 128
-    TDB_EPOCHS = 2
-    TDB_LEARNING_RATE_MULTIPLIER = 10
+    # King Of The Hill settings
+    KOTH_ON = True
+    KOTH_GENERATIONS_BETWEEN = 16
+    KOTH_TOURNAMENT_SIZE = 0.30
+    KOTH_BATCH_SIZE = 128
+    KOTH_EPOCHS = 2
+    KOTH_LEARNING_RATE_MULTIPLIER = 10
 
 class DataSettings:
     class DatasetNames:
@@ -90,7 +86,7 @@ class DataSettings:
         SLEEPEDFX = "sleepEDFX"
 
     _datasets = [DatasetNames.SLEEPEDFX, DatasetNames.TELEMETRY]
-    DATASET = _datasets[0]
+    DATASET = _datasets[1]
 
     EVEN_DATA_SPLIT = False
 
@@ -98,8 +94,7 @@ class LoggingSettings:
     LOG_IDS = ['O', 'T']
     LOGGER_ID = ""
     LOGGING = True
-    LOG_INDIVIDUALS = True # Champions always get logged
-
+    LOG_ALL_INDIVIDUALS = True
 
 class UniquenessFunctions:
     @staticmethod
@@ -214,5 +209,5 @@ class FitnessFunctions:
         else:
             return 0.0
 
-    fitness_function = train_loss
+    fitness_function = f1
 

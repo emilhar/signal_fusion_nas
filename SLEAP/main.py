@@ -83,7 +83,7 @@ class SLEAP:
         
         # Signal type selection
         if ModelSettings.SMALLER_FILES:
-            print("\nWARNING: YOU ARE USING SMALLER FILES, file 'smaller_EEG_Fpz_CZ' automatically chosen")
+            print("\nWARNING: YOU ARE USING SMALLER FILES, file 'sleepEDFX/smaller_EEG_Fpz_CZ' automatically chosen")
             self.signal_type = f"smaller_{Signal.EEG.Fpz_Cz}"
         
         else:
@@ -125,9 +125,9 @@ class SLEAP:
             LoggingSettings.LOGGER_ID = "None"
         
         if LoggingSettings.LOGGING:
-            LoggingSettings.LOG_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')
+            LoggingSettings.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')
         else:
-            LoggingSettings.LOG_INDIVIDUALS = False
+            LoggingSettings.LOG_ALL_INDIVIDUALS = False
                     
         self._print_experiment_settings()
         
@@ -184,8 +184,6 @@ class SLEAP:
         print(f"{'Tournament size:':30} {EvolutionSettings.SELECTION_TOURNAMENT_SIZE}")
         print(f"{'Crossover probability:':30} {EvolutionSettings.CX_PROB}")
         print(f"{'Mutation probability:':30} {EvolutionSettings.MUTATION_PROB}")
-        print(f"{'Offspring variation:':30} {EvolutionSettings.OFFSPRING_VARIATION}")
-        print(f"{'Layers of CNN:':30} {EvolutionSettings.LAYERS_OF_CNN}")
         print(f"{'Data points per individual:':30} {EvolutionSettings.DATA_POINTS_PER_INDIVIUAL}")
         print(f"{'Data for training:':30} {EvolutionSettings.DATA_SPLIT_TRAINING}")
         print(f"{'Data for testing:':30} {EvolutionSettings.DATA_SPLIT_TESTING}")
@@ -198,7 +196,7 @@ class SLEAP:
         print("\n📝 Logging Settings")
         print(f"{'Logging:':30} {LoggingSettings.LOGGING}")
         print(f"{'Logging ID:':30} {LoggingSettings.LOGGER_ID}")
-        print(f"{'Log all individuals:':30} {LoggingSettings.LOG_INDIVIDUALS}")
+        print(f"{'Log all individuals:':30} {LoggingSettings.LOG_ALL_INDIVIDUALS}")
         
         print("\n🦠 Uniqueness Settings")
         print(f"{'Uniqueness function:':30} {UniquenessFunctions.uniqueness_function.__name__}")

@@ -5,7 +5,7 @@ import datetime
 
 def train_full(branches):
 
-    SDL = SleepDataLoader(verbose=True, signal_type=Signal.EEG.Fpz_Cz, sleepstage=Sleepstage.WAKE, batch_size=128)
+    SDL = SleepDataLoader(signal_type=Signal.EEG.Fpz_Cz, sleepstage=Sleepstage.WAKE, batch_size=128)
     individual_training_set, individual_test_set, n_samples, pos_weight = SDL.get_full_dataset()
     a = datetime.datetime.now()
     print(a)

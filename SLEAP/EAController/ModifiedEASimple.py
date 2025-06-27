@@ -47,8 +47,8 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
             EvolutionSettings.alpha = 1
             EvolutionSettings.beta = 0
 
-        if (EvolutionSettings.TDB_ON) and (gen % EvolutionSettings.TDB_GENERATIONS_BETWEEN == 0):
-            population = test_the_best(population, toolbox, previous_the_best_fitness, verbose)
+        if (EvolutionSettings.KOTH_ON) and (gen % EvolutionSettings.KOTH_GENERATIONS_BETWEEN == 0):
+            population = king_of_the_hill(population, toolbox, previous_the_best_fitness, verbose)
             test_the_best_happened = True
         else:
             test_the_best_happened = False
@@ -81,12 +81,12 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
 
     return population
 
-def test_the_best(population, toolbox, previous_the_best_fitness, verbose=False):
+def king_of_the_hill(population, toolbox, previous_the_best_fitness, verbose=False):
     """
-    Test the Best makes sure the top individuals are also scoring well on the full dataset.
+    king_of_the_hill makes sure the top individuals are also scoring well on the full dataset.
     """
     if verbose:
-        print(f"\n=== 🔥🔥🏆 TEST THE BEST 🏆🔥🔥 ===")
+        print(f"\n=== 🔥🔥🏆 King Of The Hill 🏆🔥🔥 ===")
     
     the_best = sorted(population, key=lambda x: x.fitness.values[0], reverse=True)[0]
     

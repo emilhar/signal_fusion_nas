@@ -7,11 +7,11 @@ from random import sample
 from math import ceil
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from Globals import Sleepstage, EvolutionSettings, DataSettings
+from Globals import Sleepstage, ModelSettings, EvolutionSettings, DataSettings
 
 
 class SleepDataLoader:
-    def __init__(self, verbose, signal_type, sleepstage, batch_size):
+    def __init__(self, signal_type, sleepstage, batch_size):
         self.sleepstage = sleepstage
         self.signal_type = signal_type
 
@@ -20,9 +20,7 @@ class SleepDataLoader:
 
         self.batch_size = batch_size
 
-        self.verbose = verbose
-
-        if verbose: print("Loading Training data")
+        if ModelSettings.VERBOSE: print("Loading Training data")
         try:
             try_sleap=True
             train_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Training")            
@@ -33,7 +31,7 @@ class SleepDataLoader:
             train_file_path = self.get_filepath(SLEAP=False, data_type="Training") # try other filepath
             self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
             
-        if verbose: print("Loading Testing data")
+        if ModelSettings.VERBOSE: print("Loading Testing data")
         test_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Testing")
         
         self.test_loader, _, _ = self._load_data(filepath=test_file_path, training=False)
@@ -60,11 +58,11 @@ class SleepDataLoader:
             X = (data['X']).astype(np.float32)
             y = data['y']
 
-            if self.verbose: print("Data split. Preparing data")
+            if ModelSettings.verbose: print("Data split. Preparing data")
 
             loader, pos_weight, n_samples = self._prepare(X, y, training)
             
-        if self.verbose: print("Acquiring targets")
+        if ModelSettings.verbose: print("Acquiring targets")
         if training:
             self.training_indices_class_0 = []
             self.training_indices_class_1 = []

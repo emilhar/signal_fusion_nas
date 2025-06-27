@@ -16,51 +16,21 @@ class KernelSizeEvolutionaryOptimizer:
                  
                  # Base
                  sleepstage: str, 
-                 signal_type: str,
-                 batch_size: int = ModelSettings.BATCH_SIZE,
-                 epochs_per_individual: int = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
-                 
-                 # Evolution parameters
-                 population_size: int = EvolutionSettings.POPULATION_SIZE,
-                 generations: int = EvolutionSettings.GENERATIONS,
-                 cx_prob: float = EvolutionSettings.CX_PROB,
-                 mut_prob: float = EvolutionSettings.MUTATION_PROB,
-                 tournament_size: int = EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
-                 
-                 # Kernel size constraints
-                 min_kernel_size: int = ModelSettings.MIN_KERNEL_SIZE,
-                 max_kernel_size: int|None = ModelSettings.MAX_KERNEL_SIZE,
-                 
-                 verbose: bool = ModelSettings.VERBOSE):
+                 signal_type: str):
         
         # Base
         self.sleepstage = sleepstage
         self.signal_type = signal_type
-        self.batch_size = batch_size
-        self.epochs = epochs_per_individual
-        
-        # Evolution parameters
-        self.population_size = population_size
-        self.generations = generations
-        self.cx_prob = cx_prob
-        self.mut_prob = mut_prob
-        self.tournament_size = tournament_size
-        
-        # Kernel constraints
-        self.min_kernel_size = min_kernel_size
-        
-        if max_kernel_size == None:
-            ModelSettings.MAX_KERNEL_SIZE = self.find_max_kernel_size()
-            if verbose: print(f"Max kernel size set at {ModelSettings.MAX_KERNEL_SIZE}")
-        else:
-            ModelSettings.MAX_KERNEL_SIZE = max_kernel_size
-        
-        self.verbose = verbose
 
-        self.SDL = SleepDataLoader(verbose=self.verbose, 
-        signal_type=self.signal_type, 
-        sleepstage=self.sleepstage,
-        batch_size=self.batch_size)
+        if ModelSettings.MAX_KERNEL_SIZE == None:
+            ModelSettings.MAX_KERNEL_SIZE = self.find_max_kernel_size()
+            if ModelSettings.VERBOSE: print(f"Max kernel size set at {ModelSettings.MAX_KERNEL_SIZE}")
+        
+
+        self.SDL = SleepDataLoader(
+            signal_type=self.signal_type, 
+            sleepstage=self.sleepstage,
+            batch_size=ModelSettings.BATCH_SIZE)
 
         if LoggingSettings.LOGGING:
             self.LogManager = LogManager()
@@ -72,10 +42,7 @@ class KernelSizeEvolutionaryOptimizer:
         self.setup_deap()
     
     def find_max_kernel_size(self):
-        if self.signal_type == Signal.EMG.SUBMENTAL:
-            return (Signal.EMG_SIGNAL_COUNT // 2)
-        else:
-            return (Signal.NON_EMG_SIGNAL_COUNT // 2)
+        return Signal.SIGNAL_COUNT
 
     def setup_deap(self):
         """Setup DEAP framework"""
@@ -92,7 +59,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", self.select, tournsize=self.tournament_size)
+        self.toolbox.register("select", self.select, tournsize=EvolutionSettings.SELECTION_TOURNAMENT_SIZE)
 
         # Create wrapper functions for evaluation
         def evaluate_normal(individual):
@@ -125,7 +92,7 @@ class KernelSizeEvolutionaryOptimizer:
             for _ in range(ModelSettings.NUMBER_OF_BRANCHES):
                 branch = []
                 for _ in range(ModelSettings.KERNELS_PER_BRANCH):
-                    kernel = random.randint(self.min_kernel_size, k_max)
+                    kernel = random.randint(ModelSettings.MIN_KERNEL_SIZE, k_max)
                     branch.append(kernel)
                     if kernel < k_max:
                         k_max = kernel
@@ -134,7 +101,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         else:
             for _ in range( ModelSettings.NUMBER_OF_BRANCHES ):
-                branch =  [random.randint(self.min_kernel_size, ModelSettings.MAX_KERNEL_SIZE) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
+                branch =  [random.randint(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
                 branches.append(branch)
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
@@ -156,7 +123,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         fitness_value = self.calculate_fitness(model_performance)
         
-        if self.verbose:
+        if ModelSettings.VERBOSE:
             print(f"Fitness: {fitness_value}")
 
         if LoggingSettings.LOGGING:
@@ -181,15 +148,15 @@ class KernelSizeEvolutionaryOptimizer:
             learning_rate = ModelSettings.LEARNING_RATE * EvolutionSettings.TOC_LEARNING_RATE_MULTIPLIER
         else:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
-            batch_size = self.batch_size
-            epochs = self.epochs
+            batch_size = ModelSettings.BATCH_SIZE
+            epochs = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL
             learning_rate = ModelSettings.LEARNING_RATE
 
 
         # Things marked with # come from the SDL
         new_model = TrainedModelMaker(
             branches = branches,
-            name=f"{branches}, sleepstage: {self.sleepstage}, {batch_size}batch, {self.epochs}epochs",
+            name=f"{branches}, sleepstage: {self.sleepstage}, {batch_size}batch, {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
             sleepstage = self.sleepstage,
             signal_type=self.signal_type,
             batch_size= batch_size,
@@ -197,7 +164,7 @@ class KernelSizeEvolutionaryOptimizer:
             test_loader = individual_test_set,
             epochs= epochs,
             learning_rate=learning_rate,
-            verbose= self.verbose,
+            verbose= ModelSettings.VERBOSE,
             N_SAMPLES= n_samples, #
             pos_weight= pos_weight,
             champion=champion) #
@@ -227,8 +194,7 @@ class KernelSizeEvolutionaryOptimizer:
             fitness = 1.0
         else:
             fitness = (highest_loss_val - loss) / (highest_loss_val - lowest_loss_val)
-
-            
+                
         to_be_compared = [ind for ind in self.chosen if ind != individual]
         
         uniqueness = UniquenessFunctions.uniqueness_function(individual, to_be_compared)
@@ -261,8 +227,8 @@ class KernelSizeEvolutionaryOptimizer:
                 random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
                 percentage = random_val / 100.0
 
-                new_head1 = max(self.min_kernel_size, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
-                new_head2 = max(self.min_kernel_size, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+                new_head1 = max(ModelSettings.min_kernel_size, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+                new_head2 = max(ModelSettings.min_kernel_size, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
 
                 branch1[0] = new_head1
                 branch2[0] = new_head2
@@ -291,30 +257,33 @@ class KernelSizeEvolutionaryOptimizer:
                     delta = -delta
 
                 new_value = branch[i] + delta
-                new_value = max(self.min_kernel_size, min(ModelSettings.MAX_KERNEL_SIZE, new_value))
+                new_value = max(ModelSettings.min_kernel_size, min(ModelSettings.MAX_KERNEL_SIZE, new_value))
                 branch[i] = new_value
+
+            if ModelSettings.SORT_KERNELS:
+                branch.sort(reverse=True)
 
         return individual,
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
-        if self.verbose:
-            print(f"Starting evolution with {self.population_size} individuals for {self.generations} generations")
+        if ModelSettings.VERBOSE:
+            print(f"Starting evolution with {EvolutionSettings.POPULATION_SIZE} individuals for {EvolutionSettings.GENERATIONS} generations")
 
         # Create initial population
-        population = self.toolbox.population(n=self.population_size)
+        population = self.toolbox.population(n=EvolutionSettings.POPULATION_SIZE)
         
         # Run evolution
         result_pop = ModifiedEASimple(
             population, 
             self.toolbox,
-            cxpb=self.cx_prob,
-            mutpb=self.mut_prob,
-            ngen=self.generations,
+            cxpb=EvolutionSettings.CX_PROB,
+            mutpb=EvolutionSettings.MUTATION_PROB,
+            ngen=EvolutionSettings.GENERATIONS,
             LogManager=self.LogManager,
             stats=self.stats,
             halloffame=self.hall_of_fame,
-            verbose=self.verbose
+            verbose=ModelSettings.VERBOSE
         )
         
         return result_pop, self.hall_of_fame, self.stats
