@@ -30,7 +30,7 @@ class ModelSettings:
     # Base
     NUMBER_OF_BRANCHES = 1
     BATCH_SIZE = 32
-    TRAINING_EPOCHS_PER_INDIVIDUAL: int = 1
+    TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
     KERNELS_PER_BRANCH = 3
     MAX_TIME_SPENT_TRAINING = 3
     LEARNING_RATE = 5e-5
@@ -47,8 +47,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 100
-    GENERATIONS: int = 10
+    POPULATION_SIZE: int = 5
+    GENERATIONS: int = 100
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
 
@@ -75,7 +75,7 @@ class EvolutionSettings:
 
     # King Of The Hill settings
     KOTH_ON = True
-    KOTH_GENERATIONS_BETWEEN = 16
+    KOTH_GENERATIONS_BETWEEN = 1600000
     KOTH_TOURNAMENT_SIZE = 0.30
     KOTH_BATCH_SIZE = 128
     KOTH_EPOCHS = 2
@@ -216,5 +216,5 @@ class FitnessFunctions:
         else:
             return 0.0
 
-    fitness_function = f1
+    fitness_function = train_loss
 

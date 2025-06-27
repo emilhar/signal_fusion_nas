@@ -21,8 +21,8 @@ class LogManager:
                 "Recall": 0,
                 "F1": 0,
                 "Accuracy": 0,
-                "fitness": 0,
-                "champion": 0,
+                "Fitness": 0,
+                "Champion": 0,
         }
     
     def _get_experiment_id(self):
@@ -121,7 +121,7 @@ class LogManager:
             "fitness_median": median,
             "fitness_min": min,
             "fitness_max": fit_max,
-            "best_individual_id": f"(exp:{self.experiment_id},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{round(self.best_individual_in_generation["fitness"], 7)}, kernels:{str(self.best_individual_in_generation["individual"])}",
+            "best_individual_id": f"(exp:{self.experiment_id},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{round(self.best_individual_in_generation["Fitness"], 7)}, kernels:{str(self.best_individual_in_generation["individual"])}",
             "tournament_of_champions": test_the_best}
 
         self._write_with_config(filetype="Generation", config=generation_configs)
@@ -141,8 +141,8 @@ class LogManager:
                 "Recall": 0,
                 "F1": 0,
                 "Accuracy": 0,
-                "fitness": 0,
-                "champion": 0,
+                "Fitness": 0,
+                "Champion": 0,
         }
 
     def check_for_best_in_gen(self, individual, fitness, champion, train_loss, test_loss, precision, recall, f1, accuracy):
@@ -152,7 +152,7 @@ class LogManager:
         best = self.best_individual_in_generation
         generation = LoggingSettings.current_generation_id
         
-        if (best["fitness"] <= fitness):
+        if (best["Fitness"] <= fitness):
 
             self.best_individual_in_generation = {
                 "experiment_id": self.experiment_id,
@@ -165,8 +165,8 @@ class LogManager:
                 "Recall": round(recall, 4),
                 "F1": round(f1, 4),
                 "Accuracy": round(accuracy, 4),
-                "fitness": fitness,
-                "champion": champion,
+                "Fitness": fitness,
+                "Champion": champion,
         }
 
         LoggingSettings.current_individual_id += 1
@@ -190,8 +190,8 @@ class LogManager:
                 "Recall": round(recall, 4),
                 "F1": round(f1, 4),
                 "Accuracy": round(accuracy, 4),
-                "fitness": fitness,
-                "champion": champion,
+                "Fitness": fitness,
+                "Champion": champion,
         }
         
         self._write_with_config(filetype="Individual", config=individual_log_entry)
