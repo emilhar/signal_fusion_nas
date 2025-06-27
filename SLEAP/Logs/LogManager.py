@@ -10,9 +10,6 @@ class LogManager:
         self.start_time = datetime.now()
         self.experiment_id = self._get_experiment_id()
 
-        self.current_generation_id = 0
-        self.current_individual_id = -1
-
         self.best_individual_in_generation = {
                 "experiment_id": 0,
                 "generation": 0,
@@ -112,25 +109,26 @@ class LogManager:
 
     def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
 
-        self.current_generation_id = generation
+        LoggingSettings.current_generation_id = generation
+        LoggingSettings.population_size = population_size
 
         generation_configs = {
             "experiment_id": self.experiment_id,
-            "generation": self.current_generation_id,
+            "generation": LoggingSettings.current_generation_id,
             "population_size": population_size,
             "fitness_mean": mean,
             "fitness_std": std_deviation,
             "fitness_median": median,
             "fitness_min": min,
             "fitness_max": fit_max,
-            "best_individual_id": f"(exp:{self.experiment_id},gen:{self.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{round(self.best_individual_in_generation["fitness"], 7)}, kernels:{str(self.best_individual_in_generation["individual"])}",
+            "best_individual_id": f"(exp:{self.experiment_id},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{round(self.best_individual_in_generation["fitness"], 7)}, kernels:{str(self.best_individual_in_generation["individual"])}",
             "tournament_of_champions": test_the_best}
 
         self._write_with_config(filetype="Generation", config=generation_configs)
         self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
 
-        self.current_generation_id = generation + 1
-        self.current_individual_id = -1
+        LoggingSettings.current_generation_id = generation + 1
+        LoggingSettings.current_individual_id = -1
 
         self.best_individual_in_generation = {
                 "experiment_id": 0,
@@ -151,16 +149,16 @@ class LogManager:
 
         train_loss, test_loss, precision, recall, f1, accuracy = map(lambda x: x[0], [train_loss, test_loss, precision, recall, f1, accuracy])
 
-        self.current_individual_id += 1
+        LoggingSettings.current_individual_id += 1
         best = self.best_individual_in_generation
-        generation = self.current_generation_id
+        generation = LoggingSettings.current_generation_id
         
         if (best["fitness"] <= fitness):
 
             self.best_individual_in_generation = {
                 "experiment_id": self.experiment_id,
                 "generation": generation,
-                "individual_id": self.current_individual_id,
+                "individual_id": LoggingSettings.current_individual_id,
                 "individual": str(individual),
                 "Train Loss": round(train_loss, 4),
                 "Test Loss": round(test_loss, 4),
@@ -180,11 +178,11 @@ class LogManager:
         """Log individual evaluation"""
 
         # Make entry
-        generation = self.current_generation_id
+        generation = LoggingSettings.current_generation_id
         individual_log_entry = {
                 "experiment_id": self.experiment_id,
                 "generation": generation,
-                "individual_id": self.current_individual_id,
+                "individual_id": LoggingSettings.current_individual_id,
                 "individual": str(individual),
                 "Train Loss": round(train_loss, 4),
                 "Test Loss": round(test_loss, 4),

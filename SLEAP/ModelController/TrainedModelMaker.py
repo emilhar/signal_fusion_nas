@@ -11,6 +11,7 @@ from Globals import ModelSettings
 from ModelController._Trainer import train_model
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from ModelController.BranchSettings import get_branch_configs
+from Globals import LoggingSettings
 
 class TrainedModelMaker:
 
@@ -51,8 +52,8 @@ class TrainedModelMaker:
 
         model = CNN_BinaryClassifier(**model_args).to(self.device)
 
-        if verbose: 
-            print(f"\n\nTraining model: {branches=}")
+        if verbose:
+            print(f"\n\nTraining model: {branches=}, Generation:{LoggingSettings.current_generation_id} Generation Completeness: {LoggingSettings.current_individual_id}/{LoggingSettings.population_size}")
 
         self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, self.lr, epochs=epochs, verbose=verbose, champion=champion)
 

@@ -96,6 +96,10 @@ class LoggingSettings:
     LOGGING = True
     LOG_ALL_INDIVIDUALS = True
 
+    current_generation_id = 0
+    current_individual_id = -1
+    population_size = 0
+
 class UniquenessFunctions:
     @staticmethod
     def manhattan_distance(individual, comparisons):

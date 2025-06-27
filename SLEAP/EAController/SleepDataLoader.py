@@ -58,11 +58,11 @@ class SleepDataLoader:
             X = (data['X']).astype(np.float32)
             y = data['y']
 
-            if ModelSettings.verbose: print("Data split. Preparing data")
+            if ModelSettings.VERBOSE: print("Data split. Preparing data")
 
             loader, pos_weight, n_samples = self._prepare(X, y, training)
             
-        if ModelSettings.verbose: print("Acquiring targets")
+        if ModelSettings.VERBOSE: print("Acquiring targets")
         if training:
             self.training_indices_class_0 = []
             self.training_indices_class_1 = []
