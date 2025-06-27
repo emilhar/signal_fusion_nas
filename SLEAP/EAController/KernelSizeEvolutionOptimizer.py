@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from deap import base, creator, tools
+from math import pow
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
@@ -210,18 +211,29 @@ class KernelSizeEvolutionaryOptimizer:
         self.chosen = []
         for _ in range(k):
             aspirants = [random.choice(individuals) for _ in range(tournsize)]
-            next_up = max(aspirants, key=lambda x: self._selection_criteria(x))
+            next_up = max(aspirants, key=lambda x: self._selection_criteria(x, individuals))
             self.chosen.append(next_up)
 
         return self.chosen
 
-    def _selection_criteria(self, individual):
-        fitness = individual.fitness.values[0]
+    def _selection_criteria(self, individual, population):
+
+        losses = [x.fitness.values[0] for x in population]
+        highest_loss_val = max(losses)
+        lowest_loss_val = min(losses)
+        loss = individual.fitness.values[0]
+
+        if highest_loss_val == lowest_loss_val:
+            fitness = 1.0
+        else:
+            fitness = (highest_loss_val - loss) / (highest_loss_val - lowest_loss_val)
+
             
         to_be_compared = [ind for ind in self.chosen if ind != individual]
         
         uniqueness = UniquenessFunctions.uniqueness_function(individual, to_be_compared)
         
+        print(f"{fitness=}, {uniqueness=}")
         return (EvolutionSettings.alpha * fitness + 
                 EvolutionSettings.beta * uniqueness)
     
@@ -331,3 +343,4 @@ class KernelSizeEvolutionaryOptimizer:
         print(f"\nHall of Fame (Top {len(self.hall_of_fame)}):")
         for i, individual in enumerate(self.hall_of_fame):
             print(f"  {i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}")
+            

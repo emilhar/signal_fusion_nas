@@ -2,6 +2,7 @@
 These names are used by many classes, good idea to keep them global
 """
 # Available batch sizes for all models
+import math
 BATCH_SIZE_OPTIONS = [2, 4, 8, 16, 32, 64, 128]
 
 class Sleepstage:
@@ -38,7 +39,7 @@ class ModelSettings:
     LEARNING_RATE = 5e-5
 
     # Kernel size constraints
-    SORT_KERNELS = True
+    SORT_KERNELS = False
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = None
 
@@ -48,11 +49,10 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 50
-    GENERATIONS: int = 12
+    POPULATION_SIZE: int = 8
+    GENERATIONS: int = 10
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
-    # 'F1' or 'F1 + Unique'
 
     # Data split
     DATA_POINTS_PER_INDIVIUAL = 4300
@@ -62,10 +62,10 @@ class EvolutionSettings:
 
     # Fitness Settings:
     # alpha and beta are used in the fitness function
-    #   alpha is how much you value F1 score
+    #   alpha is how much you value fitness score
     #   beta is how much you value uniqueness
     # these values change over time as generations come and go
-    ALPHA_BETA = [0.3, 0.7]
+    ALPHA_BETA = [0.1, 0.9]
     alpha = ALPHA_BETA [0]
     beta = ALPHA_BETA[1]
     BETA_SWITCH = 1/2
@@ -75,7 +75,6 @@ class EvolutionSettings:
     MUTATION_PROB: float = 0.4
     OFFSPRING_VARIATION = 5     # When crossover happens, how different are the children from their parents?
     LAYERS_OF_CNN = 3
-
 
     # Tournament of Champion settings
     TDB_ON = True
@@ -171,9 +170,9 @@ class UniquenessFunctions:
         uniqueness = 1 / (1 + avg_inverse_penalty)
         return uniqueness
     
-    staticmethod
+    @staticmethod
     def gargoyle(individual, comparisons):
-        import math
+        
         if not comparisons:
             return 1.0
 
@@ -188,8 +187,8 @@ class UniquenessFunctions:
             if dist < min_distance:
                 min_distance = dist
 
-        steepness = 0.15
-        transition = 40
+        steepness = 0.01
+        transition = int(ModelSettings.MAX_KERNEL_SIZE  / pow(EvolutionSettings.POPULATION_SIZE, 1/3))
 
         return 1 / (1 + math.exp(-steepness * (min_distance - transition)))
 
@@ -215,5 +214,5 @@ class FitnessFunctions:
         else:
             return 0.0
 
-    fitness_function = branch_size
+    fitness_function = train_loss
 
