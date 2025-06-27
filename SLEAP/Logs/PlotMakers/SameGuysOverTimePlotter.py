@@ -5,10 +5,11 @@ from scipy import stats
 
 # Load the data from CSV
 df = pd.read_csv('Logs/OLogs/IndividualLog.csv')
+#df = pd.read_csv('Logs/TLogs/IndividualLog.csv') [1, 5]
 
 def plot_individual_trainloss(individual_id, attr):
     # Filter data for the specific individual
-    individual_data = df[df['experiment_id'] == 1]
+    individual_data = df[df['experiment_id'] == 1] # <-- If Teitur, breyta í 5
     individual_data = individual_data[individual_data['individual_id'] == individual_id]
     
     if individual_data.empty:
