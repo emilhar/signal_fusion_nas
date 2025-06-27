@@ -48,7 +48,7 @@ class EvolutionSettings:
 
     # Overview settings
     POPULATION_SIZE: int = 5
-    GENERATIONS: int = 2
+    GENERATIONS: int = 10
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
 
@@ -63,14 +63,15 @@ class EvolutionSettings:
     #   alpha is how much you value fitness score
     #   beta is how much you value uniqueness
     # these values change over time as generations come and go
-    ALPHA_BETA = [0.1, 0.9]
+
+    ALPHA_BETA = [1.0, 0.0]
     alpha = ALPHA_BETA [0]
     beta = ALPHA_BETA[1]
     BETA_SWITCH = 1/2
 
     # Evolution settings
-    CX_PROB: float = 0.7
-    MUTATION_PROB: float = 0.4
+    CX_PROB: float = 0.0
+    MUTATION_PROB: float = 0.0
 
     # King Of The Hill settings
     KOTH_ON = True
@@ -215,5 +216,5 @@ class FitnessFunctions:
         else:
             return 0.0
 
-    fitness_function = train_loss
+    fitness_function = f1
 

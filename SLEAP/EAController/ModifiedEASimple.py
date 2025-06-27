@@ -110,6 +110,10 @@ def king_of_the_hill(population, toolbox, previous_the_best_fitness, verbose=Fal
 
 def varAnd(population, toolbox, cxpb, mutpb):
     """See: DEAP/Algorithms"""
+    if cxpb == 0.0 and mutpb == 0.0:
+        for pop in population:
+            del pop.fitness.values
+        return population[:] 
 
     offspring = [toolbox.clone(ind) for ind in population]
 

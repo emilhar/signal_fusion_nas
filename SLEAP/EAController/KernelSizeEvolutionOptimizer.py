@@ -13,8 +13,6 @@ from Logs.LogManager import LogManager
 class KernelSizeEvolutionaryOptimizer:
 
     def __init__(self, 
-                 
-                 # Base
                  sleepstage: str, 
                  signal_type: str):
         
@@ -175,6 +173,8 @@ class KernelSizeEvolutionaryOptimizer:
         return FitnessFunctions.fitness_function(model_performance)
 
     def select(self, individuals, k, tournsize):
+        if EvolutionSettings.CX_PROB == 0.0 and EvolutionSettings.MUTATION_PROB == 0.0:
+            return individuals
         self.chosen = []
         for _ in range(k):
             aspirants = [random.choice(individuals) for _ in range(tournsize)]
