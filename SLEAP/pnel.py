@@ -49,7 +49,7 @@ def penelope(branches: list[list[int]], epochs: int) -> tuple[list[float], list[
     return PnEL, FtF1
 
 def fully_train(branch: list[int]) -> float:
-    with open("./T_Logs/fully_trained_models.csv") as f:
+    with open("./Logs/T_fully_trained_models.csv") as f:
         title = f"Training Full model with kernels {branch}"
         print(f"\n{"="*len(title)}")
         print(title)
