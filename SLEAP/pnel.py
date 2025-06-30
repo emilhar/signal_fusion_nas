@@ -49,7 +49,7 @@ def penelope(branches: list[list[int]], epochs: int) -> tuple[list[float], list[
     return PnEL, FtF1
 
 def fully_train(branch: list[int]) -> float:
-    with open("./Logs/fully_trained_models.csv") as f:
+    with open("./T_Logs/fully_trained_models.csv") as f:
         title = f"Training Full model with kernels {branch}"
         print(f"\n{"="*len(title)}")
         print(title)
@@ -58,6 +58,8 @@ def fully_train(branch: list[int]) -> float:
         if (df["name"] == str(branch)).any():
             print(f"Model {branch} already in fully_train_models.csv, skipping...")
             return df.loc[df["name"] == str(branch), "F1"].values[0]
+        
+
 
         model_args = get_branch_configs([branch], "Fully Trained", 3000)
         model = CNN_BinaryClassifier(**model_args).to(device)
@@ -82,7 +84,7 @@ def fully_train(branch: list[int]) -> float:
 
         new_row = pd.DataFrame([{"name": str(branch), "F1": res["F1"]}])
         df = pd.concat([df, new_row], ignore_index=True)
-        new_row.to_csv("./Logs/fully_trained_models.csv", mode="a", header=False, index=False)
+        new_row.to_csv("./Logs/T_fully_trained_models.csv", mode="a", header=False, index=False)
     
     return res["Best F1"]
 
@@ -175,8 +177,8 @@ def plot(PnEL, FtF1, labels, epochs):
     plt.title(f"Fully-trained F1 vs. Partial {epochs} Train Loss")
     plt.ylabel("FtF1")
     plt.xlabel(f"P{epochs}EL")
-    plt.ylim(0.0, 1.0)
-    plt.xlim(0.0, 1.5)
+    # plt.ylim(0.0, 1.0)
+    # plt.xlim(0.0, 1.5)
 
     plt.grid(True, linestyle="--", alpha=0.7)
 
