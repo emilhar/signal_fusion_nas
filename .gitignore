@@ -68,7 +68,6 @@ htmlcov/
 !SLEAP/Logs/
 
 #SLEAP
-Data/
 *.png
 
 
