@@ -31,7 +31,7 @@ class TrainedModelMaker:
                  epochs:int = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
                  learning_rate:int = ModelSettings.LEARNING_RATE,
 
-                 champion:bool = False,
+                 have_time_limit:bool = False,
                  verbose:bool = ModelSettings.VERBOSE
         ):
         
@@ -55,5 +55,5 @@ class TrainedModelMaker:
         if verbose:
             print(f"\n\nTraining model: {branches=}, Generation:{LoggingSettings.current_generation_id+1} Generation Completeness: {LoggingSettings.current_individual_id+1}/{LoggingSettings.population_size}")
 
-        self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, self.lr, epochs=epochs, verbose=verbose, champion=champion)
+        self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, self.lr, epochs=epochs, verbose=verbose, have_time_limit=have_time_limit)
 

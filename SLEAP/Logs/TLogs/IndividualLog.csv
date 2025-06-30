@@ -1,4 +1,4 @@
-experiment_id,generation,individual_id,individual,TrainLoss,TestLoss,Precision,Recall,F1,Accuracy,fitness,champion
+Experiment_ID,Generation,Individual_ID,Individual,Train_Loss,Test_Loss,Precision,Recall,F1,Accuracy,Fitness,Fully_Trained,Uniqueness,AlphaBetaFitness
 0,0,0,"[[939, 1425, 971]]",0.9752,1.1553,0.2262,1.0,0.3689,0.2388,0.36889460154241643,False
 0,0,1,"[[1327, 681, 183]]",0.9797,1.2466,0.2372,1.0,0.3834,0.2395,0.3834066624764299,False
 0,0,2,"[[780, 569, 163]]",1.0136,1.1657,0.2204,1.0,0.3611,0.2457,0.36112934996717005,False

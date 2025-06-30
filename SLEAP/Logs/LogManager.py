@@ -3,41 +3,45 @@ import os
 from datetime import datetime
 from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
-class LogManager:
-    """Comprehensive logging system for evolutionary algorithms"""
-    
-    def __init__(self):
-        self.start_time = datetime.now()
-        self.experiment_id = self._get_experiment_id()
-
-        self.best_individual_in_generation = {
-                "experiment_id": 0,
-                "generation": 0,
-                "individual_id": 0,
-                "individual": 0,
-                "Train Loss": 0,
-                "Test Loss": 0,
+INDIVIDUAL_TEMPLATE = {
+                "Experiment_ID": 0,
+                "Generation": 0,
+                "Individual_ID": 0,
+                "Individual": 0,
+                "Train_Loss": 0,
+                "Test_Loss": 0,
                 "Precision": 0,
                 "Recall": 0,
                 "F1": 0,
                 "Accuracy": 0,
                 "Fitness": 0,
-                "Champion": 0,
+                "Fully_Trained": 0,
+                "Uniqueness": 0.0,
+                "AlphaBetaFitness": 0.0,
         }
+
+class LogManager:
+    """Comprehensive logging system for evolutionary algorithms"""
     
-    def _get_experiment_id(self):
+    def __init__(self):
+        self.start_time = datetime.now()
+        self.Experiment_ID = self._get_Experiment_ID()
+
+        self.best_individual_in_generation = INDIVIDUAL_TEMPLATE.copy()
+    
+    def _get_Experiment_ID(self):
         """Get the next experiment ID based on the CSV log"""
 
         filepath = self._get_filepath(filetype="Experiment")
 
         with open(filepath, mode='r', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
-            experiment_ids = [int(row["experiment_id"]) for row in reader if "experiment_id" in row and row["experiment_id"].isdigit()]
+            Experiment_IDs = [int(row["Experiment_ID"]) for row in reader if "Experiment_ID" in row and row["Experiment_ID"].isdigit()]
             
-            if not experiment_ids:
+            if not Experiment_IDs:
                 return 0
             
-            return  max(experiment_ids) + 1
+            return  max(Experiment_IDs) + 1
 
     def _write_with_config(self, filetype, config):
         
@@ -76,34 +80,37 @@ class LogManager:
         """Log the experiment configuration"""
 
         config = {
-            "name": LoggingSettings.experiment_name,
-            "experiment_id": self.experiment_id,
-            "start_time":  self.start_time,
-            "end_time": datetime.now(),
-            "sleepstage": sleepstage,
-            "signal_type": signal_type,
-            "batch_size": ModelSettings.BATCH_SIZE,
-            "epochs_per_individual": ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
-            "population_size": EvolutionSettings.POPULATION_SIZE,
-            "generations": EvolutionSettings.GENERATIONS,
-            "crossover_prob": EvolutionSettings.CX_PROB,
-            "mutation_prob": EvolutionSettings.MUTATION_PROB,
-            "tournament_size": EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
-            "min_kernel_size": ModelSettings.MIN_KERNEL_SIZE,
-            "max_kernel_size": max_kernel_size,
-            "data_points_per_individual": EvolutionSettings.DATA_POINTS_PER_INDIVIUAL,
-            "best": best,
-            "second_best": second_best,
-            "third_best": third_best,
-            "TDB_on": EvolutionSettings.KOTH_ON,
-            "TDB_generations_between": EvolutionSettings.KOTH_GENERATIONS_BETWEEN,
-            "TDB_tournament_size": EvolutionSettings.KOTH_TOURNAMENT_SIZE,
-            "TDB_training_epochs":EvolutionSettings.KOTH_EPOCHS,
-            "TDB_batch_size": EvolutionSettings.KOTH_BATCH_SIZE,
-            "dataset_name": DataSettings.DATASET,
-            "max_time_spent_training": ModelSettings.MAX_TIME_SPENT_TRAINING,
-            "fitness_function": FitnessFunctions.fitness_function.__name__,
-            "uniqueness_function": UniquenessFunctions.uniqueness_function.__name__
+            "Name": LoggingSettings.experiment_name,
+            "Experiment_ID": self.Experiment_ID,
+            "Start_Time": self.start_time,
+            "End_Time": datetime.now(),
+            "Sleepstage": sleepstage,
+            "Signal_Type": signal_type,
+            "Batch_Size": ModelSettings.BATCH_SIZE,
+            "Epochs_Per_Individual": ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
+            "Population_Size": EvolutionSettings.POPULATION_SIZE,
+            "Generations": EvolutionSettings.GENERATIONS,
+            "Crossover_Prob": EvolutionSettings.CX_PROB,
+            "Mutation_Prob": EvolutionSettings.MUTATION_PROB,
+            "Tournament_Size": EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
+            "Min_Kernel_Size": ModelSettings.MIN_KERNEL_SIZE,
+            "Max_Kernel_Size": max_kernel_size,
+            "Data_Points_Per_Individual": EvolutionSettings.DATA_POINTS_PER_INDIVIUAL,
+            "Best": best,
+            "Second_Best": second_best,
+            "Third_Best": third_best,
+            "TDB_On": EvolutionSettings.KOTH_ON,
+            "TDB_Generations_Between": EvolutionSettings.KOTH_GENERATIONS_BETWEEN,
+            "TDB_Tournament_Size": EvolutionSettings.KOTH_TOURNAMENT_SIZE,
+            "TDB_Training_Epochs": EvolutionSettings.KOTH_EPOCHS,
+            "TDB_Batch_Size": EvolutionSettings.KOTH_BATCH_SIZE,
+            "Dataset_Name": DataSettings.DATASET,
+            "Max_Time_Spent_Training": ModelSettings.MAX_TIME_SPENT_TRAINING,
+            "Fitness_Function": FitnessFunctions.fitness_function.__name__,
+            "Uniqueness_Function": UniquenessFunctions.uniqueness_function.__name__,
+            'Alpha': EvolutionSettings.ALPHA_BETA[0],
+            'Beta': EvolutionSettings.ALPHA_BETA[1],
+            'AB_Switch': EvolutionSettings.BETA_SWITCH
         }
 
         self._write_with_config(filetype="Experiment", config=config)
@@ -113,16 +120,17 @@ class LogManager:
         LoggingSettings.current_generation_id = generation
 
         generation_configs = {
-            "experiment_id": self.experiment_id,
-            "generation": LoggingSettings.current_generation_id,
-            "population_size": population_size,
-            "fitness_mean": mean,
-            "fitness_std": std_deviation,
-            "fitness_median": median,
-            "fitness_min": min,
-            "fitness_max": fit_max,
-            "best_individual_id": f"(exp:{self.experiment_id},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation["individual_id"]}), fitness:{round(self.best_individual_in_generation["Fitness"], 7)}, kernels:{str(self.best_individual_in_generation["individual"])}",
-            "tournament_of_champions": test_the_best}
+            "Experiment_ID": self.Experiment_ID,
+            "Generation": LoggingSettings.current_generation_id,
+            "Population_Size": population_size,
+            "Fitness_Mean": mean,
+            "Fitness_Std": std_deviation,
+            "Fitness_Median": median,
+            "Fitness_Min": min,
+            "Fitness_Max": fit_max,
+            "Best_Individual_ID": f"(exp:{self.Experiment_ID},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation['Individual_ID']}), fitness:{round(self.best_individual_in_generation['Fitness'], 7)}, kernels:{str(self.best_individual_in_generation['Individual'])}",
+            "Tournament_Of_Champions": test_the_best
+        }
 
         self._write_with_config(filetype="Generation", config=generation_configs)
         self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
@@ -130,68 +138,46 @@ class LogManager:
         LoggingSettings.current_generation_id = generation + 1
         LoggingSettings.current_individual_id = 0
 
-        self.best_individual_in_generation = {
-                "experiment_id": 0,
-                "generation": 0,
-                "individual_id": 0,
-                "individual": 0,
-                "Train Loss": 0,
-                "Test Loss": 0,
-                "Precision": 0,
-                "Recall": 0,
-                "F1": 0,
-                "Accuracy": 0,
-                "Fitness": 0,
-                "Champion": 0,
-        }
+        self.best_individual_in_generation = INDIVIDUAL_TEMPLATE.copy()
 
-    def check_for_best_in_gen(self, individual, fitness, champion, train_loss, test_loss, precision, recall, f1, accuracy):
+    def check_for_best_in_gen(self, individual):
 
-        train_loss, test_loss, precision, recall, f1, accuracy = map(lambda x: x[0], [train_loss, test_loss, precision, recall, f1, accuracy])
+        fitness = individual.raw_fitness or individual.fitness.values[0]
+        fully_trained = individual.fully_trained
+        uniqueness = individual.uniqueness
+        alpha_beta_fitness = individual.alpha_beta_fitness
+
+        train_loss = individual.model_performance.get("Train Loss", 0.0)
+        test_loss = individual.model_performance.get("Test Loss", 0.0)
+        precision = individual.model_performance.get("Precision", 0.0)
+        recall = individual.model_performance.get("Recall", 0.0)
+        f1 = individual.model_performance.get("F1", 0.0)
+        accuracy = individual.model_performance.get("Accuracy", 0.0)
 
         best = self.best_individual_in_generation
         generation = LoggingSettings.current_generation_id
-        
-        if (best["Fitness"] <= fitness):
 
-            self.best_individual_in_generation = {
-                "experiment_id": self.experiment_id,
-                "generation": generation,
-                "individual_id": LoggingSettings.current_individual_id,
-                "individual": str(individual),
-                "Train Loss": round(train_loss, 4),
-                "Test Loss": round(test_loss, 4),
+        individual_log_entry = {
+                "Experiment_ID": self.Experiment_ID,
+                "Generation": generation,
+                "Individual_ID": LoggingSettings.current_individual_id,
+                "Individual": str(individual),
+                "Train_Loss": round(train_loss, 4),
+                "Test_Loss": round(test_loss, 4),
                 "Precision": round(precision, 4),
                 "Recall": round(recall, 4),
                 "F1": round(f1, 4),
                 "Accuracy": round(accuracy, 4),
-                "Fitness": fitness,
-                "Champion": champion,
+                "Fitness": round(fitness, 4),
+                "Fully_Trained": fully_trained,
+                "Uniqueness": round(uniqueness, 4),
+                "AlphaBetaFitness": round(alpha_beta_fitness, 4),
         }
+
+        if (best["Fitness"] <= fitness):
+            self.best_individual_in_generation = individual_log_entry
 
         LoggingSettings.current_individual_id += 1
-        if (champion or LoggingSettings.LOG_ALL_INDIVIDUALS):
-            self.log_individual_stats(individual, fitness, train_loss, test_loss, precision, recall, f1, accuracy, champion)
+        if (fully_trained or LoggingSettings.LOG_ALL_INDIVIDUALS):
+            self._write_with_config(filetype="Individual", config=individual_log_entry)
             return
-
-    def log_individual_stats(self, individual, fitness, train_loss, test_loss, precision, recall, f1, accuracy, champion: bool = False):
-        """Log individual evaluation"""
-
-        # Make entry
-        generation = LoggingSettings.current_generation_id
-        individual_log_entry = {
-                "experiment_id": self.experiment_id,
-                "generation": generation,
-                "individual_id": LoggingSettings.current_individual_id,
-                "individual": str(individual),
-                "Train Loss": round(train_loss, 4),
-                "Test Loss": round(test_loss, 4),
-                "Precision": round(precision, 4),
-                "Recall": round(recall, 4),
-                "F1": round(f1, 4),
-                "Accuracy": round(accuracy, 4),
-                "Fitness": fitness,
-                "Champion": champion,
-        }
-        
-        self._write_with_config(filetype="Individual", config=individual_log_entry)

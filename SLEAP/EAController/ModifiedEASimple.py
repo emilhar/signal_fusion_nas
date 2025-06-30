@@ -8,7 +8,6 @@ We then create a new population from those individuals.
 """
 
 import random
-from math import ceil
 
 from Globals import EvolutionSettings, LoggingSettings
 
@@ -32,7 +31,6 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
     if LoggingSettings.LOGGING:
         # Log the generation
         LogManager.log_generation_stats(0, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'], test_the_best=False)
-
 
     # Begin the generational process
     for gen in range(1, ngen + 1):
@@ -95,8 +93,8 @@ def king_of_the_hill(population, toolbox, previous_the_best_fitness, verbose=Fal
     if verbose:
         print(f"Best individual in population={the_best}, fitness={the_best.fitness.values[0]}")
 
-    the_best_fitness = toolbox.evaluate_champion(the_best)
-    the_best.fitness.values = the_best_fitness
+    the_best_fitness = toolbox.fully_evaluate(the_best)
+    the_best.raw_fitness = the_best_fitness[0]
 
     if the_best_fitness > previous_the_best_fitness:
         if verbose: print("New representative")

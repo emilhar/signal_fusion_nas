@@ -64,14 +64,14 @@ class EvolutionSettings:
     #   beta is how much you value uniqueness
     # these values change over time as generations come and go
 
-    ALPHA_BETA = [1.0, 0.0]
+    ALPHA_BETA = [0.7, 0.3]
     alpha = ALPHA_BETA [0]
     beta = ALPHA_BETA[1]
     BETA_SWITCH = 1/2
 
     # Evolution settings
-    CX_PROB: float = 0.0
-    MUTATION_PROB: float = 0.0
+    CX_PROB: float = 0.7
+    MUTATION_PROB: float = 0.4
 
     # King Of The Hill settings
     KOTH_ON = True
@@ -208,6 +208,23 @@ class FitnessFunctions:
         return fitness
     
     @staticmethod
+    def train_loss_normalize(individual, population):
+
+        losses = [x.fitness.values[0] for x in population]
+        highest_loss_val = max(losses)
+        lowest_loss_val = min(losses)
+        loss = individual.fitness.values[0]
+
+        if highest_loss_val == lowest_loss_val:
+            fitness = 1.0
+        else:
+            fitness = (highest_loss_val - loss) / (highest_loss_val - lowest_loss_val)
+
+        individual.fitness.values = (fitness,)
+
+        return fitness
+    
+    @staticmethod
     def branch_size(individual_performance):
         branches = individual_performance.get("Branches", [[]])
         
@@ -217,4 +234,5 @@ class FitnessFunctions:
             return 0.0
 
     fitness_function = train_loss
+    normalize = (True, train_loss_normalize)
 

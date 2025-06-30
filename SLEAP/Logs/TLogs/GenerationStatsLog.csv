@@ -1,4 +1,4 @@
-experiment_id,generation,population_size,fitness_mean,fitness_std,fitness_median,fitness_min,fitness_max,best_individual_id,tournament_of_champions
+Experiment_ID,Generation,Population_Size,Fitness_Mean,Fitness_Std,Fitness_Median,Fitness_Min,Fitness_Max,Best_Individual_ID,Tournament_Of_Champions
 0,0,20,0.3745464691215138,0.013022769671369304,0.3732420430070066,0.34900193174500965,0.40698455339153794,"(exp:0,gen:0,id:3), fitness:0.40698455339153794, kernels:[[885, 595, 375]]",False
 0,1,18,0.3862525450952678,0.018954910536892623,0.38481272360982904,0.3559539052496799,0.4296081277213353,"(exp:0,gen:1,id:14), fitness:0.4296081277213353, kernels:[[778, 1033, 765]]",False
 0,2,16,0.3804213272118096,0.017517662552987853,0.379580378250591,0.3451443569553806,0.4218533886583679,"(exp:0,gen:2,id:13), fitness:0.4218533886583679, kernels:[[873, 1213, 895]]",False

@@ -1,7 +1,6 @@
 import random
 import numpy as np
 from deap import base, creator, tools
-from math import pow
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
@@ -61,14 +60,14 @@ class KernelSizeEvolutionaryOptimizer:
 
         # Create wrapper functions for evaluation
         def evaluate_normal(individual):
-            return self.evaluate_individual(individual, champion=False)
+            return self.evaluate_individual(individual, full_training=False)
         
-        def evaluate_champion(individual):
-            return self.evaluate_individual(individual, champion=True)
+        def evaluate_fully(individual):
+            return self.evaluate_individual(individual, full_training=True)
         
         # Genetic operatorss
         self.toolbox.register("evaluate", evaluate_normal)
-        self.toolbox.register("evaluate_champion", evaluate_champion)
+        self.toolbox.register("fully_evaluate", evaluate_fully)
         
         # Statistics and Hall of Fame
         self.stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -109,37 +108,33 @@ class KernelSizeEvolutionaryOptimizer:
         for branch in branches:
             individual.append(branch)
 
-        return creator.Individual(individual)
-
-    def evaluate_individual(self, individual, champion=False):
+        individual = creator.Individual(branches)
+        individual.raw_fitness = None
+        individual.uniqueness = None
+        individual.alpha_beta_fitness = None
+        individual.fully_trained = False
+        return individual
+    
+    def evaluate_individual(self, individual, full_training):
         """Evaluate an individual by training a model
-        arg: individual
-        arg: champion Bool, if individual is partaking in a tournament of champions, then they train on the full dataset"""
-        
+        arg: individual"""
+
         # Train model and get performance
-        model_performance = self.create_individual(individual, champion)
-        
+        model_performance = self.create_trained_individual(individual, full_training)
         fitness_value = self.calculate_fitness(model_performance)
-        
+
+        individual.model_performance = model_performance
+        individual.raw_fitness = fitness_value
+        individual.fully_trained = full_training
+
         if ModelSettings.VERBOSE:
             print(f"Fitness: {fitness_value}")
 
-        if LoggingSettings.LOGGING:
-
-            train_loss = model_performance.get("Train Loss", 0.0),
-            test_loss = model_performance.get("Test Loss", 0.0),
-            precision = model_performance.get("Precision", 0.0),
-            recall = model_performance.get("Recall", 0.0),
-            f1 = model_performance.get("F1", 0.0),
-            accuracy = model_performance.get("Accuracy", 0.0),
-
-            self.LogManager.check_for_best_in_gen(individual, fitness_value, champion, train_loss, test_loss, precision, recall, f1, accuracy)
-        
         return (fitness_value,)
     
-    def create_individual(self, branches: list[list[int]], champion=False):
+    def create_trained_individual(self, branches: list[list[int]], full_training=False):
 
-        if champion:
+        if full_training:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_full_dataset()
             batch_size = EvolutionSettings.TOC_BATCH_SIZE
             epochs = EvolutionSettings.TOC_EPOCHS
@@ -151,7 +146,6 @@ class KernelSizeEvolutionaryOptimizer:
             learning_rate = ModelSettings.LEARNING_RATE
 
 
-        # Things marked with # come from the SDL
         new_model = TrainedModelMaker(
             branches = branches,
             name=f"{branches}, sleepstage: {self.sleepstage}, {batch_size}batch, {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
@@ -163,9 +157,10 @@ class KernelSizeEvolutionaryOptimizer:
             epochs= epochs,
             learning_rate=learning_rate,
             verbose= ModelSettings.VERBOSE,
-            N_SAMPLES= n_samples, #
+            N_SAMPLES= n_samples,
             pos_weight= pos_weight,
-            champion=champion) #
+            have_time_limit = (not full_training)
+        )
 
         return new_model.model_performance
 
@@ -173,36 +168,48 @@ class KernelSizeEvolutionaryOptimizer:
         return FitnessFunctions.fitness_function(model_performance)
 
     def select(self, individuals, k, tournsize):
+        
         if EvolutionSettings.CX_PROB == 0.0 and EvolutionSettings.MUTATION_PROB == 0.0:
+            if LoggingSettings.LOGGING:
+                for individual in individuals:
+                    self.LogManager.check_for_best_in_gen(individual)
+
             return individuals
+        
         self.chosen = []
         for _ in range(k):
             aspirants = [random.choice(individuals) for _ in range(tournsize)]
             next_up = max(aspirants, key=lambda x: self._selection_criteria(x, individuals))
             self.chosen.append(next_up)
 
+        if LoggingSettings.LOGGING:
+            for individual in individuals:
+                self.LogManager.check_for_best_in_gen(individual)
+
         return self.chosen
 
     def _selection_criteria(self, individual, population):
 
-        losses = [x.fitness.values[0] for x in population]
-        highest_loss_val = max(losses)
-        lowest_loss_val = min(losses)
-        loss = individual.fitness.values[0]
+        if FitnessFunctions.normalize[0] == True:
+            fitness = FitnessFunctions.normalize[1](individual, population)
 
-        if highest_loss_val == lowest_loss_val:
-            fitness = 1.0
-        else:
-            fitness = (highest_loss_val - loss) / (highest_loss_val - lowest_loss_val)
-                
         to_be_compared = [ind for ind in self.chosen if ind != individual]
         
         uniqueness = UniquenessFunctions.uniqueness_function(individual, to_be_compared)
         
         print(f"{fitness=}, {uniqueness=}")
-        return (EvolutionSettings.alpha * fitness + 
-                EvolutionSettings.beta * uniqueness)
-    
+
+        alpha_beta_fitness = (
+            EvolutionSettings.alpha * fitness + 
+            EvolutionSettings.beta * uniqueness
+        )
+
+        individual.uniqueness = uniqueness
+        individual.alpha_beta_fitness = alpha_beta_fitness
+        individual.fitness.values = (alpha_beta_fitness,)
+        
+        return alpha_beta_fitness
+
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
 
@@ -287,7 +294,7 @@ class KernelSizeEvolutionaryOptimizer:
         )
         
         return result_pop, self.hall_of_fame, self.stats
-    
+
     def log_results(self):
         
         def get_hall_of_fame_format(i):

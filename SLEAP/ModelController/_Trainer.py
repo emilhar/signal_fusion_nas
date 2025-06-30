@@ -7,13 +7,11 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
-import os
-import csv
 
 import datetime # For max training time
 from Globals import ModelSettings
 
-def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1, verbose=False, champion = False):
+def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1, verbose=False, have_time_limit = True):
 
     training_time_start = datetime.datetime.now()
 
@@ -87,7 +85,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
         if f1 > best_f1:
             best_f1 = f1
 
-        if not champion:
+        if have_time_limit:
             elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
             if elapsed > ModelSettings.MAX_TIME_SPENT_TRAINING:
                 if verbose:
