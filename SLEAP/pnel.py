@@ -16,22 +16,17 @@ def main():
     if device.type == "cpu":
         raise ValueError("Device is CPU, not GPU")
     
-    branches = [
-        [3, 3, 3],
-        [10, 10, 10],
-        [100, 100, 100],
-        [25, 10, 5],
-        [80, 40, 20],
-        [150, 50, 10],
-        [200, 80, 30],
-        [300, 100, 25],
-        [500, 200, 50],
-        [50, 20, 5],
-        [120, 60, 15],
-        [600, 300, 100]
-    ]
+    signal = input("Signal: ")
+    if signal not in ["Fpz-Cz", "Pz-Oz", "EMG submental", "EOG horizontal"]:
+        raise ValueError("Not valid signal")
 
-    epochs = 1
+    sleep_stage = input("Sleep stage: ")
+    if sleep_stage not in ["W", "N1", "N2", "N3", "REM"]:
+        raise ValueError("Not valid sleep stage")
+
+    
+    branches = []
+    epochs = 3
 
     PnEL, FtF1 = penelope(branches, epochs)
 
@@ -42,6 +37,17 @@ def main():
 def penelope(branches: list[list[int]], epochs: int) -> tuple[list[float], list[float]]:
     PnEL = []
     FtF1 = []
+
+    temp = []
+    if not branches:
+        for log_id in LoggingSettings.LOG_IDS:
+            with open(f"Logs/{log_id}_fully_trained_models.csv") as f:
+                df = pd.read_csv(f)
+                for b in df["name"]:
+                    temp.append(eval(b))
+
+    branches = temp
+
     for branch in branches:
         FtF1.append(fully_train(branch))
         PnEL.append(partial_train(branch, epochs))
@@ -178,8 +184,8 @@ def plot(PnEL, FtF1, labels, epochs):
     plt.title(f"Fully-trained F1 vs. Partial {epochs} Train Loss")
     plt.ylabel("FtF1")
     plt.xlabel(f"P{epochs}EL")
-    # plt.ylim(0.0, 1.0)
-    # plt.xlim(0.0, 1.5)
+    plt.ylim(0.0, 1.0)
+    plt.xlim(0.0, 1.5)
 
     plt.grid(True, linestyle="--", alpha=0.7)
 
@@ -203,4 +209,5 @@ if __name__ == "__main__":
             break
         else:
             print("❌ Please enter valid ID\n")
+    
     main()
