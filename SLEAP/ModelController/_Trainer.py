@@ -104,7 +104,8 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
             "F1": f1,
             "Accuracy": accuracy,
             "Learning rate": current_lr,
-            "Branches": kernel_sizes[0]}
+            "Branches": kernel_sizes[0],
+            "Best F1": best_f1}
 
     return output
 
