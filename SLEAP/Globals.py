@@ -28,7 +28,7 @@ class Signal:
 
 class ModelSettings:
     # Base
-    NUMBER_OF_BRANCHES = 1
+    NUMBER_OF_BRANCHES = 3
     BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
     KERNELS_PER_BRANCH = 3
@@ -47,8 +47,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 5
-    GENERATIONS: int = 100
+    POPULATION_SIZE: int = 30
+    GENERATIONS: int = 20
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
 

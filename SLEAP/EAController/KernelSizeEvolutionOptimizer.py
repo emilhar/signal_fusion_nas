@@ -113,6 +113,7 @@ class KernelSizeEvolutionaryOptimizer:
         individual.uniqueness = None
         individual.alpha_beta_fitness = None
         individual.fully_trained = False
+
         return individual
     
     def evaluate_individual(self, individual, full_training):

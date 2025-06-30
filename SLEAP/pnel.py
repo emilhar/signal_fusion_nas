@@ -17,24 +17,20 @@ def main():
         raise ValueError("Device is CPU, not GPU")
     
     branches = [
-        [1, 1, 1],
-        [50, 50, 50],
-        [400, 400, 400],
-        [1, 1, 1500],
-        [50, 25, 13],
-        [100, 50, 25],
-        [150, 75, 38], 
-        [200, 100, 50],
-        [250, 125, 63],
-        [300, 150, 75],
-        [350, 175, 88],
-        [400, 200, 100],
-        [450, 225, 113],
-        [500, 250, 125],
-        [400, 8, 8],
-        [22, 6, 6],
-        [270, 90, 30]
+        [3, 3, 3],
+        [10, 10, 10],
+        [100, 100, 100],
+        [25, 10, 5],
+        [80, 40, 20],
+        [150, 50, 10],
+        [200, 80, 30],
+        [300, 100, 25],
+        [500, 200, 50],
+        [50, 20, 5],
+        [120, 60, 15],
+        [600, 300, 100]
     ]
+
     epochs = 1
 
     PnEL, FtF1 = penelope(branches, epochs)
@@ -81,7 +77,7 @@ def fully_train(branch: list[int]) -> float:
             epochs=40, 
             output_period=5, 
             verbose=True,
-            champion=True # Time limit switch
+            have_time_limit=False # Time limit switch
         )
 
         new_row = pd.DataFrame([{"name": str(branch), "F1": res["F1"]}])
@@ -113,7 +109,7 @@ def partial_train(branch: list[int], epochs: int) -> float:
         epochs=epochs, 
         output_period=1, 
         verbose=True,
-        champion=True # Time limit switch
+        have_time_limit=False # Time limit switch
     )
 
     return res["Train Loss"]

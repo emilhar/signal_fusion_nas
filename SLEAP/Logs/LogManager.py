@@ -146,6 +146,7 @@ class LogManager:
         fully_trained = individual.fully_trained
         uniqueness = individual.uniqueness
         alpha_beta_fitness = individual.alpha_beta_fitness
+        ind_id = individual.individual_id
 
         train_loss = individual.model_performance.get("Train Loss", 0.0)
         test_loss = individual.model_performance.get("Test Loss", 0.0)
@@ -160,7 +161,7 @@ class LogManager:
         individual_log_entry = {
                 "Experiment_ID": self.Experiment_ID,
                 "Generation": generation,
-                "Individual_ID": LoggingSettings.current_individual_id,
+                "Individual_ID": ind_id,
                 "Individual": str(individual),
                 "Train_Loss": round(train_loss, 4),
                 "Test_Loss": round(test_loss, 4),
@@ -177,7 +178,6 @@ class LogManager:
         if (best["Fitness"] <= fitness):
             self.best_individual_in_generation = individual_log_entry
 
-        LoggingSettings.current_individual_id += 1
         if (fully_trained or LoggingSettings.LOG_ALL_INDIVIDUALS):
             self._write_with_config(filetype="Individual", config=individual_log_entry)
             return
