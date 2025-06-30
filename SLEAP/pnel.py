@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
+from Globals import LoggingSettings
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from ModelController._Trainer import train_model
 from ModelController.BranchSettings import get_branch_configs
@@ -49,17 +49,18 @@ def penelope(branches: list[list[int]], epochs: int) -> tuple[list[float], list[
     return PnEL, FtF1
 
 def fully_train(branch: list[int]) -> float:
-    with open("./Logs/T_fully_trained_models.csv") as f:
-        title = f"Training Full model with kernels {branch}"
+    title = f"Training Full model with kernels {branch}"
+    for log_id in LoggingSettings.LOG_IDS:
+        with open(f"./Logs/{log_id}_fully_trained_models.csv") as f:
+            df = pd.read_csv(f)
+            if (df["name"] == str(branch)).any():
+                print(f"Model {branch} already in {LoggingSettings.LOGGER_ID}_fully_train_models.csv, skipping...")
+                return df.loc[df["name"] == str(branch), "F1"].values[0]
+    
+    with open(f"./Logs/{LoggingSettings.LOGGER_ID}_fully_trained_models.csv") as f:
         print(f"\n{"="*len(title)}")
         print(title)
         print(f"{"="*len(title)}\n")
-        df = pd.read_csv(f)
-        if (df["name"] == str(branch)).any():
-            print(f"Model {branch} already in fully_train_models.csv, skipping...")
-            return df.loc[df["name"] == str(branch), "F1"].values[0]
-        
-
 
         model_args = get_branch_configs([branch], "Fully Trained", 3000)
         model = CNN_BinaryClassifier(**model_args).to(device)
@@ -84,7 +85,7 @@ def fully_train(branch: list[int]) -> float:
 
         new_row = pd.DataFrame([{"name": str(branch), "F1": res["F1"]}])
         df = pd.concat([df, new_row], ignore_index=True)
-        new_row.to_csv("./Logs/T_fully_trained_models.csv", mode="a", header=False, index=False)
+        new_row.to_csv(f"./Logs/{LoggingSettings.LOGGER_ID}_fully_trained_models.csv", mode="a", header=False, index=False)
     
     return res["Best F1"]
 
@@ -194,4 +195,12 @@ def plot(PnEL, FtF1, labels, epochs):
 
 
 if __name__ == "__main__":
+    while True:
+        print("\n",LoggingSettings.LOG_IDS)
+        potential_log_id = input("Enter logging ID: ").upper().strip()
+        if potential_log_id in LoggingSettings.LOG_IDS:
+            LoggingSettings.LOGGER_ID = potential_log_id
+            break
+        else:
+            print("❌ Please enter valid ID\n")
     main()
