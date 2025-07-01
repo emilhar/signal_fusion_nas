@@ -102,8 +102,8 @@ class LogManager:
             "TDB_On": EvolutionSettings.KOTH_ON,
             "TDB_Generations_Between": EvolutionSettings.KOTH_GENERATIONS_BETWEEN,
             "TDB_Tournament_Size": EvolutionSettings.KOTH_TOURNAMENT_SIZE,
-            "TDB_Training_Epochs": EvolutionSettings.KOTH_EPOCHS,
-            "TDB_Batch_Size": EvolutionSettings.KOTH_BATCH_SIZE,
+            "TDB_Training_Epochs": EvolutionSettings.FULL_TRAIN_EPOCHS,
+            "TDB_Batch_Size": EvolutionSettings.FULL_TRAIN_BATCH_SIZE,
             "Dataset_Name": DataSettings.DATASET,
             "Max_Time_Spent_Training": ModelSettings.MAX_TIME_SPENT_TRAINING,
             "Fitness_Function": FitnessFunctions.fitness_function.__name__,
@@ -171,8 +171,8 @@ class LogManager:
                 "Accuracy": round(accuracy, 4),
                 "Fitness": round(fitness, 4),
                 "Fully_Trained": fully_trained,
-                "Uniqueness": round(uniqueness, 4),
-                "AlphaBetaFitness": round(alpha_beta_fitness, 4),
+                "Uniqueness": round(uniqueness, 4) if uniqueness else None,
+                "AlphaBetaFitness": round(alpha_beta_fitness, 4) if alpha_beta_fitness else None,
         }
 
         if (best["Fitness"] <= fitness):

@@ -131,7 +131,7 @@ class SLEAP:
 
         if LoggingSettings.LOGGING:
             LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
-                    
+        
         self._print_experiment_settings()
         
         input("OK? ")

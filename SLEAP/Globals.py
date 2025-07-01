@@ -33,7 +33,7 @@ class ModelSettings:
     NUMBER_OF_KERNELS_RANGE = (1, 3)
     BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
-    MAX_TIME_SPENT_TRAINING = 3
+    MAX_TIME_SPENT_TRAINING = 6
     LEARNING_RATE = 5e-5
 
     # Kernel size constraints
@@ -47,7 +47,7 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 10
+    POPULATION_SIZE: int = 40
     GENERATIONS: int = 20
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
@@ -156,8 +156,8 @@ class FitnessFunctions:
     
     @staticmethod
     def train_loss(individual_performance):
-        fitness = individual_performance.get("Train Loss", 0.0)
-        return fitness
+        raw_fitness = individual_performance.get("Train Loss", 0.0)
+        return raw_fitness
     
     @staticmethod
     def train_loss_normalize(individual, population):
@@ -175,16 +175,7 @@ class FitnessFunctions:
         individual.fitness.values = (fitness,)
 
         return fitness
-    
-    @staticmethod
-    def branch_size(individual_performance):
-        branches = individual_performance.get("Branches", [[]])
-        
-        if sum(branches) < 1000:
-            return 1.0
-        else:
-            return 0.0
 
     fitness_function = train_loss
-    normalize = (True, train_loss_normalize)
+    normalize = train_loss_normalize
 

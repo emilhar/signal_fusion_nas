@@ -117,10 +117,10 @@ class KernelSizeEvolutionaryOptimizer:
 
         # Train model and get performance
         model_performance = self.create_trained_individual(individual, full_training)
-        fitness_value = self.calculate_fitness(model_performance)
+        raw_fitness = self.calculate_fitness(model_performance)
 
         individual.model_performance = model_performance
-        individual.raw_fitness = fitness_value
+        individual.raw_fitness = raw_fitness
         individual.fully_trained = full_training
         individual.individual_id = LoggingSettings.current_individual_id
 
@@ -128,9 +128,9 @@ class KernelSizeEvolutionaryOptimizer:
 
 
         if ModelSettings.VERBOSE:
-            print(f"Fitness: {fitness_value}")
+            print(f"Fitness: {raw_fitness}")
 
-        return (fitness_value,)
+        return (raw_fitness,)
     
     def create_trained_individual(self, branches: list[list[int]], full_training=False):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
@@ -183,6 +183,7 @@ class KernelSizeEvolutionaryOptimizer:
             next_up = max(aspirants, key=lambda x: self._selection_criteria(x, population))
             self.chosen.append(next_up)
 
+        print(individual, individual.fitness.values[0])
         if LoggingSettings.LOGGING:
             for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)
@@ -191,9 +192,7 @@ class KernelSizeEvolutionaryOptimizer:
 
     def _selection_criteria(self, individual, population):
 
-        if FitnessFunctions.normalize[0] == True:
-            fitness = FitnessFunctions.normalize[1](individual, population)
-
+        fitness = FitnessFunctions.normalize(individual, population)
         to_be_compared = [ind for ind in self.chosen if ind != individual]
         
         uniqueness = UniquenessFunctions.uniqueness_function(individual, to_be_compared)
@@ -278,7 +277,7 @@ class KernelSizeEvolutionaryOptimizer:
             if mutation_type == "add_branch":
                 if len(mutant) < ModelSettings.NUMBER_OF_BRANCHES_RANGE[1]:
                     branch_length = random.randint(*ModelSettings.NUMBER_OF_KERNELS_RANGE)
-                    first_kernel = max(1, random.choice(range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20) - 1))
+                    first_kernel = max(1, random.choice(range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20))-1)
                     new_branch = [first_kernel]
                     for _ in range(branch_length - 1):
                         new_branch.append(max( new_branch[-1] // 2, 1))

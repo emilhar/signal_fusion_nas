@@ -74,24 +74,25 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
         kernel_sizes = []
         for branch in model.branches.values():
             kernel_sizes.append(_get_kernel_sizes(branch))
+                
+        if f1 > best_f1:
+            best_f1 = f1
+
+        elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
+        if have_time_limit:
+            if elapsed > ModelSettings.MAX_TIME_SPENT_TRAINING:
+                if verbose:
+                    print(f"Stopping training: elapsed time {elapsed:.1f}s > max {ModelSettings.MAX_TIME_SPENT_TRAINING}s")
+                break
+
         if verbose:
             if epoch % output_period == 0 or epoch == epochs-1:
                 print(f"Epoch {epoch+1:2}/{epochs} -> "
                     f"Train Loss: {train_loss:.4f} | Test Loss: {test_loss:2.4f} | "
                     f"Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f} | "
                     f"Branches: { kernel_sizes} "
+                    f"Time: {round(elapsed, 3)}sec "
                     f"Accuracy: {accuracy:.3f} ---> Learning rate: \x1b[31m{current_lr}\x1b[0m")
-                
-        if f1 > best_f1:
-            best_f1 = f1
-
-        if have_time_limit:
-            elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
-            if elapsed > ModelSettings.MAX_TIME_SPENT_TRAINING:
-                if verbose:
-                    print(f"Stopping training: elapsed time {elapsed:.1f}s > max {ModelSettings.MAX_TIME_SPENT_TRAINING}s")
-                break
-
 
     kernel_sizes = []
     for branch in model.branches.values():
@@ -105,7 +106,8 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
             "Accuracy": accuracy,
             "Learning rate": current_lr,
             "Branches": kernel_sizes[0],
-            "Best F1": best_f1}
+            "Best F1": best_f1,
+            "Time": elapsed}
 
     return output
 
