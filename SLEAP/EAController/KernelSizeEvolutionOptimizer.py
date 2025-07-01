@@ -115,8 +115,6 @@ class KernelSizeEvolutionaryOptimizer:
         """Evaluate an individual by training a model
         arg: individual"""
 
-        print("INDIVIDUAL", individual)
-
         # Train model and get performance
         model_performance = self.create_trained_individual(individual, full_training)
         fitness_value = self.calculate_fitness(model_performance)
@@ -124,6 +122,10 @@ class KernelSizeEvolutionaryOptimizer:
         individual.model_performance = model_performance
         individual.raw_fitness = fitness_value
         individual.fully_trained = full_training
+        individual.individual_id = LoggingSettings.current_individual_id
+
+        LoggingSettings.current_individual_id += 1
+
 
         if ModelSettings.VERBOSE:
             print(f"Fitness: {fitness_value}")
@@ -249,9 +251,8 @@ class KernelSizeEvolutionaryOptimizer:
         """Crossover function for when one individual has exactly 1 branch, but the other has many branches.
         A single branch is chosen from the larger individual, then small_branch_crossover is performed on those branches"""
         branch_choice_index = random.randrange(len(other)-1)
-        single_branch, new_branch_from_larger = self._small_branch_crossover(single_branch[0], other[branch_choice_index])
 
-        other[branch_choice_index] = new_branch_from_larger
+        other[branch_choice_index], single_branch[0] = self._small_branch_crossover(single_branch[0], other[branch_choice_index])
 
         return single_branch, other
         
@@ -277,10 +278,10 @@ class KernelSizeEvolutionaryOptimizer:
             if mutation_type == "add_branch":
                 if len(mutant) < ModelSettings.NUMBER_OF_BRANCHES_RANGE[1]:
                     branch_length = random.randint(*ModelSettings.NUMBER_OF_KERNELS_RANGE)
-                    first_kernel = random.choice(range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20))
+                    first_kernel = max(1, random.choice(range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20) - 1))
                     new_branch = [first_kernel]
                     for _ in range(branch_length - 1):
-                        new_branch.append(new_branch[-1] // 2)
+                        new_branch.append(max( new_branch[-1] // 2, 1))
                     mutant.append(new_branch)
 
             elif mutation_type == "remove_branch":

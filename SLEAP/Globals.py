@@ -66,7 +66,7 @@ class EvolutionSettings:
     #   beta is how much you value uniqueness
     # these values change over time as generations come and go
 
-    ALPHA_BETA = [0.7, 0.3]
+    ALPHA_BETA = [1.0, 0.0]
     alpha = ALPHA_BETA [0]
     beta = ALPHA_BETA[1]
     BETA_SWITCH = 1/2
@@ -110,8 +110,6 @@ class UniquenessFunctions:
     @staticmethod
     def gargoyle(individual, comparisons):
         if not comparisons:
-            if ModelSettings.VERBOSE:
-                print(f"Missing comparisons, giving full uniqueness score to {individual}")
             return 1.0
 
         min_distance = float("inf")
@@ -144,8 +142,6 @@ class UniquenessFunctions:
 
         steepness = 0.01
         transition = ModelSettings.MAX_KERNEL_SIZE / pow(EvolutionSettings.POPULATION_SIZE, 1/3)
-
-        print(min_distance)
 
         return 1 / (1 + math.exp(-steepness * (min_distance - transition)))
 
