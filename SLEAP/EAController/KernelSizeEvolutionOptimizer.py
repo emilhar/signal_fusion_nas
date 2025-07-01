@@ -44,7 +44,7 @@ class KernelSizeEvolutionaryOptimizer:
     def setup_deap(self):
         """Setup DEAP framework"""
         # Create fitness and individual classes
-        creator.create("FitnessMax", base.Fitness, weights=(1.0,))  # Maximizing fitness
+        creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMax)
         
         self.toolbox = base.Toolbox()
@@ -183,7 +183,8 @@ class KernelSizeEvolutionaryOptimizer:
             next_up = max(aspirants, key=lambda x: self._selection_criteria(x, population))
             self.chosen.append(next_up)
 
-        print(individual, individual.fitness.values[0])
+        for individual in population:
+            print(individual, individual.fitness.values[0])
         if LoggingSettings.LOGGING:
             for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)

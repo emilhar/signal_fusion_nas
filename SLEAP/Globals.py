@@ -175,7 +175,11 @@ class FitnessFunctions:
         individual.fitness.values = (fitness,)
 
         return fitness
+    
+    @staticmethod
+    def no_normalization(individual, population):
+        return individual.fitness.values[0]
 
     fitness_function = train_loss
-    normalize = train_loss_normalize
+    normalize = no_normalization
 

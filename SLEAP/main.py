@@ -220,8 +220,7 @@ class SLEAP:
 
         print("\n💖 Fitness Settings")
         print(f"{'Fitness function:':30} {FitnessFunctions.fitness_function.__name__}")
-        print(f"{'Normalize fitness:':30} {FitnessFunctions.normalize[0]}")
-        print(f"{'Normalization function:':30} {FitnessFunctions.normalize[1].__name__}")
+        print(f"{'Normalization function:':30} {FitnessFunctions.normalize.__name__}")
 
 
 
