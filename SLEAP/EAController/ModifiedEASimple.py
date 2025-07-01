@@ -118,6 +118,8 @@ def varAnd(population, toolbox, cxpb, mutpb):
     # Apply crossover and mutation on the offspring
     for i in range(1, len(offspring), 2):
         if random.random() < cxpb:
+
+            print(offspring[i - 1], offspring[i])
             offspring[i - 1], offspring[i] = toolbox.mate(offspring[i - 1],
                                                           offspring[i])
             del offspring[i - 1].fitness.values, offspring[i].fitness.values

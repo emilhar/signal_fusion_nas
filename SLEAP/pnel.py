@@ -24,7 +24,19 @@ def main():
     if sleep_stage not in ["W", "N1", "N2", "N3", "REM"]:
         raise ValueError("Not valid sleep stage")
 
-    branches = []
+    branches = [
+    [1, 1500, 1],
+    [17, 999, 42],
+    [5, 5, 1500],
+    [123, 456, 789],
+    [10, 1000, 10],
+    [1500, 1, 1500],
+    [2, 4, 8, 16, 32],
+    [777, 777, 777],
+    [64, 128, 256],
+    [1, 2, 3,]
+    ]
+
     epochs = 3
 
     PnEL, FtF1 = penelope(branches, epochs, signal, sleep_stage)

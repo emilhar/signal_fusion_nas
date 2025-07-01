@@ -3,6 +3,7 @@ These names are used by many classes, good idea to keep them global
 """
 
 import math
+import copy
 
 class Sleepstage:
     WAKE = "wake"
@@ -28,15 +29,14 @@ class Signal:
 
 class ModelSettings:
     # Base
-    NUMBER_OF_BRANCHES = 3
+    NUMBER_OF_BRANCHES_RANGE = (1, 4)
+    NUMBER_OF_KERNELS_RANGE = (1, 3)
     BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
-    KERNELS_PER_BRANCH = 3
     MAX_TIME_SPENT_TRAINING = 3
     LEARNING_RATE = 5e-5
 
     # Kernel size constraints
-    SORT_KERNELS = False
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = None
 
@@ -47,10 +47,12 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 30
+    POPULATION_SIZE: int = 10
     GENERATIONS: int = 20
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
+
+    MAX_NUMBER_OF_MUTATIONS = 3
 
     # Data split
     DATA_POINTS_PER_INDIVIUAL = 4300
@@ -73,13 +75,13 @@ class EvolutionSettings:
     CX_PROB: float = 0.7
     MUTATION_PROB: float = 0.4
 
-    # King Of The Hill settings
+    # Full training settings
     KOTH_ON = True
     KOTH_GENERATIONS_BETWEEN = 1600000
     KOTH_TOURNAMENT_SIZE = 0.30
-    KOTH_BATCH_SIZE = 128
-    KOTH_EPOCHS = 2
-    KOTH_LEARNING_RATE_MULTIPLIER = 10
+    FULL_TRAIN_BATCH_SIZE = 128
+    FULL_TRAIN_EPOCHS = 20
+    FULL_TRAIN_LEARNING_RATE_MULTIPLIER = 10
 
 class DataSettings:
     class DatasetNames:
@@ -104,97 +106,51 @@ class LoggingSettings:
     experiment_name = "My lovely experiment"
 
 class UniquenessFunctions:
-    @staticmethod
-    def manhattan_distance(individual, comparisons):
-        if not comparisons:
-            return 1
 
-        def distance(a, b):
-            return sum(abs(x - y) for x, y in zip(a, b))
-    
-        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
-                ModelSettings.MAX_KERNEL_SIZE - ModelSettings.MIN_KERNEL_SIZE
-            )
-
-        uniqueness_scores = [
-            distance(individual[0], other[0])
-            for other in comparisons
-        ]
-
-        avg_distance = sum(uniqueness_scores) / len(uniqueness_scores)
-        
-        # Normalize uniqueness to [0,1]
-        uniqueness = avg_distance / max_possible_dist if max_possible_dist > 0 else 0.0
-        return uniqueness
-
-    @staticmethod
-    def _reverse_manhattan_distance(individual, comparisons):
-
-        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
-                ModelSettings.MAX_KERNEL_SIZE - ModelSettings.MIN_KERNEL_SIZE
-            )
-
-        def distance(a, b):
-            dist = max_possible_dist - sum(abs(x - y) for x, y in zip(a, b))
-            return dist / max_possible_dist
-
-        uniqueness_scores = [
-            distance(individual[0], other[0])
-            for other in comparisons
-        ]
-        sum_denominator = sum(uniqueness_scores)
-
-        uniqueness = 1 / (1+sum_denominator)
-        return uniqueness
-
-    @staticmethod
-    def punishing_reverse_manhattan(individual, comparisons):
-        if not comparisons:
-            return 1.0
-
-        max_possible_dist = ModelSettings.KERNELS_PER_BRANCH * (
-            ModelSettings.MAX_KERNEL_SIZE - ModelSettings.MIN_KERNEL_SIZE
-        )
-
-        def normalized_distance(a, b):
-            dist = sum(abs(x - y) for x, y in zip(a, b))
-            return dist / max_possible_dist
-
-        # Use inverse-square to punish close neighbors harshly
-        uniqueness_scores = [
-            1 / (normalized_distance(individual[0], other[0]) + 1e-6)**2  # avoid div by 0
-            for other in comparisons
-        ]
-
-        avg_inverse_penalty = sum(uniqueness_scores) / len(uniqueness_scores)
-
-        # Invert so that large penalties -> low uniqueness
-        uniqueness = 1 / (1 + avg_inverse_penalty)
-        return uniqueness
-    
     @staticmethod
     def gargoyle(individual, comparisons):
-        
         if not comparisons:
+            if ModelSettings.VERBOSE:
+                print(f"Missing comparisons, giving full uniqueness score to {individual}")
             return 1.0
 
         min_distance = float("inf")
+        sorted_individual_copy = sorted(copy.deepcopy(individual), key=lambda x: len(x))
 
         for other in comparisons:
-            dist = math.sqrt(
-                (individual[0][0] - other[0][0]) ** 2 +
-                (individual[0][1] - other[0][1]) ** 2 + 
-                (individual[0][2] - other[0][2]) ** 2
-            )
+            sorted_other_copy = sorted(copy.deepcopy(other), key=lambda x: len(x))
+            max_branch_count = max(len(sorted_individual_copy), len(sorted_other_copy))
+
+            total_distance = 0
+
+            for i in range(max_branch_count):
+                # Get branches or empty list if not present
+                branch_a = sorted_individual_copy[i] if i < len(sorted_individual_copy) else []
+                branch_b = sorted_other_copy[i] if i < len(sorted_other_copy) else []
+
+                max_len = max(len(branch_a), len(branch_b))
+
+                # Pad with zeros
+                padded_a = branch_a + [0] * (max_len - len(branch_a))
+                padded_b = branch_b + [0] * (max_len - len(branch_b))
+
+                # Euclidean distance between the padded branches
+                total_distance += sum((a - b) ** 2 for a, b in zip(padded_a, padded_b))
+
+            dist = math.sqrt(total_distance)
+
             if dist < min_distance:
                 min_distance = dist
 
         steepness = 0.01
-        transition = int(ModelSettings.MAX_KERNEL_SIZE  / pow(EvolutionSettings.POPULATION_SIZE, 1/3))
+        transition = ModelSettings.MAX_KERNEL_SIZE / pow(EvolutionSettings.POPULATION_SIZE, 1/3)
+
+        print(min_distance)
 
         return 1 / (1 + math.exp(-steepness * (min_distance - transition)))
 
     uniqueness_function = gargoyle
+
 
 class FitnessFunctions:
     @staticmethod

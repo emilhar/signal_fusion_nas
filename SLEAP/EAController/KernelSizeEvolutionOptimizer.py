@@ -80,33 +80,28 @@ class KernelSizeEvolutionaryOptimizer:
         self.hall_of_fame = tools.HallOfFame(EvolutionSettings.HALL_OF_FAME_MEMBERS)
     
     def generate_individual(self):
-        """Generate a random individual with kernel branches"""
+        """Generate a random individual with kernel branches.
+        Only used to create the first generation of individuals"""
 
         branches = []
 
-        if ModelSettings.SORT_KERNELS:
-            k_max = ModelSettings.MAX_KERNEL_SIZE
-            for _ in range(ModelSettings.NUMBER_OF_BRANCHES):
-                branch = []
-                for _ in range(ModelSettings.KERNELS_PER_BRANCH):
-                    kernel = random.randint(ModelSettings.MIN_KERNEL_SIZE, k_max)
-                    branch.append(kernel)
-                    if kernel < k_max:
-                        k_max = kernel
+        number_of_branches = random.randint( ModelSettings.NUMBER_OF_BRANCHES_RANGE[0], ModelSettings.NUMBER_OF_BRANCHES_RANGE[1])
+        kernel_per_branch = [ random.randint( ModelSettings.NUMBER_OF_KERNELS_RANGE[0], ModelSettings.NUMBER_OF_KERNELS_RANGE[1]) for _ in range(number_of_branches) ]
 
-                branches.append(branch)
+        for i in range(number_of_branches):
 
-        else:
-            for _ in range( ModelSettings.NUMBER_OF_BRANCHES ):
-                branch =  [random.randint(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
-                branches.append(branch)
+            first = max(
+                1,
+                random.choice( range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20)) - 1)
+            branch = [first]
+
+            for _ in range(kernel_per_branch[i]-1):
+                item  = max( branch[-1] // 2, 1)
+                branch.append(item)
+                
+            branches.append(branch)
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
-
-        individual = []
-
-        for branch in branches:
-            individual.append(branch)
 
         individual = creator.Individual(branches)
         individual.raw_fitness = None
@@ -119,6 +114,8 @@ class KernelSizeEvolutionaryOptimizer:
     def evaluate_individual(self, individual, full_training):
         """Evaluate an individual by training a model
         arg: individual"""
+
+        print("INDIVIDUAL", individual)
 
         # Train model and get performance
         model_performance = self.create_trained_individual(individual, full_training)
@@ -134,12 +131,13 @@ class KernelSizeEvolutionaryOptimizer:
         return (fitness_value,)
     
     def create_trained_individual(self, branches: list[list[int]], full_training=False):
+        """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
         if full_training:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_full_dataset()
-            batch_size = EvolutionSettings.TOC_BATCH_SIZE
-            epochs = EvolutionSettings.TOC_EPOCHS
-            learning_rate = ModelSettings.LEARNING_RATE * EvolutionSettings.TOC_LEARNING_RATE_MULTIPLIER
+            batch_size = EvolutionSettings.FULL_TRAIN_BATCH_SIZE
+            epochs = EvolutionSettings.FULL_TRAIN_EPOCHS
+            learning_rate = ModelSettings.LEARNING_RATE * EvolutionSettings.FULL_TRAIN_LEARNING_RATE_MULTIPLIER
         else:
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
             batch_size = ModelSettings.BATCH_SIZE
@@ -168,23 +166,23 @@ class KernelSizeEvolutionaryOptimizer:
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)
 
-    def select(self, individuals, k, tournsize):
+    def select(self, population, k, tournsize):
         
         if EvolutionSettings.CX_PROB == 0.0 and EvolutionSettings.MUTATION_PROB == 0.0:
             if LoggingSettings.LOGGING:
-                for individual in individuals:
+                for individual in population:
                     self.LogManager.check_for_best_in_gen(individual)
 
-            return individuals
+            return population
         
         self.chosen = []
         for _ in range(k):
-            aspirants = [random.choice(individuals) for _ in range(tournsize)]
-            next_up = max(aspirants, key=lambda x: self._selection_criteria(x, individuals))
+            aspirants = [random.choice(population) for _ in range(tournsize)]
+            next_up = max(aspirants, key=lambda x: self._selection_criteria(x, population))
             self.chosen.append(next_up)
 
         if LoggingSettings.LOGGING:
-            for individual in individuals:
+            for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)
 
         return self.chosen
@@ -197,8 +195,6 @@ class KernelSizeEvolutionaryOptimizer:
         to_be_compared = [ind for ind in self.chosen if ind != individual]
         
         uniqueness = UniquenessFunctions.uniqueness_function(individual, to_be_compared)
-        
-        print(f"{fitness=}, {uniqueness=}")
 
         alpha_beta_fitness = (
             EvolutionSettings.alpha * fitness + 
@@ -214,64 +210,108 @@ class KernelSizeEvolutionaryOptimizer:
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
 
-        num_branches = len(ind1)
-        assert len(ind2) == num_branches, "Both individuals must have the same number of branches"
+        branch_count_ind1 = len(ind1)
+        branch_count_ind2 = len(ind2)
 
-        for i in range(num_branches):
-            branch1 = ind1[i]
-            branch2 = ind2[i]
+        # Both individuals have >1 branch
+        if ( (branch_count_ind1 > 1) and (branch_count_ind2 > 1) ):
+            return self._large_branch_crossover(ind1, ind2)
+            
+        # Both individuals have exactly 1 branch
+        elif ( (branch_count_ind1 == 1) and (branch_count_ind2 == 1) ):
+            return self._small_branch_crossover(ind1, ind2)
 
-            if not branch1 or not branch2:
-                continue  # Skip empty branches
+        # Exactly one individual has 1 branch while other has >1 branches
+        if branch_count_ind1 == 1:
+            single_branch = ind1
+            other = ind2
 
-            for j in range(len(branch1)):
-                head1 = branch1[j]
-                head2 = branch2[j]
+        elif branch_count_ind2 == 1:
+            single_branch = ind2
+            other = ind1
 
-                favorite = random.choice([head1, head2])
-                diff = abs(head1 - head2)
+        return self._medium_branch_crossover(single_branch, other)
 
-                # Gaussian noise
-                random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
-                percentage = random_val / 100.0
+    def _large_branch_crossover(self, ind1, ind2):
+        """Crossover function for individuals when BOTH individuals have more than one branch.
+        Individuals trade a single branch"""
 
-                new_head1 = max(ModelSettings.MIN_KERNEL_SIZE, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
-                new_head2 = max(ModelSettings.MIN_KERNEL_SIZE, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+        # Decide branch to trade
+        range_max = min(len(ind1), len(ind2)) - 1
+        trade_branch_index = random.randrange(range_max)
 
-                branch1[j] = new_head1
-                branch2[j] = new_head2
-
-                if ModelSettings.SORT_KERNELS:
-                    branch1.sort(reverse=True)
-                    branch2.sort(reverse=True)
-
-            # Update branches
-            ind1[i] = branch1
-            ind2[i] = branch2
+        # Trade branches
+        ind1[trade_branch_index], ind2[trade_branch_index] = ind2[trade_branch_index], ind1[trade_branch_index]
 
         return ind1, ind2
 
+    def _medium_branch_crossover(self, single_branch, other):
+        """Crossover function for when one individual has exactly 1 branch, but the other has many branches.
+        A single branch is chosen from the larger individual, then small_branch_crossover is performed on those branches"""
+        branch_choice_index = random.randrange(len(other)-1)
+        single_branch, new_branch_from_larger = self._small_branch_crossover(single_branch[0], other[branch_choice_index])
+
+        other[branch_choice_index] = new_branch_from_larger
+
+        return single_branch, other
+        
+    def _small_branch_crossover(self, ind1, ind2):
+        """Crossover function for when both individuals have exactly 1 branch.
+        Picks one branch"""
+        picked = random.choice([ind1, ind2])
+    
+        return picked, picked
+
     def mutate(self, individual):
-        """Custom mutation for kernel sizes and branch lengths"""
+        """Mutate an individual by randomly modifying branches or kernel sizes."""
+        
+        # Clone the individual to avoid in-place issues
+        mutant = creator.Individual([branch[:] for branch in individual])
+        
+        number_of_mutations = random.randint(0, EvolutionSettings.MAX_NUMBER_OF_MUTATIONS)
+        mutation_types = ["add_branch", "remove_branch", "add_kernel", "remove_kernel", "change_kernel"]
 
-        mutation_range = 0.2
+        for _ in range(number_of_mutations):
+            mutation_type = random.choice(mutation_types)
+        
+            if mutation_type == "add_branch":
+                if len(mutant) < ModelSettings.NUMBER_OF_BRANCHES_RANGE[1]:
+                    branch_length = random.randint(*ModelSettings.NUMBER_OF_KERNELS_RANGE)
+                    first_kernel = random.choice(range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20))
+                    new_branch = [first_kernel]
+                    for _ in range(branch_length - 1):
+                        new_branch.append(new_branch[-1] // 2)
+                    mutant.append(new_branch)
 
-        for branch in individual:
-            for i in range(len(branch)):
-                top_of_range = max(2, round(branch[i] * mutation_range))
-                delta = random.randint(1, top_of_range)
+            elif mutation_type == "remove_branch":
+                if len(mutant) > ModelSettings.NUMBER_OF_BRANCHES_RANGE[0]:
+                    mutant.pop(random.randrange(len(mutant)))
 
-                if random.random() < 0.5:
-                    delta = -delta
+            elif mutation_type == "add_kernel":
+                branch_idx = random.randrange(len(mutant))
+                if len(mutant[branch_idx]) < ModelSettings.NUMBER_OF_KERNELS_RANGE[1]:
+                    new_kernel = max(ModelSettings.MIN_KERNEL_SIZE, mutant[branch_idx][-1] // 2)
+                    mutant[branch_idx].append(new_kernel)
 
-                new_value = branch[i] + delta
-                new_value = max(ModelSettings.MIN_KERNEL_SIZE, min(ModelSettings.MAX_KERNEL_SIZE, new_value))
-                branch[i] = new_value
+            elif mutation_type == "remove_kernel":
+                branch_idx = random.randrange(len(mutant))
+                if len(mutant[branch_idx]) > ModelSettings.NUMBER_OF_KERNELS_RANGE[0]:
+                    mutant[branch_idx].pop(random.randrange(len(mutant[branch_idx])))
 
-            if ModelSettings.SORT_KERNELS:
-                branch.sort(reverse=True)
+            elif mutation_type == "change_kernel":
+                branch_idx = random.randrange(len(mutant))
+                kernel_idx = random.randrange(len(mutant[branch_idx]))
+                current_value = mutant[branch_idx][kernel_idx]
+                change = random.choice([-100, -50, 50, 100])
+                new_value = min(max(current_value + change, ModelSettings.MIN_KERNEL_SIZE), ModelSettings.MAX_KERNEL_SIZE)
+                mutant[branch_idx][kernel_idx] = new_value
 
-        return individual,
+        mutant.raw_fitness = None
+        mutant.uniqueness = None
+        mutant.alpha_beta_fitness = None
+        mutant.fully_trained = False
+
+        return (mutant,)
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
