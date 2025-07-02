@@ -18,6 +18,11 @@ from ModelController.ModelMaker import CNN_BinaryClassifier
 from ModelController._Trainer import train_model
 from ModelController.BranchSettings import get_branch_configs
 
+"""
+Penelope
+Partial-training for N-Epoch training Loss .py
+"""
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def main():
@@ -36,15 +41,16 @@ def main():
     # if sleep_stage not in ["W", "N1", "N2", "N3", "REM"]:
     #     raise ValueError("Not valid sleep stage")
 
-    if r := input("Random branches? (y/n) ").lower().endswith("y"):
-        branches = get_branches(gen_random=True, size=24, seed=42)
-        branches.append([[300, 50, 10, 10], [100, 20, 20, 10], [20, 4, 4, 4]]) # Four convolutional behemoth
-    else:
-        branches = get_branches()
+    branches = [ [[300, 150, 75], [60, 30, 15]], [[450, 112, 56, 1], [540, 270], [1440, 360]], [[570], [50, 75, 37], [760, 380, 190]]]
 
     for epochs in [1]:
         for signal in ["Fpz-Cz", "Pz-Oz", "EMG_submental", "EOG_horizontal"]:
+            if signal != "Pz-Oz":
+                continue
             for sleep_stage in ["W", "N1", "N2", "N3", "REM"]:
+                if sleep_stage != "N3":
+                    continue
+                print(signal, sleep_stage)
                 PnEL, FtF1, FtEL = penelope(branches, epochs, signal, sleep_stage)
 
                 title = f"Fully-trained F1 vs. Partial {epochs} Epoch Loss (train)"
