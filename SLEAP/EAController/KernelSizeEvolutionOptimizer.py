@@ -11,9 +11,7 @@ from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
 
-    def __init__(self, 
-                 sleepstage: str, 
-                 signal_type: str):
+    def __init__(self, sleepstage: str, signal_type: str):
         
         # Base
         self.sleepstage = sleepstage
@@ -23,18 +21,16 @@ class KernelSizeEvolutionaryOptimizer:
             ModelSettings.MAX_KERNEL_SIZE = self.find_max_kernel_size()
             if ModelSettings.VERBOSE: print(f"Max kernel size set at {ModelSettings.MAX_KERNEL_SIZE}")
         
-
         self.SDL = SleepDataLoader(
             signal_type=self.signal_type, 
-            sleepstage=self.sleepstage,
-            batch_size=ModelSettings.BATCH_SIZE)
+            sleepstage=self.sleepstage)
 
         if LoggingSettings.LOGGING:
             self.LogManager = LogManager()
         else:
             self.LogManager = None
 
-        self.chosen=[]
+        self.chosen_for_next_generation = []
 
         self.setup_deap()
     
@@ -44,9 +40,13 @@ class KernelSizeEvolutionaryOptimizer:
     def setup_deap(self):
         """Setup DEAP framework"""
         # Create fitness and individual classes
-        creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
-        creator.create("Individual", list, fitness=creator.FitnessMax)
-        
+        if FitnessFunctions.MINIMIZE_FITNESS:
+            creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+            creator.create("Individual", list, fitness=creator.FitnessMin)
+        else:
+            creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+            creator.create("Individual", list, fitness=creator.FitnessMax)
+
         self.toolbox = base.Toolbox()
         
         # Individual generation
@@ -56,7 +56,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", self.select, tournsize=EvolutionSettings.SELECTION_TOURNAMENT_SIZE)
+        self.toolbox.register("select", self.select)
 
         # Create wrapper functions for evaluation
         def evaluate_normal(individual):
@@ -84,17 +84,13 @@ class KernelSizeEvolutionaryOptimizer:
         Only used to create the first generation of individuals"""
 
         branches = []
-
         number_of_branches = random.randint( ModelSettings.NUMBER_OF_BRANCHES_RANGE[0], ModelSettings.NUMBER_OF_BRANCHES_RANGE[1])
         kernel_per_branch = [ random.randint( ModelSettings.NUMBER_OF_KERNELS_RANGE[0], ModelSettings.NUMBER_OF_KERNELS_RANGE[1]) for _ in range(number_of_branches) ]
 
         for i in range(number_of_branches):
-
-            first = max(
-                1,
-                random.choice( range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20)) - 1)
+            first = max(1, random.choice( range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20) ) - 1)
             branch = [first]
-
+            
             for _ in range(kernel_per_branch[i]-1):
                 item  = max( branch[-1] // 2, 1)
                 branch.append(item)
@@ -106,8 +102,10 @@ class KernelSizeEvolutionaryOptimizer:
         individual = creator.Individual(branches)
         individual.raw_fitness = None
         individual.uniqueness = None
-        individual.alpha_beta_fitness = None
         individual.fully_trained = False
+
+        if EvolutionSettings.beta < 0:
+            individual.alpha_beta_fitness = None
 
         return individual
     
@@ -168,44 +166,49 @@ class KernelSizeEvolutionaryOptimizer:
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)
 
-    def select(self, population, k, tournsize):
+    def select(self, population, k):
+        """
+        Selects the best k individuals based on updated selection criteria 
+        that includes both fitness and uniqueness. Uniqueness is recalculated 
+        every time a new individual is added.
+        """
+        if k <= 0:
+            return []
         
-        if EvolutionSettings.CX_PROB == 0.0 and EvolutionSettings.MUTATION_PROB == 0.0:
-            if LoggingSettings.LOGGING:
-                for individual in population:
-                    self.LogManager.check_for_best_in_gen(individual)
+        min_or_max = min if FitnessFunctions.MINIMIZE_FITNESS else max
+        
+        # Normalize all fitnesses:
+        map(lambda x: FitnessFunctions.normalization_function(x, population), population)
 
-            return population
-        
-        self.chosen = []
+        self.chosen_for_next_generation = []
+        remaining = population[:]
+
         for _ in range(k):
-            aspirants = [random.choice(population) for _ in range(tournsize)]
-            next_up = max(aspirants, key=lambda x: self._selection_criteria(x, population))
-            self.chosen.append(next_up)
+            best_individual = min_or_max(remaining, 
+                key=lambda ind: self._selection_criteria(ind))
 
-        for individual in population:
-            print(individual, individual.fitness.values[0])
+            self.chosen_for_next_generation.append(best_individual)
+            remaining.remove(best_individual)
+
         if LoggingSettings.LOGGING:
             for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)
 
-        return self.chosen
+        return self.chosen_for_next_generation
 
-    def _selection_criteria(self, individual, population):
-
-        fitness = FitnessFunctions.normalize(individual, population)
-        to_be_compared = [ind for ind in self.chosen if ind != individual]
+    def _selection_criteria(self, individual):
+        if self.chosen_for_next_generation == []:
+            return individual.fitness.values[0]
         
-        uniqueness = UniquenessFunctions.uniqueness_function(individual, to_be_compared)
+        uniqueness = UniquenessFunctions.uniqueness_function(individual, self.chosen_for_next_generation)
 
         alpha_beta_fitness = (
-            EvolutionSettings.alpha * fitness + 
+            EvolutionSettings.alpha * individual.fitness.values[0] + 
             EvolutionSettings.beta * uniqueness
         )
 
         individual.uniqueness = uniqueness
         individual.alpha_beta_fitness = alpha_beta_fitness
-        individual.fitness.values = (alpha_beta_fitness,)
         
         return alpha_beta_fitness
 
@@ -252,15 +255,17 @@ class KernelSizeEvolutionaryOptimizer:
         A single branch is chosen from the larger individual, then small_branch_crossover is performed on those branches"""
         branch_choice_index = random.randrange(len(other)-1)
 
-        other[branch_choice_index], single_branch[0] = self._small_branch_crossover(single_branch[0], other[branch_choice_index])
+        choices = self._small_branch_crossover(single_branch, [other[branch_choice_index]])
+        single_branch[0] = choices[0][0]
+        other[branch_choice_index] = choices[0][0]
 
         return single_branch, other
         
     def _small_branch_crossover(self, ind1, ind2):
         """Crossover function for when both individuals have exactly 1 branch.
-        Picks one branch"""
-        picked = random.choice([ind1, ind2])
-    
+        Picks the longest branch"""
+
+        picked = max([ind1, ind2], key=lambda x: len(x[0]))
         return picked, picked
 
     def mutate(self, individual):
@@ -268,12 +273,14 @@ class KernelSizeEvolutionaryOptimizer:
         
         # Clone the individual to avoid in-place issues
         mutant = creator.Individual([branch[:] for branch in individual])
+
+        mutation_number_options = [i + 1 for i in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS)
+              for _ in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS - i)]
         
-        number_of_mutations = random.randint(0, EvolutionSettings.MAX_NUMBER_OF_MUTATIONS)
-        mutation_types = ["add_branch", "remove_branch", "add_kernel", "remove_kernel", "change_kernel"]
+        number_of_mutations = random.choice(mutation_number_options)
 
         for _ in range(number_of_mutations):
-            mutation_type = random.choice(mutation_types)
+            mutation_type = self._mutation_choice()
         
             if mutation_type == "add_branch":
                 if len(mutant) < ModelSettings.NUMBER_OF_BRANCHES_RANGE[1]:
@@ -313,6 +320,25 @@ class KernelSizeEvolutionaryOptimizer:
         mutant.fully_trained = False
 
         return (mutant,)
+
+    def _mutation_choice(self):
+        """
+        Randomly selects a mutation type based on predefined probability ranges.
+        """
+        num = random.randint(0, 99)
+        mutation_options = ["remove_branch", "add_branch", "add_kernel", "remove_kernel", "change_kernel"]
+
+        if 0 <= num < 10:
+            return mutation_options[0]  # remove_branch (10%)
+        elif 10 <= num < 25:
+            return mutation_options[1]  # add_branch (15%)
+        elif 25 <= num < 50:
+            return mutation_options[2]  # add_kernel (25%)
+        elif 50 <= num < 75:
+            return mutation_options[3]  # remove_kernel (25%)
+        else:
+            return mutation_options[4]  # change_kernel (25%)
+
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
@@ -361,4 +387,3 @@ class KernelSizeEvolutionaryOptimizer:
         print(f"\nHall of Fame (Top {len(self.hall_of_fame)}):")
         for i, individual in enumerate(self.hall_of_fame):
             print(f"  {i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}")
-            

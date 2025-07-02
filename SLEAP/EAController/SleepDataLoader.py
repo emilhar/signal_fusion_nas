@@ -3,7 +3,6 @@ from torch.utils.data import TensorDataset, DataLoader, Subset
 import torch
 import gc
 from random import sample
-
 from math import ceil
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
@@ -11,20 +10,20 @@ from Globals import Sleepstage, ModelSettings, EvolutionSettings, DataSettings
 
 
 class SleepDataLoader:
-    def __init__(self, signal_type, sleepstage, batch_size):
+    def __init__(self, signal_type, sleepstage):
         self.sleepstage = sleepstage
         self.signal_type = signal_type
 
         if DataSettings.DATASET == DataSettings.DatasetNames.TELEMETRY:
             self.signal_type = f"telemetry_{signal_type}"
 
-        self.batch_size = batch_size
+        self.batch_size = ModelSettings.BATCH_SIZE
 
         if ModelSettings.VERBOSE: print("Loading Training data")
         try:
             try_sleap=True
             train_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Training")            
-            self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True) # could fail if filepath is wrong
+            self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
 
         except FileNotFoundError:
             try_sleap=False
@@ -62,32 +61,33 @@ class SleepDataLoader:
 
             loader, pos_weight, n_samples = self._prepare(X, y, training)
             
-        if ModelSettings.VERBOSE: print("Acquiring targets")
-        if training:
-            self.training_indices_class_0 = []
-            self.training_indices_class_1 = []
+        if DataSettings.EVEN_DATA_SPLIT:
 
-            for i, (_, label) in enumerate(loader.dataset):
-                if label == 0:
-                    self.training_indices_class_0.append(i)
-                elif label == 1:
-                    self.training_indices_class_1.append(i)
+            if ModelSettings.VERBOSE: print("Preparing for even data split")
+            if training:
+                self.training_indices_class_0 = []
+                self.training_indices_class_1 = []
 
-        else:
-            self.testing_indices_class_0 = []
-            self.testing_indices_class_1 = []
+                for i, (_, label) in enumerate(loader.dataset):
+                    if label == 0:
+                        self.training_indices_class_0.append(i)
+                    elif label == 1:
+                        self.training_indices_class_1.append(i)
 
-            for i, (_, label) in enumerate(loader.dataset):
-                if label == 0:
-                    self.testing_indices_class_0.append(i)
-                elif label == 1:
-                    self.testing_indices_class_1.append(i)
+            else:
+                self.testing_indices_class_0 = []
+                self.testing_indices_class_1 = []
+
+                for i, (_, label) in enumerate(loader.dataset):
+                    if label == 0:
+                        self.testing_indices_class_0.append(i)
+                    elif label == 1:
+                        self.testing_indices_class_1.append(i)
 
 
         del data
         gc.collect()
-
-
+        
         return loader, pos_weight, n_samples
 
     def _prepare(self, X, y, training):
@@ -149,7 +149,6 @@ class SleepDataLoader:
 
         return train_loader_subset, test_loader_subset, self.n_samples, self.pos_weight
 
-
     def get_balanced_subset(self, dataset, total_data_points, training: bool):
         if training:
             indices_class_0 = self.training_indices_class_0
@@ -175,7 +174,6 @@ class SleepDataLoader:
         #self.see_dataset_breakdown(balanced_subset)
 
         return balanced_subset
-
     
     def see_dataset_breakdown(self, dataset):
         labels = [dataset[i][1] for i in range(len(dataset))]

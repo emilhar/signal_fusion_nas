@@ -29,8 +29,8 @@ class Signal:
 
 class ModelSettings:
     # Base
-    NUMBER_OF_BRANCHES_RANGE = (1, 4)
-    NUMBER_OF_KERNELS_RANGE = (1, 3)
+    NUMBER_OF_BRANCHES_RANGE = (1, 3)
+    NUMBER_OF_KERNELS_RANGE = (1, 4)
     BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
     MAX_TIME_SPENT_TRAINING = 6
@@ -47,7 +47,7 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 40
+    POPULATION_SIZE: int = 20
     GENERATIONS: int = 20
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
@@ -147,7 +147,6 @@ class UniquenessFunctions:
 
     uniqueness_function = gargoyle
 
-
 class FitnessFunctions:
     @staticmethod
     def f1(individual_performance):
@@ -172,14 +171,14 @@ class FitnessFunctions:
         else:
             fitness = (highest_loss_val - loss) / (highest_loss_val - lowest_loss_val)
 
-        individual.fitness.values = (fitness,)
 
-        return fitness
+        individual.fitness.values = (fitness,)
     
     @staticmethod
     def no_normalization(individual, population):
-        return individual.fitness.values[0]
+        pass
 
+    MINIMIZE_FITNESS = True
     fitness_function = train_loss
-    normalize = no_normalization
+    normalization_function = no_normalization
 

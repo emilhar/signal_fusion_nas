@@ -28,7 +28,6 @@ class SLEAP:
         print("🧠 SLEAP - Sleep Labeling using Evolutionary Algorithms and PyTorch")
         print("="*68)
         
-
         # Get user configuration
         if run_omega:
             print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")
@@ -220,10 +219,8 @@ class SLEAP:
 
         print("\n💖 Fitness Settings")
         print(f"{'Fitness function:':30} {FitnessFunctions.fitness_function.__name__}")
-        print(f"{'Normalization function:':30} {FitnessFunctions.normalize.__name__}")
-
-
-
+        print(f"{'Normalization function:':30} {FitnessFunctions.normalization_function.__name__}")
+        print(f"{'Minimizing Fitness:':30} {FitnessFunctions.MINIMIZE_FITNESS}")
 
 def main():
     """Main entry point"""
