@@ -144,8 +144,8 @@ class LogManager:
 
         fitness = individual.raw_fitness or individual.fitness.values[0]
         fully_trained = individual.fully_trained
-        uniqueness = individual.uniqueness
-        alpha_beta_fitness = individual.alpha_beta_fitness
+        uniqueness = individual.uniqueness if hasattr(individual, 'uniqueness') else None
+        alpha_beta_fitness = individual.alpha_beta_fitness if hasattr(individual, 'alpha_beta_fitness') else None
         ind_id = individual.individual_id
 
         train_loss = individual.model_performance.get("Train Loss", 0.0)
