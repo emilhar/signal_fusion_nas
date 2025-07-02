@@ -37,7 +37,7 @@ def main():
     #     raise ValueError("Not valid sleep stage")
 
     if r := input("Random branches? (y/n) ").lower().endswith("y"):
-        branches = get_branches(gen_random=True, size=50, seed=42)
+        branches = get_branches(gen_random=True, size=24, seed=42)
         branches.append([[300, 50, 10, 10], [100, 20, 20, 10], [20, 4, 4, 4]]) # Four convolutional behemoth
     else:
         branches = get_branches()
@@ -130,7 +130,7 @@ def fully_train(branch: list[list[int]], signal: str, sleep_stage: str, lr: floa
             pos_weight, 
             lr=lr, 
             wd=0.0001, 
-            p=5e309, 
+            p=5, 
             f=0.5, 
             epochs=40, 
             output_period=5, 
@@ -142,7 +142,7 @@ def fully_train(branch: list[list[int]], signal: str, sleep_stage: str, lr: floa
 
         new_row = pd.DataFrame([{
             "name": str(branch), 
-            "F1": res["F1"],
+            "F1": res["Best F1"],
             "loss": res["Train Loss"],
             "signal": signal,
             "sleep_stage": sleep_stage,
