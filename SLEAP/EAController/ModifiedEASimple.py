@@ -18,6 +18,7 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
     LoggingSettings.population_size = len(invalid_ind)
+
     fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
     for ind, fit in zip(invalid_ind, fitnesses):
         ind.fitness.values = fit
@@ -46,15 +47,16 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
         offspring = toolbox.select(population, len(population))
 
         # Vary the pool of individuals
-        offspring = varAnd(offspring, toolbox, cxpb, mutpb)
+        offspring = make_next_gen(offspring, toolbox, cxpb, mutpb)
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        LoggingSettings.population_size = len(invalid_ind)
         fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
+        LoggingSettings.population_size = len(invalid_ind)
+        
         # Update the hall of fame with the generated individuals
         if halloffame is not None:
             halloffame.update(offspring)
@@ -70,8 +72,9 @@ def ModifiedEASimple(population, toolbox, cxpb, mutpb, ngen, LogManager, stats=N
 
     return population
 
-def varAnd(population, toolbox, cxpb, mutpb):
-    """See: DEAP/Algorithms"""
+def make_next_gen(population, toolbox, cxpb, mutpb):
+    """Almost the same as DEAP's varAnd.
+    Now crossover application is based on age brackets"""
     if cxpb == 0.0 and mutpb == 0.0:
         for pop in population:
             del pop.fitness.values
@@ -79,16 +82,53 @@ def varAnd(population, toolbox, cxpb, mutpb):
 
     offspring = [toolbox.clone(ind) for ind in population]
 
-    # Apply crossover and mutation on the offspring
-    for i in range(1, len(offspring), 2):
-        if random.random() < cxpb:
-            offspring[i - 1], offspring[i] = toolbox.mate(offspring[i - 1],
-                                                          offspring[i])
-            del offspring[i - 1].fitness.values, offspring[i].fitness.values
+    brackets = get_brackets()
 
+    # Apply crossover
+    for offspring_member in offspring:
+
+        # cxpb is divided by 2 due to the fact that if an individual is chosen, 
+        # it will automatically select another individual in it's bracket to crossover with.
+        if random.random() < cxpb/2:
+            if offspring_member.bracket == 0:
+                other_member = random.choice(brackets[offspring_member.bracket])
+            else:
+                bracket_choice = random.choice([offspring_member.bracket - 1, offspring_member.bracket])
+                other_member = random.choice(brackets[bracket_choice])
+            
+            offspring_member, other_member, child_age = toolbox.mate(offspring_member, other_member)
+
+            emptyValues(offspring_member)
+            emptyValues(other_member)
+            
+            offspring_member.age = child_age
+            other_member.age = child_age
+
+    # Apply mutation
     for i in range(len(offspring)):
         if random.random() < mutpb:
             offspring[i], = toolbox.mutate(offspring[i])
-            del offspring[i].fitness.values
+            emptyValues(offspring[i])
 
     return offspring
+
+def get_brackets(population) -> dict:
+    brackets = {}
+
+    for individual in population:
+        if individual.bracket not in brackets:
+            brackets[individual.bracket] = []
+        
+        brackets[individual.bracket].append(individual)
+
+    return brackets
+
+def emptyValues(offspring):
+    del offspring.fitness.values
+
+    if hasattr(offspring, "raw_fitness"):
+        del offspring.raw_fitness
+    
+    if hasattr(offspring, "uniqueness"):
+        del offspring.uniqueness
+

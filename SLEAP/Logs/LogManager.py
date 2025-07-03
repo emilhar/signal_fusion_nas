@@ -136,14 +136,12 @@ class LogManager:
         self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
 
         LoggingSettings.current_generation_id = generation + 1
-        LoggingSettings.current_individual_id = 0
 
         self.best_individual_in_generation = INDIVIDUAL_TEMPLATE.copy()
 
     def check_for_best_in_gen(self, individual):
 
         fitness = individual.raw_fitness or individual.fitness.values[0]
-        fully_trained = individual.fully_trained
         uniqueness = individual.uniqueness if hasattr(individual, 'uniqueness') else None
         alpha_beta_fitness = individual.alpha_beta_fitness if hasattr(individual, 'alpha_beta_fitness') else None
         ind_id = individual.individual_id
@@ -170,7 +168,6 @@ class LogManager:
                 "F1": round(f1, 4),
                 "Accuracy": round(accuracy, 4),
                 "Fitness": round(fitness, 4),
-                "Fully_Trained": fully_trained,
                 "Uniqueness": round(uniqueness, 4) if uniqueness else None,
                 "AlphaBetaFitness": round(alpha_beta_fitness, 4) if alpha_beta_fitness else None,
         }
@@ -178,6 +175,6 @@ class LogManager:
         if (best["Fitness"] <= fitness):
             self.best_individual_in_generation = individual_log_entry
 
-        if (fully_trained or LoggingSettings.LOG_ALL_INDIVIDUALS):
+        if (LoggingSettings.LOG_ALL_INDIVIDUALS):
             self._write_with_config(filetype="Individual", config=individual_log_entry)
             return

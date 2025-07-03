@@ -47,7 +47,7 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 20
+    POPULATION_SIZE: int = 10
     GENERATIONS: int = 20
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
@@ -72,7 +72,7 @@ class EvolutionSettings:
     BETA_SWITCH = 1/2
 
     # Evolution settings
-    CX_PROB: float = 0.7
+    CX_PROB: float = 0.6
     MUTATION_PROB: float = 0.4
 
     # Full training settings
@@ -84,31 +84,31 @@ class EvolutionSettings:
     FULL_TRAIN_LEARNING_RATE_MULTIPLIER = 10
 
 class AlpsSettings:
-    USE_ALPS = True
+    _AGE_GAP = 3
 
-    AGE_GAP = 3
-
-    _MAX_AGE_IN_LAYERS = [
-        1 * AGE_GAP, 
-        2 * AGE_GAP, 
-        3 * AGE_GAP, 
-        5 * AGE_GAP, 
-        8 * AGE_GAP, 
-        13 * AGE_GAP, 
-        21 * AGE_GAP
+    MAX_AGE_IN_BRACKETS = [
+        1 * _AGE_GAP, 
+        2 * _AGE_GAP, 
+        3 * _AGE_GAP, 
+        5 * _AGE_GAP, 
+        8 * _AGE_GAP, 
+        13 * _AGE_GAP, 
+        21 * _AGE_GAP
     ]
 
-    LAYER_MAX_AGES = {
-        0: _MAX_AGE_IN_LAYERS[0],
-        1: _MAX_AGE_IN_LAYERS[1],
-        2: _MAX_AGE_IN_LAYERS[2],
-        3: _MAX_AGE_IN_LAYERS[3],
-        4: _MAX_AGE_IN_LAYERS[4],
-        5: _MAX_AGE_IN_LAYERS[5],
-        6: _MAX_AGE_IN_LAYERS[6]
+    TRAINING_SETTINGS_FOR_BRACKETS = {
+        # bracket: (dataset percentage, training_epoch_amount)
+        0: (0.1, 1),
+        1: (0.1, 2),
+        2: (0.15, 3),
+        3: (0.25, 4),
+        4: (0.4, 5),
+        5: (0.5, 6),
+        6: (1.0, 10)
     }
-    
 
+    individuals_and_fitnesses_in_brackets = {}
+    
 class DataSettings:
     class DatasetNames:
         TELEMETRY = "telemetry"
@@ -129,7 +129,7 @@ class LoggingSettings:
     current_individual_id = 0
     population_size = 0
 
-    experiment_name = "My lovely experiment"
+    experiment_name = "Unnamed"
 
 class UniquenessFunctions:
 

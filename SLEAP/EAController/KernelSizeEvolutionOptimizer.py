@@ -4,7 +4,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
+from Globals import Signal, ModelSettings, EvolutionSettings, AlpsSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
 from EAController.ModifiedEASimple import ModifiedEASimple
 from Logs.LogManager import LogManager
@@ -57,17 +57,9 @@ class KernelSizeEvolutionaryOptimizer:
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
         self.toolbox.register("select", self.select)
-
-        # Create wrapper functions for evaluation
-        def evaluate_normal(individual):
-            return self.evaluate_individual(individual, full_training=False)
-        
-        def evaluate_fully(individual):
-            return self.evaluate_individual(individual, full_training=True)
         
         # Genetic operatorss
-        self.toolbox.register("evaluate", evaluate_normal)
-        self.toolbox.register("fully_evaluate", evaluate_fully)
+        self.toolbox.register("evaluate", self.evaluate_individual)
         
         # Statistics and Hall of Fame
         self.stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -102,31 +94,51 @@ class KernelSizeEvolutionaryOptimizer:
         individual = creator.Individual(branches)
         individual.raw_fitness = None
         individual.uniqueness = None
-        individual.fully_trained = False
+        individual.age =  0
+        individual.bracket = 0
 
-        if EvolutionSettings.beta < 0:
+        if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
+            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
+        
+        AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, individual.fitness.values[0]) )
+
+        if EvolutionSettings.beta <= 0:
             individual.alpha_beta_fitness = None
 
         return individual
     
-    def evaluate_individual(self, individual, full_training):
+    def evaluate_individual(self, individual):
         """Evaluate an individual by training a model
         arg: individual"""
 
-        # Train model and get performance
-        model_performance = self.create_trained_individual(individual, full_training)
+        # If the individual has passed the maximum age in their bracket, then they train as if they are in the bracket above.
+        # This is then used in the comparison later.
+        if individual.age > AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket]:
+            fake_bracket = individual.bracket + 1
+            model_performance = self.create_trained_individual(individual, fake_bracket)
+        else:
+            model_performance = self.create_trained_individual(individual, individual.bracket)
+
         raw_fitness = self.calculate_fitness(model_performance)
 
         individual.model_performance = model_performance
         individual.raw_fitness = raw_fitness
-        individual.fully_trained = full_training
+
+
+        if individual.age > AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket]:
+            # Now it's time to see if they move up a bracket or fail to do so.
+            successful = self.attempt_bracket_switch(individual)
+
+            if not successful:
+                if FitnessFunctions.MINIMIZE_FITNESS:
+                    raw_fitness = float('inf')
+                else:
+                    raw_fitness = float('-inf')
+                    
+                return (raw_fitness,)
+
         individual.individual_id = LoggingSettings.current_individual_id
-
         LoggingSettings.current_individual_id += 1
-
-
-        if ModelSettings.VERBOSE:
-            print(f"Fitness: {raw_fitness}")
 
         return (raw_fitness,)
     
@@ -166,12 +178,54 @@ class KernelSizeEvolutionaryOptimizer:
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)
 
+    def attempt_bracket_switch(self, individual):
+
+        # If a new bracket JUST opened, we're allowed in
+        # If we are on generation 5, and the max age of our bracket is 4, then we are the first individuals going into that bracket
+        if LoggingSettings.current_generation_id == (AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket] - 1):
+            individual.bracket += 1
+
+            if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
+                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
+
+            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, individual.fitness.values[0]) )
+
+            return True
+        
+        # If the bracket is not new, the individual must be better than the worst person in the above bracket
+        else:
+            individuals_in_above_bracket = AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1]
+            replace = False
+
+            if FitnessFunctions.MINIMIZE_FITNESS:
+                worst_individual_in_above_bracket = max(individuals_in_above_bracket, key=lambda x: x[1])
+                if worst_individual_in_above_bracket[1] > individual.fitness.values[0]:
+                    replace = True
+
+            else:
+                worst_individual_in_above_bracket = min(individuals_in_above_bracket, key=lambda x: x[1])
+                if worst_individual_in_above_bracket[1] < individual.fitness.values[0]:
+                    replace = True
+                    
+                    
+            if replace:
+                individual.bracket += 1
+                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].remove(worst_individual_in_above_bracket)
+                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].append( (individual, individual.fitness.values[0]) )
+                return True
+            
+        # If the bracket wasn't new, and the individual didn't get in, it will not be a part of the population anymore.
+        return False
+                
     def select(self, population, k):
         """
         Selects the best k individuals based on updated selection criteria 
         that includes both fitness and uniqueness. Uniqueness is recalculated 
         every time a new individual is added.
         """
+
+        LoggingSettings.current_individual_id = 0
+            
         if k <= 0:
             return []
         
@@ -218,24 +272,29 @@ class KernelSizeEvolutionaryOptimizer:
         branch_count_ind1 = len(ind1)
         branch_count_ind2 = len(ind2)
 
+        child_age = max(ind1.age, ind2.age) + 1
+
         # Both individuals have >1 branch
         if ( (branch_count_ind1 > 1) and (branch_count_ind2 > 1) ):
-            return self._large_branch_crossover(ind1, ind2)
+            children = self._large_branch_crossover(ind1, ind2)
             
         # Both individuals have exactly 1 branch
         elif ( (branch_count_ind1 == 1) and (branch_count_ind2 == 1) ):
-            return self._small_branch_crossover(ind1, ind2)
+            children = self._small_branch_crossover(ind1, ind2)
 
         # Exactly one individual has 1 branch while other has >1 branches
-        if branch_count_ind1 == 1:
-            single_branch = ind1
-            other = ind2
+        else:
+            if branch_count_ind1 == 1:
+                single_branch = ind1
+                other = ind2
 
-        elif branch_count_ind2 == 1:
-            single_branch = ind2
-            other = ind1
+            elif branch_count_ind2 == 1:
+                single_branch = ind2
+                other = ind1
 
-        return self._medium_branch_crossover(single_branch, other)
+            children =  self._medium_branch_crossover(single_branch, other)
+
+        return children[0], children[1], child_age
 
     def _large_branch_crossover(self, ind1, ind2):
         """Crossover function for individuals when BOTH individuals have more than one branch.
@@ -270,9 +329,11 @@ class KernelSizeEvolutionaryOptimizer:
 
     def mutate(self, individual):
         """Mutate an individual by randomly modifying branches or kernel sizes."""
+        mutant_age = individual.age
         
         # Clone the individual to avoid in-place issues
         mutant = creator.Individual([branch[:] for branch in individual])
+        mutant.age = mutant_age
 
         mutation_number_options = [i + 1 for i in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS)
               for _ in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS - i)]
@@ -317,7 +378,6 @@ class KernelSizeEvolutionaryOptimizer:
         mutant.raw_fitness = None
         mutant.uniqueness = None
         mutant.alpha_beta_fitness = None
-        mutant.fully_trained = False
 
         return (mutant,)
 
@@ -338,7 +398,6 @@ class KernelSizeEvolutionaryOptimizer:
             return mutation_options[3]  # remove_kernel (25%)
         else:
             return mutation_options[4]  # change_kernel (25%)
-
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
