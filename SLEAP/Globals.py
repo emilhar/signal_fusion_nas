@@ -55,7 +55,6 @@ class EvolutionSettings:
     MAX_NUMBER_OF_MUTATIONS = 3
 
     # Data split
-    DATA_POINTS_PER_INDIVIUAL = 4300
     DATA_SPLIT_TRAINING = 0.7
     DATA_SPLIT_TESTING = 0.3
     VALID_DATA_SPLIT = (DATA_SPLIT_TRAINING + DATA_SPLIT_TESTING == 1)
@@ -74,15 +73,7 @@ class EvolutionSettings:
     # Evolution settings
     CX_PROB: float = 0.6
     MUTATION_PROB: float = 0.4
-
-    # Full training settings
-    KOTH_ON = True
-    KOTH_GENERATIONS_BETWEEN = 1600000
-    KOTH_TOURNAMENT_SIZE = 0.30
-    FULL_TRAIN_BATCH_SIZE = 128
-    FULL_TRAIN_EPOCHS = 20
-    FULL_TRAIN_LEARNING_RATE_MULTIPLIER = 10
-
+    
 class AlpsSettings:
     _AGE_GAP = 3
 
@@ -97,15 +88,16 @@ class AlpsSettings:
     ]
 
     TRAINING_SETTINGS_FOR_BRACKETS = {
-        # bracket: (dataset percentage, training_epoch_amount)
-        0: (0.1, 1),
-        1: (0.1, 2),
-        2: (0.15, 3),
-        3: (0.25, 4),
-        4: (0.4, 5),
-        5: (0.5, 6),
-        6: (1.0, 10)
+        0: {"dataset_percentage": 0.15,  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE},
+        1: {"dataset_percentage": 0.15,  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE},
+        2: {"dataset_percentage": 0.20, "training_epochs": 3,  "batch_size": 64},
+        3: {"dataset_percentage": 0.30, "training_epochs": 4,  "batch_size": 64},
+        4: {"dataset_percentage": 0.4,  "training_epochs": 5,  "batch_size": 128},
+        5: {"dataset_percentage": 0.5,  "training_epochs": 6,  "batch_size": 128},
+        6: {"dataset_percentage": 1.0,  "training_epochs": 10, "batch_size": 256}
     }
+
+
 
     individuals_and_fitnesses_in_brackets = {}
     

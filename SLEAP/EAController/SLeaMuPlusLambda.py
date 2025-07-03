@@ -43,6 +43,12 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
             want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
             print(" ".join(want_to_print))
 
+            for thing in AlpsSettings.individuals_and_fitnesses_in_brackets.keys():
+                
+                print(f"Bracket {thing}:")
+                for (indi, fit) in AlpsSettings.individuals_and_fitnesses_in_brackets[thing]:
+                    print(f"{'Individual And Fitness:':30} {f'{indi}':30} {f'{fit}':30}")
+
         if int(gen) == int(ngen*(EvolutionSettings.BETA_SWITCH)):
             EvolutionSettings.alpha = 1
             EvolutionSettings.beta = 0
@@ -64,13 +70,13 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
         # Select the next generation population
         population[:] = toolbox.select(population + offspring, mu)
+        update_brackets(population)
 
         # Update the statistics with the new population
         record = stats.compile(population) if stats is not None else {}
         if LoggingSettings.LOGGING:
             # Log the generation
             LogManager.log_generation_stats(gen, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
-
 
     return population
 
@@ -89,24 +95,39 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb):
             offspring.append(crossover_child)
 
         elif op_choice < cxpb + mutpb:  # Apply mutation
+
+            pre_mutation_ind = random.choice(population)
+            age, bracket = pre_mutation_ind.age, pre_mutation_ind.bracket
+
             ind = toolbox.clone(random.choice(population))
             ind, = toolbox.mutate(ind)
             emptyValues(ind)
+
+            ind.age = age + 1
+            ind.bracket = bracket
+
             offspring.append(ind)
+
         else:                           # Apply reproduction
             offspring.append(random.choice(population))
 
     return offspring
 
-
 def crossover(population, toolbox):
-    ind1 = random.sample(population, 1)
+
+    ind1_no_clone = random.choice(population)
+    ind1 = toolbox.clone( ind1_no_clone )
+
     other_individuals_in_same_bracket = random.choice(AlpsSettings.individuals_and_fitnesses_in_brackets[ind1.bracket])
-    ind2 = other_individuals_in_same_bracket[0]
+    ind2_no_clone = other_individuals_in_same_bracket[0]
+    ind2 = toolbox.clone( ind2_no_clone )
 
     ind1, ind2 = toolbox.mate(ind1, ind2)
-    return ind1
 
+    ind1.age = max( ind1_no_clone.age, ind2_no_clone.age ) + 1
+    ind1.bracket = max( ind1_no_clone.bracket, ind2_no_clone.bracket )
+
+    return ind1
 
 def emptyValues(offspring):
     del offspring.fitness.values
@@ -117,3 +138,9 @@ def emptyValues(offspring):
     if hasattr(offspring, "uniqueness"):
         del offspring.uniqueness
 
+def update_brackets(future_population):
+    AlpsSettings.individuals_and_fitnesses_in_brackets = {}
+    
+    for individual in future_population:
+        if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
+            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []

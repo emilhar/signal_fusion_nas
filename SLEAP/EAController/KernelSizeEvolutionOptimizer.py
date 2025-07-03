@@ -6,7 +6,7 @@ from EAController.SleepDataLoader import SleepDataLoader
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from Globals import Signal, ModelSettings, EvolutionSettings, AlpsSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
-from EAController.ModifiedEASimple import ModifiedEASimple
+from EAController.SLeaMuPlusLambda import eaMuPlusLambda
 from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
@@ -97,11 +97,6 @@ class KernelSizeEvolutionaryOptimizer:
         individual.age =  0
         individual.bracket = 0
 
-        if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
-            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
-        
-        AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, individual.fitness.values[0]) )
-
         if EvolutionSettings.beta <= 0:
             individual.alpha_beta_fitness = None
 
@@ -125,6 +120,12 @@ class KernelSizeEvolutionaryOptimizer:
         individual.raw_fitness = raw_fitness
 
 
+        if individual.bracket == 0:
+            if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
+                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
+            
+            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, individual.raw_fitness) )
+
         if individual.age > AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket]:
             # Now it's time to see if they move up a bracket or fail to do so.
             successful = self.attempt_bracket_switch(individual)
@@ -142,24 +143,22 @@ class KernelSizeEvolutionaryOptimizer:
 
         return (raw_fitness,)
     
-    def create_trained_individual(self, branches: list[list[int]], full_training=False):
+    def create_trained_individual(self, individual, bracket):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
-        if full_training:
-            individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_full_dataset()
-            batch_size = EvolutionSettings.FULL_TRAIN_BATCH_SIZE
-            epochs = EvolutionSettings.FULL_TRAIN_EPOCHS
-            learning_rate = ModelSettings.LEARNING_RATE * EvolutionSettings.FULL_TRAIN_LEARNING_RATE_MULTIPLIER
-        else:
-            individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
-            batch_size = ModelSettings.BATCH_SIZE
-            epochs = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL
-            learning_rate = ModelSettings.LEARNING_RATE
+        time_limit = False
+
+        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
+            dataset_percentage = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["dataset_percentage"]) 
+        
+        batch_size = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["batch_size"]
+        epochs =AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["training_epochs"]
+        learning_rate = ModelSettings.LEARNING_RATE
 
 
         new_model = TrainedModelMaker(
-            branches = branches,
-            name=f"{branches}, sleepstage: {self.sleepstage}, {batch_size}batch, {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
+            branches = individual,
+            name=f"{individual}, {batch_size}batch, {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
             sleepstage = self.sleepstage,
             signal_type=self.signal_type,
             batch_size= batch_size,
@@ -170,7 +169,7 @@ class KernelSizeEvolutionaryOptimizer:
             verbose= ModelSettings.VERBOSE,
             N_SAMPLES= n_samples,
             pos_weight= pos_weight,
-            have_time_limit = (not full_training)
+            have_time_limit = time_limit
         )
 
         return new_model.model_performance
@@ -182,6 +181,11 @@ class KernelSizeEvolutionaryOptimizer:
 
         # If a new bracket JUST opened, we're allowed in
         # If we are on generation 5, and the max age of our bracket is 4, then we are the first individuals going into that bracket
+        print("attempt bracket switch")
+        print(LoggingSettings.current_generation_id)
+        print(AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket] - 1)
+        print(LoggingSettings.current_generation_id == (AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket] - 1))
+
         if LoggingSettings.current_generation_id == (AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket] - 1):
             individual.bracket += 1
 
@@ -199,19 +203,32 @@ class KernelSizeEvolutionaryOptimizer:
 
             if FitnessFunctions.MINIMIZE_FITNESS:
                 worst_individual_in_above_bracket = max(individuals_in_above_bracket, key=lambda x: x[1])
-                if worst_individual_in_above_bracket[1] > individual.fitness.values[0]:
+                if worst_individual_in_above_bracket[1] > individual.raw_fitness:
                     replace = True
 
             else:
                 worst_individual_in_above_bracket = min(individuals_in_above_bracket, key=lambda x: x[1])
-                if worst_individual_in_above_bracket[1] < individual.fitness.values[0]:
+                if worst_individual_in_above_bracket[1] < individual.raw_fitness:
                     replace = True
                     
                     
             if replace:
+
+                # Remove individual from old bracket
+                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = [
+                    (i, f) for (i, f) in AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] if i is not individual
+                ]
+
+                # Remove worst individual from their bracket
+                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1] = [
+                    (i, f) for (i, f) in AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1] if i is not worst_individual_in_above_bracket
+                ]
+
+                # Add individual to new bracket
+                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].append( (individual, individual.raw_fitness) )
+                
                 individual.bracket += 1
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].remove(worst_individual_in_above_bracket)
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].append( (individual, individual.fitness.values[0]) )
+
                 return True
             
         # If the bracket wasn't new, and the individual didn't get in, it will not be a part of the population anymore.
@@ -272,8 +289,6 @@ class KernelSizeEvolutionaryOptimizer:
         branch_count_ind1 = len(ind1)
         branch_count_ind2 = len(ind2)
 
-        child_age = max(ind1.age, ind2.age) + 1
-
         # Both individuals have >1 branch
         if ( (branch_count_ind1 > 1) and (branch_count_ind2 > 1) ):
             children = self._large_branch_crossover(ind1, ind2)
@@ -294,7 +309,7 @@ class KernelSizeEvolutionaryOptimizer:
 
             children =  self._medium_branch_crossover(single_branch, other)
 
-        return children[0], children[1], child_age
+        return children
 
     def _large_branch_crossover(self, ind1, ind2):
         """Crossover function for individuals when BOTH individuals have more than one branch.
@@ -408,7 +423,7 @@ class KernelSizeEvolutionaryOptimizer:
         population = self.toolbox.population(n=EvolutionSettings.POPULATION_SIZE)
         
         # Run evolution
-        result_pop = ModifiedEASimple(
+        result_pop = eaMuPlusLambda(
             population, 
             self.toolbox,
             cxpb=EvolutionSettings.CX_PROB,

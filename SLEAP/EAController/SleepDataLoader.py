@@ -127,16 +127,25 @@ class SleepDataLoader:
 
         return STAGE_MAP
     
-    def get_random_subset(self):
+    def get_random_subset(self, dataset_percentage):
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset
 
         if not EvolutionSettings.VALID_DATA_SPLIT:
             raise (ValueError, f"Invalid data split. {EvolutionSettings.DATA_SPLIT_TRAINING} + {EvolutionSettings.DATA_SPLIT_TESTING} != 1")
         
-        train_data_amount = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TRAINING)
-        test_data_amount = ceil(EvolutionSettings.DATA_POINTS_PER_INDIVIUAL * EvolutionSettings.DATA_SPLIT_TESTING)
+        train_data_amount = ceil( 
+            max( len(train_dataset), len(test_dataset) ) * 
+            dataset_percentage *
+            EvolutionSettings.DATA_SPLIT_TRAINING
+        )
 
+        test_data_amount = ceil( 
+            max( len(train_dataset), len(test_dataset) ) * 
+            dataset_percentage *
+            EvolutionSettings.DATA_SPLIT_TESTING
+        )
+        
         if DataSettings.EVEN_DATA_SPLIT:
             training_subset = self.get_balanced_subset(train_dataset, total_data_points=train_data_amount, training=True)
             testing_subset = self.get_balanced_subset(test_dataset, total_data_points=test_data_amount, training=False)
