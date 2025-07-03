@@ -75,16 +75,16 @@ class EvolutionSettings:
     MUTATION_PROB: float = 0.4
     
 class AlpsSettings:
-    _AGE_GAP = 3
+    AGE_GAP = 3
 
     MAX_AGE_IN_BRACKETS = [
-        1 * _AGE_GAP, 
-        2 * _AGE_GAP, 
-        3 * _AGE_GAP, 
-        5 * _AGE_GAP, 
-        8 * _AGE_GAP, 
-        13 * _AGE_GAP, 
-        21 * _AGE_GAP
+        1 * AGE_GAP, 
+        2 * AGE_GAP, 
+        3 * AGE_GAP, 
+        5 * AGE_GAP, 
+        8 * AGE_GAP, 
+        13 * AGE_GAP, 
+        21 * AGE_GAP
     ]
 
     TRAINING_SETTINGS_FOR_BRACKETS = {

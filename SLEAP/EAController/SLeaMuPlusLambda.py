@@ -53,6 +53,25 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
             EvolutionSettings.alpha = 1
             EvolutionSettings.beta = 0
 
+        # Replace Layer 0 every AGE_GAP generations
+        if gen % AlpsSettings.AGE_GAP == 0:
+            population_layer_0 = [ind for ind in population if ind.bracket == 0]
+            num_to_replace = len(population_layer_0)
+            
+            new_individuals = [toolbox.individual() for _ in range(num_to_replace)]
+            fitnesses = toolbox.map(toolbox.evaluate, new_individuals)
+            for ind, fit in zip(new_individuals, fitnesses):
+                ind.fitness.values = fit
+
+            # Remove old bracket 0 individuals from population
+            population = [ind for ind in population if ind.bracket != 0]
+            population.extend(new_individuals)
+
+            if verbose:
+                print(f"🧼 Layer 0 replaced with {num_to_replace} new individuals (Generation {gen})")
+
+
+
         # Vary the population
         offspring = varOr(population, toolbox, lambda_, cxpb, mutpb)
 
@@ -79,7 +98,6 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
             LogManager.log_generation_stats(gen, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
 
     return population
-
 
 def varOr(population, toolbox, lambda_, cxpb, mutpb):
     assert (cxpb + mutpb) <= 1.0, (
