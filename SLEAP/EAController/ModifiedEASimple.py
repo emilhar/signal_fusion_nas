@@ -1,6 +1,11 @@
 """
 Modified eaSimple comes from the deap.algorithms.eaSimple that can be further seen here:
 https://github.com/DEAP/deap/tree/master
+
+Hornby, Greg. (2006). 
+ALPS: The age-layered population structure for reducing the problem of premature convergence. 
+GECCO 2006 - Genetic and Evolutionary Computation Conference. 1. 
+10.1145/1143997.1144142. 
 """
 
 import random

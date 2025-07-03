@@ -83,6 +83,32 @@ class EvolutionSettings:
     FULL_TRAIN_EPOCHS = 20
     FULL_TRAIN_LEARNING_RATE_MULTIPLIER = 10
 
+class AlpsSettings:
+    USE_ALPS = True
+
+    AGE_GAP = 3
+
+    _MAX_AGE_IN_LAYERS = [
+        1 * AGE_GAP, 
+        2 * AGE_GAP, 
+        3 * AGE_GAP, 
+        5 * AGE_GAP, 
+        8 * AGE_GAP, 
+        13 * AGE_GAP, 
+        21 * AGE_GAP
+    ]
+
+    LAYER_MAX_AGES = {
+        0: _MAX_AGE_IN_LAYERS[0],
+        1: _MAX_AGE_IN_LAYERS[1],
+        2: _MAX_AGE_IN_LAYERS[2],
+        3: _MAX_AGE_IN_LAYERS[3],
+        4: _MAX_AGE_IN_LAYERS[4],
+        5: _MAX_AGE_IN_LAYERS[5],
+        6: _MAX_AGE_IN_LAYERS[6]
+    }
+    
+
 class DataSettings:
     class DatasetNames:
         TELEMETRY = "telemetry"
