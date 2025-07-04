@@ -4,21 +4,23 @@ from datetime import datetime
 from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
 INDIVIDUAL_TEMPLATE = {
-                "Experiment_ID": 0,
-                "Generation": 0,
-                "Individual_ID": 0,
-                "Individual": 0,
-                "Train_Loss": 0,
-                "Test_Loss": 0,
-                "Precision": 0,
-                "Recall": 0,
-                "F1": 0,
-                "Accuracy": 0,
-                "Fitness": 0,
-                "Fully_Trained": 0,
-                "Uniqueness": 0.0,
-                "AlphaBetaFitness": 0.0,
-        }
+    "Experiment_ID": 0,
+    "Generation": 0,
+    "Individual_ID": 0,
+    "Individual": 0,
+    "Age": 0,
+    "Bracket": 0,
+    "Train_Loss": 0,
+    "Test_Loss": 0,
+    "Precision": 0,
+    "Recall": 0,
+    "F1": 0,
+    "Accuracy": 0,
+    "Fitness": 0,
+    "Fully_Trained": 0,
+    "Uniqueness": 0.0,
+    "AlphaBetaFitness": 0.0,
+}
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
@@ -109,7 +111,7 @@ class LogManager:
 
         self._write_with_config(filetype="Experiment", config=config)
 
-    def log_generation_stats(self, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
+    def log_generation_stats(self, population_size:int, mean, std_deviation, median, min, fit_max):
 
         LoggingSettings.current_generation_id
         generation_configs = {
@@ -122,7 +124,6 @@ class LogManager:
             "Fitness_Min": min,
             "Fitness_Max": fit_max,
             "Best_Individual_ID": f"(exp:{self.Experiment_ID},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation['Individual_ID']}), fitness:{round(self.best_individual_in_generation['Fitness'], 7)}, kernels:{str(self.best_individual_in_generation['Individual'])}",
-            "Tournament_Of_Champions": test_the_best
         }
 
         self._write_with_config(filetype="Generation", config=generation_configs)
@@ -152,6 +153,8 @@ class LogManager:
                 "Generation": generation,
                 "Individual_ID": ind_id,
                 "Individual": str(individual),
+                "Age": individual.age,
+                "Bracket": individual.bracket,
                 "Train_Loss": round(train_loss, 4),
                 "Test_Loss": round(test_loss, 4),
                 "Precision": round(precision, 4),

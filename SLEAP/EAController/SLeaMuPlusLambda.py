@@ -16,7 +16,7 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
     """See: DEAP/Algorithms"""
 
     mu = EvolutionSettings.POPULATION_SIZE
-    lambda_ = mu
+    lambda_ = mu // 2
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
@@ -35,7 +35,10 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
     update_brackets(population)
 
     if LoggingSettings.LOGGING:
-        LogManager.log_generation_stats(0, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'], test_the_best=False)
+        for individual in population:
+            LogManager.check_for_best_in_gen(individual)
+            
+        LogManager.log_generation_stats(len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
 
 
     # Begin the generational process
@@ -84,11 +87,9 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
         if gen % AlpsSettings.AGE_GAP == 0:
 
             if verbose: print("\n\n## Replacing Layer 0 ##\n")
-            population_layer_0 = [ind for ind in population if ind.bracket == 0]
-            num_to_replace = len(population_layer_0)
-            
-            if verbose: print(f"Number of new peeps:", num_to_replace)
-            new_individuals = [toolbox.individual() for _ in range(num_to_replace)]
+
+            if verbose: print(f"Number of new peeps:", lambda_)
+            new_individuals = [toolbox.individual() for _ in range(lambda_)]
             fitnesses = toolbox.map(toolbox.evaluate, new_individuals)
             for ind, fit in zip(new_individuals, fitnesses):
                 ind.fitness.values = fit
