@@ -42,8 +42,8 @@ def main():
     else:
         branches = get_branches()
 
-    for epochs in [1]:
-        for signal in ["Fpz-Cz", "Pz-Oz", "EMG_submental", "EOG_horizontal"]:
+    for epochs in [3]:
+        for signal in ["EEG_Fpz-Cz", "EEG_Pz-Oz", "EMG_submental", "EOG_horizontal"]:
             for sleep_stage in ["W", "N1", "N2", "N3", "REM"]:
                 PnEL, FtF1, FtEL = penelope(branches, epochs, signal, sleep_stage)
 
@@ -242,7 +242,7 @@ def load_data(batch_size: int, signal: str, sleep_stage: str, fraction: float | 
     }
 
     
-    with np.load(f"./Data/telemetry/TrainingData/telemetry_EEG_{signal}_train.npz") as data:
+    with np.load(f"./Data/telemetry/TrainingData/telemetry_{signal}_train.npz") as data:
         Xtrain = data["X"].astype(np.float32)
         ytrain = data["y"]
         if fraction is not None:
@@ -264,7 +264,7 @@ def load_data(batch_size: int, signal: str, sleep_stage: str, fraction: float | 
             pin_memory=True
         )
 
-    with np.load(f"./Data/telemetry/TestingData/telemetry_EEG_{signal}_test.npz") as data:
+    with np.load(f"./Data/telemetry/TestingData/telemetry_{signal}_test.npz") as data:
         Xtest = data["X"].astype(np.float32)
         ytest = data["y"]
 
