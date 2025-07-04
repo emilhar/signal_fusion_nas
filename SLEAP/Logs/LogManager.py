@@ -95,15 +95,9 @@ class LogManager:
             "Tournament_Size": EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
             "Min_Kernel_Size": ModelSettings.MIN_KERNEL_SIZE,
             "Max_Kernel_Size": max_kernel_size,
-            "Data_Points_Per_Individual": EvolutionSettings.DATA_POINTS_PER_INDIVIUAL,
             "Best": best,
             "Second_Best": second_best,
             "Third_Best": third_best,
-            "TDB_On": EvolutionSettings.KOTH_ON,
-            "TDB_Generations_Between": EvolutionSettings.KOTH_GENERATIONS_BETWEEN,
-            "TDB_Tournament_Size": EvolutionSettings.KOTH_TOURNAMENT_SIZE,
-            "TDB_Training_Epochs": EvolutionSettings.KOTH_EPOCHS,
-            "TDB_Batch_Size": EvolutionSettings.KOTH_BATCH_SIZE,
             "Dataset_Name": DataSettings.DATASET,
             "Max_Time_Spent_Training": ModelSettings.MAX_TIME_SPENT_TRAINING,
             "Fitness_Function": FitnessFunctions.fitness_function.__name__,
@@ -115,10 +109,9 @@ class LogManager:
 
         self._write_with_config(filetype="Experiment", config=config)
 
-    def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
+    def log_generation_stats(self, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
 
-        LoggingSettings.current_generation_id = generation
-
+        LoggingSettings.current_generation_id
         generation_configs = {
             "Experiment_ID": self.Experiment_ID,
             "Generation": LoggingSettings.current_generation_id,
@@ -135,17 +128,13 @@ class LogManager:
         self._write_with_config(filetype="Generation", config=generation_configs)
         self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
 
-        LoggingSettings.current_generation_id = generation + 1
-        LoggingSettings.current_individual_id = 0
-
         self.best_individual_in_generation = INDIVIDUAL_TEMPLATE.copy()
 
     def check_for_best_in_gen(self, individual):
 
         fitness = individual.raw_fitness or individual.fitness.values[0]
-        fully_trained = individual.fully_trained
-        uniqueness = individual.uniqueness
-        alpha_beta_fitness = individual.alpha_beta_fitness
+        uniqueness = individual.uniqueness if hasattr(individual, 'uniqueness') else None
+        alpha_beta_fitness = individual.alpha_beta_fitness if hasattr(individual, 'alpha_beta_fitness') else None
         ind_id = individual.individual_id
 
         train_loss = individual.model_performance.get("Train Loss", 0.0)
@@ -170,14 +159,13 @@ class LogManager:
                 "F1": round(f1, 4),
                 "Accuracy": round(accuracy, 4),
                 "Fitness": round(fitness, 4),
-                "Fully_Trained": fully_trained,
-                "Uniqueness": round(uniqueness, 4),
-                "AlphaBetaFitness": round(alpha_beta_fitness, 4),
+                "Uniqueness": round(uniqueness, 4) if uniqueness else None,
+                "AlphaBetaFitness": round(alpha_beta_fitness, 4) if alpha_beta_fitness else None,
         }
 
         if (best["Fitness"] <= fitness):
             self.best_individual_in_generation = individual_log_entry
 
-        if (fully_trained or LoggingSettings.LOG_ALL_INDIVIDUALS):
+        if (LoggingSettings.LOG_ALL_INDIVIDUALS):
             self._write_with_config(filetype="Individual", config=individual_log_entry)
             return

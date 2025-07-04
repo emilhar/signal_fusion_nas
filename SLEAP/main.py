@@ -28,7 +28,6 @@ class SLEAP:
         print("🧠 SLEAP - Sleep Labeling using Evolutionary Algorithms and PyTorch")
         print("="*68)
         
-
         # Get user configuration
         if run_omega:
             print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")
@@ -131,7 +130,7 @@ class SLEAP:
 
         if LoggingSettings.LOGGING:
             LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
-                    
+        
         self._print_experiment_settings()
         
         input("OK? ")
@@ -173,38 +172,31 @@ class SLEAP:
         print(f"{'Verbose:':30} {ModelSettings.VERBOSE}")
 
         print("\n📦 Model Settings")
-        print(f"{'Number of branches:':30} {ModelSettings.NUMBER_OF_BRANCHES}")
         print(f"{'Batch size:':30} {ModelSettings.BATCH_SIZE}")
         print(f"{'Epochs per individual:':30} {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}")
-        print(f"{'Kernels per branch:':30} {ModelSettings.KERNELS_PER_BRANCH}")
         print(f"{'Max training time:':30} {ModelSettings.MAX_TIME_SPENT_TRAINING}")
         print(f"{'Learning rate:':30} {ModelSettings.LEARNING_RATE}")
-        print(f"{'Sort kernels:':30} {ModelSettings.SORT_KERNELS}")
         print(f"{'Min kernel size:':30} {ModelSettings.MIN_KERNEL_SIZE}")
         print(f"{'Max kernel size:':30} {ModelSettings.MAX_KERNEL_SIZE}")
         print(f"{'Smaller files:':30} {ModelSettings.SMALLER_FILES}")
+        print(f"{'Branch count range:':30} {ModelSettings.NUMBER_OF_BRANCHES_RANGE}")
+        print(f"{'Kernel count range:':30} {ModelSettings.NUMBER_OF_KERNELS_RANGE}")
 
         print("\n🧬 Evolution Settings")
         print(f"{'Population size:':30} {EvolutionSettings.POPULATION_SIZE}")
         print(f"{'Generations:':30} {EvolutionSettings.GENERATIONS}")
         print(f"{'Tournament size:':30} {EvolutionSettings.SELECTION_TOURNAMENT_SIZE}")
         print(f"{'Hall of Fame members:':30} {EvolutionSettings.HALL_OF_FAME_MEMBERS}")
+        print(f"{'Max mutations:':30} {EvolutionSettings.MAX_NUMBER_OF_MUTATIONS}")
         print(f"{'Alpha:':30} {EvolutionSettings.alpha}")
         print(f"{'Beta:':30} {EvolutionSettings.beta}")
         print(f"{'Beta switch point:':30} {EvolutionSettings.BETA_SWITCH}")
         print(f"{'Crossover prob:':30} {EvolutionSettings.CX_PROB}")
         print(f"{'Mutation prob:':30} {EvolutionSettings.MUTATION_PROB}")
-        print(f"{'King of the Hill:':30} {EvolutionSettings.KOTH_ON}")
-        print(f"{'KOTH interval:':30} {EvolutionSettings.KOTH_GENERATIONS_BETWEEN}")
-        print(f"{'KOTH tournament size:':30} {EvolutionSettings.KOTH_TOURNAMENT_SIZE}")
-        print(f"{'KOTH batch size:':30} {EvolutionSettings.KOTH_BATCH_SIZE}")
-        print(f"{'KOTH epochs:':30} {EvolutionSettings.KOTH_EPOCHS}")
-        print(f"{'KOTH LR multiplier:':30} {EvolutionSettings.KOTH_LEARNING_RATE_MULTIPLIER}")
 
         print("\n📁 Data Settings")
         print(f"{'Dataset:':30} {DataSettings.DATASET}")
         print(f"{'Even data split:':30} {DataSettings.EVEN_DATA_SPLIT}")
-        print(f"{'Data per individual:':30} {EvolutionSettings.DATA_POINTS_PER_INDIVIUAL}")
         print(f"{'Train split:':30} {EvolutionSettings.DATA_SPLIT_TRAINING}")
         print(f"{'Test split:':30} {EvolutionSettings.DATA_SPLIT_TESTING}")
         print(f"{'Split valid:':30} {EvolutionSettings.VALID_DATA_SPLIT}")
@@ -220,10 +212,8 @@ class SLEAP:
 
         print("\n💖 Fitness Settings")
         print(f"{'Fitness function:':30} {FitnessFunctions.fitness_function.__name__}")
-
-        print("\n" + "=" * 40 + "\n")
-
-
+        print(f"{'Normalization function:':30} {FitnessFunctions.normalization_function.__name__}")
+        print(f"{'Minimizing Fitness:':30} {FitnessFunctions.MINIMIZE_FITNESS}")
 
 def main():
     """Main entry point"""

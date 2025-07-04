@@ -4,16 +4,14 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelSettings, EvolutionSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
+from Globals import Signal, ModelSettings, EvolutionSettings, AlpsSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
-from EAController.ModifiedEASimple import ModifiedEASimple
+from EAController.SLeaMuPlusLambda import eaMuPlusLambda
 from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
 
-    def __init__(self, 
-                 sleepstage: str, 
-                 signal_type: str):
+    def __init__(self, sleepstage: str, signal_type: str):
         
         # Base
         self.sleepstage = sleepstage
@@ -23,18 +21,16 @@ class KernelSizeEvolutionaryOptimizer:
             ModelSettings.MAX_KERNEL_SIZE = self.find_max_kernel_size()
             if ModelSettings.VERBOSE: print(f"Max kernel size set at {ModelSettings.MAX_KERNEL_SIZE}")
         
-
         self.SDL = SleepDataLoader(
             signal_type=self.signal_type, 
-            sleepstage=self.sleepstage,
-            batch_size=ModelSettings.BATCH_SIZE)
+            sleepstage=self.sleepstage)
 
         if LoggingSettings.LOGGING:
             self.LogManager = LogManager()
         else:
             self.LogManager = None
 
-        self.chosen=[]
+        self.chosen_for_next_generation = []
 
         self.setup_deap()
     
@@ -44,9 +40,13 @@ class KernelSizeEvolutionaryOptimizer:
     def setup_deap(self):
         """Setup DEAP framework"""
         # Create fitness and individual classes
-        creator.create("FitnessMax", base.Fitness, weights=(1.0,))  # Maximizing fitness
-        creator.create("Individual", list, fitness=creator.FitnessMax)
-        
+        if FitnessFunctions.MINIMIZE_FITNESS:
+            creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+            creator.create("Individual", list, fitness=creator.FitnessMin)
+        else:
+            creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+            creator.create("Individual", list, fitness=creator.FitnessMax)
+
         self.toolbox = base.Toolbox()
         
         # Individual generation
@@ -56,18 +56,10 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", self.select, tournsize=EvolutionSettings.SELECTION_TOURNAMENT_SIZE)
-
-        # Create wrapper functions for evaluation
-        def evaluate_normal(individual):
-            return self.evaluate_individual(individual, full_training=False)
-        
-        def evaluate_fully(individual):
-            return self.evaluate_individual(individual, full_training=True)
+        self.toolbox.register("select", self.select)
         
         # Genetic operatorss
-        self.toolbox.register("evaluate", evaluate_normal)
-        self.toolbox.register("fully_evaluate", evaluate_fully)
+        self.toolbox.register("evaluate", self.evaluate_individual)
         
         # Statistics and Hall of Fame
         self.stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -80,76 +72,77 @@ class KernelSizeEvolutionaryOptimizer:
         self.hall_of_fame = tools.HallOfFame(EvolutionSettings.HALL_OF_FAME_MEMBERS)
     
     def generate_individual(self):
-        """Generate a random individual with kernel branches"""
+        """Generate a random individual with kernel branches.
+        Only used to create the first generation of individuals"""
 
         branches = []
+        number_of_branches = random.randint( ModelSettings.NUMBER_OF_BRANCHES_RANGE[0], ModelSettings.NUMBER_OF_BRANCHES_RANGE[1])
+        kernel_per_branch = [ random.randint( ModelSettings.NUMBER_OF_KERNELS_RANGE[0], ModelSettings.NUMBER_OF_KERNELS_RANGE[1]) for _ in range(number_of_branches) ]
 
-        if ModelSettings.SORT_KERNELS:
-            k_max = ModelSettings.MAX_KERNEL_SIZE
-            for _ in range(ModelSettings.NUMBER_OF_BRANCHES):
-                branch = []
-                for _ in range(ModelSettings.KERNELS_PER_BRANCH):
-                    kernel = random.randint(ModelSettings.MIN_KERNEL_SIZE, k_max)
-                    branch.append(kernel)
-                    if kernel < k_max:
-                        k_max = kernel
-
-                branches.append(branch)
-
-        else:
-            for _ in range( ModelSettings.NUMBER_OF_BRANCHES ):
-                branch =  [random.randint(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE) for _ in range(ModelSettings.KERNELS_PER_BRANCH)]
-                branches.append(branch)
+        for i in range(number_of_branches):
+            first = max(1, random.choice( range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20) ) - 1)
+            branch = [first]
+            
+            for _ in range(kernel_per_branch[i]-1):
+                item  = max( branch[-1] // 2, 1)
+                branch.append(item)
+                
+            branches.append(branch)
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
-
-        individual = []
-
-        for branch in branches:
-            individual.append(branch)
 
         individual = creator.Individual(branches)
         individual.raw_fitness = None
         individual.uniqueness = None
-        individual.alpha_beta_fitness = None
-        individual.fully_trained = False
+        individual.age =  0
+        individual.bracket = 0
+        if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
+            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
+            
+        AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, None) )
+
+        if EvolutionSettings.beta <= 0:
+            individual.alpha_beta_fitness = None
 
         return individual
     
-    def evaluate_individual(self, individual, full_training):
+    def evaluate_individual(self, individual):
         """Evaluate an individual by training a model
         arg: individual"""
 
-        # Train model and get performance
-        model_performance = self.create_trained_individual(individual, full_training)
-        fitness_value = self.calculate_fitness(model_performance)
+        # If the individual has passed the maximum age in their bracket, then they train as if they are in the bracket above.
+        # This is then used in the comparison later.
+        if individual.age > AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket]:
+            fake_bracket = individual.bracket + 1
+            model_performance = self.create_trained_individual(individual, fake_bracket)
+        else:
+            model_performance = self.create_trained_individual(individual, individual.bracket)
+
+        raw_fitness = self.calculate_fitness(model_performance)
 
         individual.model_performance = model_performance
-        individual.raw_fitness = fitness_value
-        individual.fully_trained = full_training
+        individual.raw_fitness = raw_fitness
+        individual.individual_id = LoggingSettings.current_individual_id
+        LoggingSettings.current_individual_id += 1
 
-        if ModelSettings.VERBOSE:
-            print(f"Fitness: {fitness_value}")
-
-        return (fitness_value,)
+        return (raw_fitness,)
     
-    def create_trained_individual(self, branches: list[list[int]], full_training=False):
+    def create_trained_individual(self, individual, bracket):
+        """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
-        if full_training:
-            individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_full_dataset()
-            batch_size = EvolutionSettings.TOC_BATCH_SIZE
-            epochs = EvolutionSettings.TOC_EPOCHS
-            learning_rate = ModelSettings.LEARNING_RATE * EvolutionSettings.TOC_LEARNING_RATE_MULTIPLIER
-        else:
-            individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
-            batch_size = ModelSettings.BATCH_SIZE
-            epochs = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL
-            learning_rate = ModelSettings.LEARNING_RATE
+        time_limit = False
 
+        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
+            dataset_percentage = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["dataset_percentage"],
+            batch_size=AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["batch_size"]) 
+        
+        batch_size = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["batch_size"]
+        epochs =AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["training_epochs"]
+        learning_rate = ModelSettings.LEARNING_RATE
 
         new_model = TrainedModelMaker(
-            branches = branches,
-            name=f"{branches}, sleepstage: {self.sleepstage}, {batch_size}batch, {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
+            branches = individual,
+            name=f"{individual}, {batch_size}batch, {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
             sleepstage = self.sleepstage,
             signal_type=self.signal_type,
             batch_size= batch_size,
@@ -160,118 +153,191 @@ class KernelSizeEvolutionaryOptimizer:
             verbose= ModelSettings.VERBOSE,
             N_SAMPLES= n_samples,
             pos_weight= pos_weight,
-            have_time_limit = (not full_training)
+            have_time_limit = time_limit
         )
 
         return new_model.model_performance
 
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)
-
-    def select(self, individuals, k, tournsize):
+                
+    def select(self, population, k):
+        """
+        Selects the best k individuals based on updated selection criteria 
+        that includes both fitness and uniqueness. Uniqueness is recalculated 
+        every time a new individual is added.
+        """
+            
+        if k <= 0:
+            return []
         
-        if EvolutionSettings.CX_PROB == 0.0 and EvolutionSettings.MUTATION_PROB == 0.0:
-            if LoggingSettings.LOGGING:
-                for individual in individuals:
-                    self.LogManager.check_for_best_in_gen(individual)
-
-            return individuals
+        min_or_max = min if FitnessFunctions.MINIMIZE_FITNESS else max
         
-        self.chosen = []
+        # Normalize all fitnesses:
+        map(lambda x: FitnessFunctions.normalization_function(x, population), population)
+
+        self.chosen_for_next_generation = []
+        remaining = population[:]
+
         for _ in range(k):
-            aspirants = [random.choice(individuals) for _ in range(tournsize)]
-            next_up = max(aspirants, key=lambda x: self._selection_criteria(x, individuals))
-            self.chosen.append(next_up)
+            best_individual = min_or_max(remaining, 
+                key=lambda ind: self._selection_criteria(ind))
+
+            self.chosen_for_next_generation.append(best_individual)
+            remaining.remove(best_individual)
 
         if LoggingSettings.LOGGING:
-            for individual in individuals:
+            for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)
 
-        return self.chosen
+        return self.chosen_for_next_generation
 
-    def _selection_criteria(self, individual, population):
-
-        if FitnessFunctions.normalize[0] == True:
-            fitness = FitnessFunctions.normalize[1](individual, population)
-
-        to_be_compared = [ind for ind in self.chosen if ind != individual]
+    def _selection_criteria(self, individual):
+        if self.chosen_for_next_generation == []:
+            return individual.fitness.values[0]
         
-        uniqueness = UniquenessFunctions.uniqueness_function(individual, to_be_compared)
-        
-        print(f"{fitness=}, {uniqueness=}")
+        uniqueness = UniquenessFunctions.uniqueness_function(individual, self.chosen_for_next_generation)
 
         alpha_beta_fitness = (
-            EvolutionSettings.alpha * fitness + 
+            EvolutionSettings.alpha * individual.fitness.values[0] + 
             EvolutionSettings.beta * uniqueness
         )
 
         individual.uniqueness = uniqueness
         individual.alpha_beta_fitness = alpha_beta_fitness
-        individual.fitness.values = (alpha_beta_fitness,)
         
         return alpha_beta_fitness
 
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
 
-        num_branches = len(ind1)
-        assert len(ind2) == num_branches, "Both individuals must have the same number of branches"
+        branch_count_ind1 = len(ind1)
+        branch_count_ind2 = len(ind2)
 
-        for i in range(num_branches):
-            branch1 = ind1[i]
-            branch2 = ind2[i]
+        # Both individuals have >1 branch
+        if ( (branch_count_ind1 > 1) and (branch_count_ind2 > 1) ):
+            children = self._large_branch_crossover(ind1, ind2)
+            
+        # Both individuals have exactly 1 branch
+        elif ( (branch_count_ind1 == 1) and (branch_count_ind2 == 1) ):
+            children = self._small_branch_crossover(ind1, ind2)
 
-            if not branch1 or not branch2:
-                continue  # Skip empty branches
+        # Exactly one individual has 1 branch while other has >1 branches
+        else:
+            if branch_count_ind1 == 1:
+                single_branch = ind1
+                other = ind2
 
-            for j in range(len(branch1)):
-                head1 = branch1[j]
-                head2 = branch2[j]
+            elif branch_count_ind2 == 1:
+                single_branch = ind2
+                other = ind1
 
-                favorite = random.choice([head1, head2])
-                diff = abs(head1 - head2)
+            children =  self._medium_branch_crossover(single_branch, other)
 
-                # Gaussian noise
-                random_val = min(int(np.floor(abs(np.random.normal(loc=0, scale=4.12)))), 10)
-                percentage = random_val / 100.0
+        return children
 
-                new_head1 = max(ModelSettings.MIN_KERNEL_SIZE, min(int(favorite + percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
-                new_head2 = max(ModelSettings.MIN_KERNEL_SIZE, min(int(favorite - percentage * diff), ModelSettings.MAX_KERNEL_SIZE))
+    def _large_branch_crossover(self, ind1, ind2):
+        """Crossover function for individuals when BOTH individuals have more than one branch.
+        Individuals trade a single branch"""
 
-                branch1[j] = new_head1
-                branch2[j] = new_head2
+        # Decide branch to trade
+        range_max = min(len(ind1), len(ind2)) - 1
+        trade_branch_index = random.randrange(range_max)
 
-                if ModelSettings.SORT_KERNELS:
-                    branch1.sort(reverse=True)
-                    branch2.sort(reverse=True)
-
-            # Update branches
-            ind1[i] = branch1
-            ind2[i] = branch2
+        # Trade branches
+        ind1[trade_branch_index], ind2[trade_branch_index] = ind2[trade_branch_index], ind1[trade_branch_index]
 
         return ind1, ind2
 
+    def _medium_branch_crossover(self, single_branch, other):
+        """Crossover function for when one individual has exactly 1 branch, but the other has many branches.
+        A single branch is chosen from the larger individual, then small_branch_crossover is performed on those branches"""
+        branch_choice_index = random.randrange(len(other)-1)
+
+        choices = self._small_branch_crossover(single_branch, [other[branch_choice_index]])
+        single_branch[0] = choices[0][0]
+        other[branch_choice_index] = choices[0][0]
+
+        return single_branch, other
+        
+    def _small_branch_crossover(self, ind1, ind2):
+        """Crossover function for when both individuals have exactly 1 branch.
+        Picks the longest branch"""
+
+        picked = max([ind1, ind2], key=lambda x: len(x[0]))
+        return picked, picked
+
     def mutate(self, individual):
-        """Custom mutation for kernel sizes and branch lengths"""
+        """Mutate an individual by randomly modifying branches or kernel sizes."""
+        mutant_age = individual.age
+        
+        # Clone the individual to avoid in-place issues
+        mutant = creator.Individual([branch[:] for branch in individual])
+        mutant.age = mutant_age
 
-        mutation_range = 0.2
+        mutation_number_options = [i + 1 for i in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS)
+              for _ in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS - i)]
+        
+        number_of_mutations = random.choice(mutation_number_options)
 
-        for branch in individual:
-            for i in range(len(branch)):
-                top_of_range = max(2, round(branch[i] * mutation_range))
-                delta = random.randint(1, top_of_range)
+        for _ in range(number_of_mutations):
+            mutation_type = self._mutation_choice()
+        
+            if mutation_type == "add_branch":
+                if len(mutant) < ModelSettings.NUMBER_OF_BRANCHES_RANGE[1]:
+                    branch_length = random.randint(*ModelSettings.NUMBER_OF_KERNELS_RANGE)
+                    first_kernel = max(1, random.choice(range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20))-1)
+                    new_branch = [first_kernel]
+                    for _ in range(branch_length - 1):
+                        new_branch.append(max( new_branch[-1] // 2, 1))
+                    mutant.append(new_branch)
 
-                if random.random() < 0.5:
-                    delta = -delta
+            elif mutation_type == "remove_branch":
+                if len(mutant) > ModelSettings.NUMBER_OF_BRANCHES_RANGE[0]:
+                    mutant.pop(random.randrange(len(mutant)))
 
-                new_value = branch[i] + delta
-                new_value = max(ModelSettings.MIN_KERNEL_SIZE, min(ModelSettings.MAX_KERNEL_SIZE, new_value))
-                branch[i] = new_value
+            elif mutation_type == "add_kernel":
+                branch_idx = random.randrange(len(mutant))
+                if len(mutant[branch_idx]) < ModelSettings.NUMBER_OF_KERNELS_RANGE[1]:
+                    new_kernel = max(ModelSettings.MIN_KERNEL_SIZE, mutant[branch_idx][-1] // 2)
+                    mutant[branch_idx].append(new_kernel)
 
-            if ModelSettings.SORT_KERNELS:
-                branch.sort(reverse=True)
+            elif mutation_type == "remove_kernel":
+                branch_idx = random.randrange(len(mutant))
+                if len(mutant[branch_idx]) > ModelSettings.NUMBER_OF_KERNELS_RANGE[0]:
+                    mutant[branch_idx].pop(random.randrange(len(mutant[branch_idx])))
 
-        return individual,
+            elif mutation_type == "change_kernel":
+                branch_idx = random.randrange(len(mutant))
+                kernel_idx = random.randrange(len(mutant[branch_idx]))
+                current_value = mutant[branch_idx][kernel_idx]
+                change = random.choice([-100, -50, 50, 100])
+                new_value = min(max(current_value + change, ModelSettings.MIN_KERNEL_SIZE), ModelSettings.MAX_KERNEL_SIZE)
+                mutant[branch_idx][kernel_idx] = new_value
+
+        mutant.raw_fitness = None
+        mutant.uniqueness = None
+        mutant.alpha_beta_fitness = None
+
+        return (mutant,)
+
+    def _mutation_choice(self):
+        """
+        Randomly selects a mutation type based on predefined probability ranges.
+        """
+        num = random.randint(0, 99)
+        mutation_options = ["remove_branch", "add_branch", "add_kernel", "remove_kernel", "change_kernel"]
+
+        if 0 <= num < 10:
+            return mutation_options[0]  # remove_branch (10%)
+        elif 10 <= num < 25:
+            return mutation_options[1]  # add_branch (15%)
+        elif 25 <= num < 50:
+            return mutation_options[2]  # add_kernel (25%)
+        elif 50 <= num < 75:
+            return mutation_options[3]  # remove_kernel (25%)
+        else:
+            return mutation_options[4]  # change_kernel (25%)
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
@@ -282,7 +348,7 @@ class KernelSizeEvolutionaryOptimizer:
         population = self.toolbox.population(n=EvolutionSettings.POPULATION_SIZE)
         
         # Run evolution
-        result_pop = ModifiedEASimple(
+        result_pop = eaMuPlusLambda(
             population, 
             self.toolbox,
             cxpb=EvolutionSettings.CX_PROB,
@@ -320,4 +386,3 @@ class KernelSizeEvolutionaryOptimizer:
         print(f"\nHall of Fame (Top {len(self.hall_of_fame)}):")
         for i, individual in enumerate(self.hall_of_fame):
             print(f"  {i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}")
-            
