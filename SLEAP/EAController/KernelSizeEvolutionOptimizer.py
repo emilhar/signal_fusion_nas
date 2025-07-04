@@ -96,6 +96,10 @@ class KernelSizeEvolutionaryOptimizer:
         individual.uniqueness = None
         individual.age =  0
         individual.bracket = 0
+        if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
+            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
+            
+        AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, None) )
 
         if EvolutionSettings.beta <= 0:
             individual.alpha_beta_fitness = None
@@ -118,26 +122,6 @@ class KernelSizeEvolutionaryOptimizer:
 
         individual.model_performance = model_performance
         individual.raw_fitness = raw_fitness
-
-
-        if individual.bracket == 0:
-            if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
-            
-            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, individual.raw_fitness) )
-
-        if individual.age > AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket]:
-            # Now it's time to see if they move up a bracket or fail to do so.
-            successful = self.attempt_bracket_switch(individual)
-
-            if not successful:
-                if FitnessFunctions.MINIMIZE_FITNESS:
-                    raw_fitness = float('inf')
-                else:
-                    raw_fitness = float('-inf')
-                    
-                return (raw_fitness,)
-
         individual.individual_id = LoggingSettings.current_individual_id
         LoggingSettings.current_individual_id += 1
 
@@ -149,12 +133,12 @@ class KernelSizeEvolutionaryOptimizer:
         time_limit = False
 
         individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
-            dataset_percentage = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["dataset_percentage"]) 
+            dataset_percentage = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["dataset_percentage"],
+            batch_size=AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["batch_size"]) 
         
         batch_size = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["batch_size"]
         epochs =AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["training_epochs"]
         learning_rate = ModelSettings.LEARNING_RATE
-
 
         new_model = TrainedModelMaker(
             branches = individual,
@@ -176,63 +160,6 @@ class KernelSizeEvolutionaryOptimizer:
 
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)
-
-    def attempt_bracket_switch(self, individual):
-
-        # If a new bracket JUST opened, we're allowed in
-        # If we are on generation 5, and the max age of our bracket is 4, then we are the first individuals going into that bracket
-        print("attempt bracket switch")
-        print(LoggingSettings.current_generation_id)
-        print(AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket] - 1)
-        print(LoggingSettings.current_generation_id == (AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket] - 1))
-
-        if LoggingSettings.current_generation_id == (AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket] - 1):
-            individual.bracket += 1
-
-            if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
-
-            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, individual.fitness.values[0]) )
-
-            return True
-        
-        # If the bracket is not new, the individual must be better than the worst person in the above bracket
-        else:
-            individuals_in_above_bracket = AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1]
-            replace = False
-
-            if FitnessFunctions.MINIMIZE_FITNESS:
-                worst_individual_in_above_bracket = max(individuals_in_above_bracket, key=lambda x: x[1])
-                if worst_individual_in_above_bracket[1] > individual.raw_fitness:
-                    replace = True
-
-            else:
-                worst_individual_in_above_bracket = min(individuals_in_above_bracket, key=lambda x: x[1])
-                if worst_individual_in_above_bracket[1] < individual.raw_fitness:
-                    replace = True
-                    
-                    
-            if replace:
-
-                # Remove individual from old bracket
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = [
-                    (i, f) for (i, f) in AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] if i is not individual
-                ]
-
-                # Remove worst individual from their bracket
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1] = [
-                    (i, f) for (i, f) in AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1] if i is not worst_individual_in_above_bracket
-                ]
-
-                # Add individual to new bracket
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].append( (individual, individual.raw_fitness) )
-                
-                individual.bracket += 1
-
-                return True
-            
-        # If the bracket wasn't new, and the individual didn't get in, it will not be a part of the population anymore.
-        return False
                 
     def select(self, population, k):
         """
@@ -240,8 +167,6 @@ class KernelSizeEvolutionaryOptimizer:
         that includes both fitness and uniqueness. Uniqueness is recalculated 
         every time a new individual is added.
         """
-
-        LoggingSettings.current_individual_id = 0
             
         if k <= 0:
             return []

@@ -31,7 +31,10 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
         for X_batch, y_batch in train_loader:
             X_batch, y_batch = X_batch.to(device), y_batch.to(device).float()
             optimizer.zero_grad()
-            outputs = model(X_batch).squeeze()
+            try:
+                outputs = model(X_batch).squeeze(-1)
+            except ValueError:
+                print("Balls")
             loss = criterion(outputs, y_batch)
             loss.backward()
             optimizer.step()
@@ -44,7 +47,10 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
         with torch.inference_mode():
             for X_batch, y_batch in test_loader:
                 X_batch, y_batch = X_batch.to(device), y_batch.to(device).float()
-                outputs = model(X_batch).squeeze()
+                try:
+                    outputs = model(X_batch).squeeze(-1)
+                except ValueError:
+                    print("Balls")
                 loss = criterion(outputs, y_batch)
                 test_loss += loss.item() * X_batch.size(0)
 
@@ -90,7 +96,6 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
                 print(f"Epoch {epoch+1:2}/{epochs} -> "
                     f"Train Loss: {train_loss:.4f} | Test Loss: {test_loss:2.4f} | "
                     f"Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f} | "
-                    f"Branches: { kernel_sizes} "
                     f"Time: {round(elapsed, 3)}sec "
                     f"Accuracy: {accuracy:.3f} ---> Learning rate: \x1b[31m{current_lr}\x1b[0m")
 

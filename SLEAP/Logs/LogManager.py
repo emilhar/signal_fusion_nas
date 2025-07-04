@@ -109,10 +109,9 @@ class LogManager:
 
         self._write_with_config(filetype="Experiment", config=config)
 
-    def log_generation_stats(self, generation: int, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
+    def log_generation_stats(self, population_size:int, mean, std_deviation, median, min, fit_max, test_the_best: bool = False):
 
-        LoggingSettings.current_generation_id = generation
-
+        LoggingSettings.current_generation_id
         generation_configs = {
             "Experiment_ID": self.Experiment_ID,
             "Generation": LoggingSettings.current_generation_id,
@@ -128,8 +127,6 @@ class LogManager:
 
         self._write_with_config(filetype="Generation", config=generation_configs)
         self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
-
-        LoggingSettings.current_generation_id = generation + 1
 
         self.best_individual_in_generation = INDIVIDUAL_TEMPLATE.copy()
 

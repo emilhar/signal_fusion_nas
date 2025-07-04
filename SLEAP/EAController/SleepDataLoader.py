@@ -127,21 +127,21 @@ class SleepDataLoader:
 
         return STAGE_MAP
     
-    def get_random_subset(self, dataset_percentage):
+    def get_random_subset(self, dataset_percentage, batch_size):
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset
 
         if not EvolutionSettings.VALID_DATA_SPLIT:
-            raise (ValueError, f"Invalid data split. {EvolutionSettings.DATA_SPLIT_TRAINING} + {EvolutionSettings.DATA_SPLIT_TESTING} != 1")
+            raise ValueError(f"Invalid data split. {EvolutionSettings.DATA_SPLIT_TRAINING} + {EvolutionSettings.DATA_SPLIT_TESTING} != 1")
         
         train_data_amount = ceil( 
-            max( len(train_dataset), len(test_dataset) ) * 
+            max(len(train_dataset), len(test_dataset)) * 
             dataset_percentage *
             EvolutionSettings.DATA_SPLIT_TRAINING
         )
 
         test_data_amount = ceil( 
-            max( len(train_dataset), len(test_dataset) ) * 
+            max(len(train_dataset), len(test_dataset)) * 
             dataset_percentage *
             EvolutionSettings.DATA_SPLIT_TESTING
         )
@@ -151,10 +151,11 @@ class SleepDataLoader:
             testing_subset = self.get_balanced_subset(test_dataset, total_data_points=test_data_amount, training=False)
         else:
             training_subset = sample(list(train_dataset), train_data_amount)
-            testing_subset =sample(list(test_dataset), test_data_amount)
+            testing_subset = sample(list(test_dataset), test_data_amount)
             
-        train_loader_subset = DataLoader(training_subset, batch_size=self.batch_size, shuffle=True)
-        test_loader_subset = DataLoader(testing_subset, batch_size=self.batch_size, shuffle=False)
+        # Create new DataLoaders with specified batch_size
+        train_loader_subset = DataLoader(training_subset, batch_size=batch_size, shuffle=True)
+        test_loader_subset = DataLoader(testing_subset, batch_size=batch_size, shuffle=False)
 
         return train_loader_subset, test_loader_subset, self.n_samples, self.pos_weight
 
@@ -183,7 +184,7 @@ class SleepDataLoader:
         #self.see_dataset_breakdown(balanced_subset)
 
         return balanced_subset
-    
+
     def see_dataset_breakdown(self, dataset):
         labels = [dataset[i][1] for i in range(len(dataset))]
 

@@ -30,11 +30,11 @@ class Signal:
 class ModelSettings:
     # Base
     NUMBER_OF_BRANCHES_RANGE = (1, 3)
-    NUMBER_OF_KERNELS_RANGE = (1, 4)
+    NUMBER_OF_KERNELS_RANGE = (2, 4)
     BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
     MAX_TIME_SPENT_TRAINING = 6
-    LEARNING_RATE = 5e-5
+    LEARNING_RATE = 5e-4
 
     # Kernel size constraints
     MIN_KERNEL_SIZE = 1
@@ -47,7 +47,7 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 10
+    POPULATION_SIZE: int = 20
     GENERATIONS: int = 20
     SELECTION_TOURNAMENT_SIZE = 5
     HALL_OF_FAME_MEMBERS = 3
@@ -88,13 +88,13 @@ class AlpsSettings:
     ]
 
     TRAINING_SETTINGS_FOR_BRACKETS = {
-        0: {"dataset_percentage": 0.15,  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE},
-        1: {"dataset_percentage": 0.15,  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE},
-        2: {"dataset_percentage": 0.20, "training_epochs": 3,  "batch_size": 64},
-        3: {"dataset_percentage": 0.30, "training_epochs": 4,  "batch_size": 64},
-        4: {"dataset_percentage": 0.4,  "training_epochs": 5,  "batch_size": 128},
-        5: {"dataset_percentage": 0.5,  "training_epochs": 6,  "batch_size": 128},
-        6: {"dataset_percentage": 1.0,  "training_epochs": 10, "batch_size": 256}
+        0: {"dataset_percentage": 0.15,  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
+        1: {"dataset_percentage": 0.15,  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
+        2: {"dataset_percentage": 0.20, "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
+        3: {"dataset_percentage": 0.30, "training_epochs": 4,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
+        4: {"dataset_percentage": 0.4,  "training_epochs": 5,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE},
+        5: {"dataset_percentage": 0.5,  "training_epochs": 6,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE},
+        6: {"dataset_percentage": 1.0,  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE},
     }
 
 
@@ -192,6 +192,14 @@ class FitnessFunctions:
 
         individual.fitness.values = (fitness,)
     
+    @staticmethod
+    def train_loss_and_time(individual_performance):
+        TL = individual_performance.get("Train Loss", 0.0)
+        time = individual_performance.get("Time", 0.0) * 0.1
+
+        return TL + time
+        
+        
     @staticmethod
     def no_normalization(individual, population):
         pass
