@@ -1,4 +1,4 @@
-Experiment_ID,Generation,Individual_ID,Individual,Age,Bracket,Train_Loss,Test_Loss,Precision,Recall,F1,Accuracy,Fitness,Fully_Trained,Uniqueness,AlphaBetaFitness
+Experiment_ID,Generation,Individual_ID,Individual,Age,Layer,Train_Loss,Test_Loss,Precision,Recall,F1,Accuracy,Fitness,Fully_Trained,Uniqueness,AlphaBetaFitness
 0,0,1,"[[1007, 1268, 488]]",-1,-1,0.7951,1.8318,0.2222,0.1132,0.15,0.8419,0.7950780342583641,False,0.0,0.0
 0,0,2,"[[599, 186, 240]]",-1,-1,0.5374,2.1217,0.4807,0.9073,0.6284,0.8744,0.537353810123431,False,0.0,0.0
 0,0,3,"[[614, 1337, 1291]]",-1,-1,0.6783,1.7125,0.0,0.0,0.0,0.8674,0.6783293023457955,False,0.0,0.0

@@ -95,11 +95,11 @@ class KernelSizeEvolutionaryOptimizer:
         individual.raw_fitness = None
         individual.uniqueness = None
         individual.age =  0
-        individual.bracket = 0
-        if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
-            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
+        individual.layer = 0
+        if individual.layer not in AlpsSettings.individuals_and_fitnesses_in_layers:
+            AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer] = []
             
-        AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, None) )
+        AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer].append( (individual, None) )
 
         if EvolutionSettings.beta <= 0:
             individual.alpha_beta_fitness = None
@@ -110,13 +110,13 @@ class KernelSizeEvolutionaryOptimizer:
         """Evaluate an individual by training a model
         arg: individual"""
 
-        # If the individual has passed the maximum age in their bracket, then they train as if they are in the bracket above.
+        # If the individual has passed the maximum age in their layer, then they train as if they are in the layer above.
         # This is then used in the comparison later.
-        if individual.age > AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket]:
-            fake_bracket = individual.bracket + 1
-            model_performance = self.create_trained_individual(individual, fake_bracket)
+        if individual.age > AlpsSettings.MAX_AGE_IN_LAYERS[individual.layer]:
+            fake_layer = individual.layer + 1
+            model_performance = self.create_trained_individual(individual, fake_layer)
         else:
-            model_performance = self.create_trained_individual(individual, individual.bracket)
+            model_performance = self.create_trained_individual(individual, individual.layer)
 
         raw_fitness = self.calculate_fitness(model_performance)
 
@@ -127,17 +127,17 @@ class KernelSizeEvolutionaryOptimizer:
 
         return (raw_fitness,)
     
-    def create_trained_individual(self, individual, bracket):
+    def create_trained_individual(self, individual, layer):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
         time_limit = False
 
         individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
-            dataset_percentage = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["dataset_percentage"],
-            batch_size=AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["batch_size"]) 
+            dataset_percentage = AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["dataset_percentage"],
+            batch_size=AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]) 
         
-        batch_size = AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["batch_size"]
-        epochs =AlpsSettings.TRAINING_SETTINGS_FOR_BRACKETS[bracket]["training_epochs"]
+        batch_size = AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]
+        epochs =AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["training_epochs"]
         learning_rate = ModelSettings.LEARNING_RATE
 
         new_model = TrainedModelMaker(

@@ -29,8 +29,8 @@ class Signal:
 
 class ModelSettings:
     # Base
-    NUMBER_OF_BRANCHES_RANGE = (1, 2)
-    NUMBER_OF_KERNELS_RANGE = (1, 3)
+    NUMBER_OF_BRANCHES_RANGE = (1, 3)
+    NUMBER_OF_KERNELS_RANGE = (2, 4)
     BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
     MAX_TIME_SPENT_TRAINING = 6
@@ -77,7 +77,7 @@ class EvolutionSettings:
 class AlpsSettings:
     AGE_GAP = 3
 
-    MAX_AGE_IN_BRACKETS = [
+    MAX_AGE_IN_LAYERS = [
         1 * AGE_GAP, 
         2 * AGE_GAP, 
         3 * AGE_GAP, 
@@ -87,7 +87,7 @@ class AlpsSettings:
         21 * AGE_GAP
     ]
 
-    TRAINING_SETTINGS_FOR_BRACKETS = {
+    TRAINING_SETTINGS_FOR_LAYERS = {
         0: {"dataset_percentage": 0.15,  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
         1: {"dataset_percentage": 0.20,  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
         2: {"dataset_percentage": 0.30, "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
@@ -97,7 +97,7 @@ class AlpsSettings:
         6: {"dataset_percentage": 1.0,  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE},
     }
 
-    individuals_and_fitnesses_in_brackets = {}
+    individuals_and_fitnesses_in_layers = {}
     
 class DataSettings:
     class DatasetNames:
