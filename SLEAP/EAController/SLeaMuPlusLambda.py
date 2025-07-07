@@ -13,9 +13,11 @@ from Globals import EvolutionSettings, AlpsSettings, LoggingSettings, FitnessFun
 
 def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
                    stats=None, halloffame=None, verbose=__debug__):
-    """See: DEAP/Algorithms"""
+    """See: DEAP/Algorithms
+    mu: The number of individuals to select for the next generation.
+    lambda: The number of children to produce at each generation."""
 
-    mu = EvolutionSettings.POPULATION_SIZE
+    mu = EvolutionSettings.POPULATION_SIZE_PER_LAYER
     lambda_ = mu // 2
 
     # Evaluate the individuals with an invalid fitness
@@ -32,7 +34,7 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
     record = stats.compile(population) if stats is not None else {}
 
-    update_brackets(population)
+    update_individuals_and_fitnesses_in_layer(0, population)
 
     if LoggingSettings.LOGGING:
         for individual in population:
@@ -43,60 +45,82 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
     # Begin the generational process
     for gen in range(1, ngen + 1):
+
+        LoggingSettings.population_size =       len(population)
+        LoggingSettings.current_generation_id = gen
         LoggingSettings.current_individual_id = 0
+
         if verbose: 
+            print_individual_dict()
             print(f"\n\n===== NEW GEN ({gen} / {ngen})===")
             print("avg, std, med, min, max")
             want_to_print = [record['avg'], record['std'], record['med'], record['min'], record['max']]
             want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
             print(" ".join(want_to_print))
 
-            for thing in AlpsSettings.individuals_and_fitnesses_in_brackets.keys():
-                
-                print(f"Bracket {thing}:")
-                for (indi, fit) in AlpsSettings.individuals_and_fitnesses_in_brackets[thing]:
-                    print(f"Individual And Fitness: {f'{indi}':30} {f'{indi.age}':30} {f'{fit}':30}")
 
-        if int(gen) == int(ngen*(EvolutionSettings.BETA_SWITCH)):
-            EvolutionSettings.alpha = 1
-            EvolutionSettings.beta = 0
+        for layer in sorted(AlpsSettings.individuals_and_fitnesses_in_layers.keys()):
+            if verbose: print(f"\nWorking on layer {layer}")
 
-        LoggingSettings.current_generation_id = gen
+            layer_population = [indi for indi in population if indi.layer == layer]
 
-        # Vary the population
-        offspring = varOr(population, toolbox, lambda_, cxpb, mutpb)
+            # Vary the population
+            offspring, genetic_material_used = varOr(layer_population, toolbox, lambda_, cxpb, mutpb)
 
-        # Evaluate the individuals with an invalid fitness
-        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
+            # Evaluate the individuals with an invalid fitness
+            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+            fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+            for ind, fit in zip(invalid_ind, fitnesses):
+                ind.fitness.values = fit
 
-        LoggingSettings.population_size = len(invalid_ind)
+            # Update the hall of fame with the generated individuals
+            if halloffame is not None:
+                halloffame.update(offspring)
 
-        # Update the hall of fame with the generated individuals
-        if halloffame is not None:
-            halloffame.update(offspring)
+            # Select the next generation population
+            combined_population = layer_population + offspring
+            new_chosen_population =  toolbox.select(combined_population, mu)
 
-        # Select the next generation population
-        combined_population = population + offspring
-        population[:] = toolbox.select(combined_population, mu)
-        update_brackets(population)
+            individuals_to_age = []
+    
+            for individual in new_chosen_population:
+                str_ind = str(individual)
+                if str_ind not in genetic_material_used.keys():
+                    continue
+
+                for parent in genetic_material_used[str_ind]:
+                    if parent not in individuals_to_age:
+                        individuals_to_age.append(parent)
+
+            for individual in individuals_to_age:
+                individual.age += 1
+
+            population = [indi for indi in population if indi.layer != layer]
+            population.extend(new_chosen_population)
+            update_individuals_and_fitnesses_in_layer(layer, new_chosen_population)
+
+        update_layers(population)
+
+        if gen in AlpsSettings.MAX_AGE_IN_LAYERS:
+            new_offspring = create_new_layer(toolbox)
+            population.extend(new_offspring)
+
 
         # Replace Layer 0 every AGE_GAP generations
-        if gen % AlpsSettings.AGE_GAP == 0:
+        if (gen % AlpsSettings.AGE_GAP == 0):
 
             if verbose: print("\n\n## Replacing Layer 0 ##\n")
+            if verbose: print(f"New additions:", mu)
 
-            if verbose: print(f"Number of new peeps:", lambda_)
-            new_individuals = [toolbox.individual() for _ in range(lambda_)]
+            new_individuals = [toolbox.individual() for _ in range(mu)]
             fitnesses = toolbox.map(toolbox.evaluate, new_individuals)
             for ind, fit in zip(new_individuals, fitnesses):
                 ind.fitness.values = fit
 
-            # Remove old bracket 0 individuals from population
-            population = [ind for ind in population if ind.bracket != 0]
+            # Remove old layer 0 individuals from population
+            population = [ind for ind in population if ind.layer != 0]
             population.extend(new_individuals)
+            update_individuals_and_fitnesses_in_layer(0, new_individuals)
 
         # Update the statistics with the new population
         record = stats.compile(population) if stats is not None else {}
@@ -106,13 +130,21 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
     return population
 
+def update_individuals_and_fitnesses_in_layer(layer_to_update, new_layer_population):
+    """Clears out the layer_to_update index in the individuals_and_fitnesses_in_layers dictionary 
+    and replaces it with the new__layer_population"""
+
+    AlpsSettings.individuals_and_fitnesses_in_layers[layer_to_update] = []
+    for individual in new_layer_population:
+        AlpsSettings.individuals_and_fitnesses_in_layers[layer_to_update].append( (individual, individual.fitness.values[0]) )
+
 def varOr(population, toolbox, lambda_, cxpb, mutpb):
     assert (cxpb + mutpb) <= 1.0, (
         "The sum of the crossover and mutation probabilities must be smaller "
         "or equal to 1.0.")
 
     offspring = []
-    genetic_material_used = []
+    genetic_material_used = {}
 
     for _ in range(lambda_):
         op_choice = random.random()
@@ -120,37 +152,72 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb):
             crossover_child, parent_1, parent_2 = crossover(population, toolbox)
 
             offspring.append(crossover_child)
-            if parent_1 not in genetic_material_used: genetic_material_used.append(parent_1)
-            if parent_2 not in genetic_material_used: genetic_material_used.append(parent_2)
+            genetic_material_used[str(crossover_child)] = [parent_1, parent_2]
 
         elif op_choice < cxpb + mutpb:  # Apply mutation
 
             mutant, ind_pre_mutation = mutate(population, toolbox)
 
             offspring.append(mutant)
-            if ind_pre_mutation not in genetic_material_used: genetic_material_used.append(ind_pre_mutation)
+            genetic_material_used[str(mutant)] = [ind_pre_mutation]
 
         else:                           # Apply reproduction
             offspring.append(random.choice(population))
 
-    for parent in genetic_material_used:
-        parent.age += 1
+    return offspring, genetic_material_used
 
-    return offspring
+def print_individual_dict():
+    # Print layer information in a table format with dynamic column widths
+    for layer in sorted(AlpsSettings.individuals_and_fitnesses_in_layers.keys()):
+        layer_data = AlpsSettings.individuals_and_fitnesses_in_layers[layer]
+        if not layer_data:
+            continue
+        
+        # Calculate max lengths for each column
+        max_ind_len = max(len(str(indi)) for (indi, _) in layer_data)
+        max_age_len = max(len(f"{indi.age}/{AlpsSettings.MAX_AGE_IN_LAYERS[indi.layer]}") 
+                        for (indi, _) in layer_data)
+        max_fit_len = max(len(f"{fit:.4f}") for (_, fit) in layer_data)
+        
+        # Add some padding (minimum 10 for ind, 8 for others)
+        ind_width = max(10, max_ind_len + 2)
+        age_width = max(8, max_age_len + 2)
+        fit_width = max(8, max_fit_len + 2)
+        
+        # Print table header
+        header = f"\nLayer {layer}:"
+        separator = "-" * (ind_width + age_width + fit_width + 4)
+        print(header)
+        print(separator)
+        print(f"{'Individual':<{ind_width}} {'Age':<{age_width}} {'Fitness':<{fit_width}}")
+        print(separator)
+        
+        # Print each row
+        for (indi, fit) in layer_data:
+            age_str = f"{indi.age}/{AlpsSettings.MAX_AGE_IN_LAYERS[indi.layer]}"
+            fit_str = f"{fit:.4f}"
+            print(f"{str(indi):<{ind_width}} {age_str:<{age_width}} {fit_str:<{fit_width}}")
+        
+        print(separator)
 
 def crossover(population, toolbox):
 
     ind1 = random.choice(population)
     ind1_clone = toolbox.clone( ind1 )
 
-    other_individuals_in_same_bracket = random.choice(AlpsSettings.individuals_and_fitnesses_in_brackets[ind1.bracket])
-    ind2 = other_individuals_in_same_bracket[0]
+    if ind1.layer != 0:
+        layer_choice = random.choice([ind1.layer, ind1.layer-1])
+    else:
+        layer_choice = ind1.layer
+
+    other_individuals_in_same_layer = random.choice(AlpsSettings.individuals_and_fitnesses_in_layers[layer_choice])
+    ind2 = other_individuals_in_same_layer[0]
     ind2_clone = toolbox.clone( ind2 )
 
     ind1_clone, ind2_clone = toolbox.mate(ind1_clone, ind2_clone)
 
     ind1_clone.age = max( ind1.age, ind2.age ) + 1
-    ind1_clone.bracket = max( ind1.bracket, ind2.bracket )
+    ind1_clone.layer = max( ind1.layer, ind2.layer )
 
     emptyValues(ind1_clone)
 
@@ -164,7 +231,7 @@ def mutate(population, toolbox):
     emptyValues(ind)
 
     ind.age = pre_mutation_ind.age + 1
-    ind.bracket = pre_mutation_ind.bracket
+    ind.layer = pre_mutation_ind.layer
 
     return ind, pre_mutation_ind
 
@@ -177,75 +244,83 @@ def emptyValues(offspring):
     if hasattr(offspring, "uniqueness"):
         del offspring.uniqueness
 
-def update_brackets(population):
-    # Clear brackets and refill them based on the current population
-    AlpsSettings.individuals_and_fitnesses_in_brackets = {}
+def create_new_layer(toolbox):
 
-    for individual in population:
-        if individual.bracket not in AlpsSettings.individuals_and_fitnesses_in_brackets:
-            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket] = []
+    # Get the current maximum layer
+    max_layer = max(AlpsSettings.individuals_and_fitnesses_in_layers.keys())
+    new_layer = max_layer + 1
+    
+    # Create new layer entry
+    AlpsSettings.individuals_and_fitnesses_in_layers[new_layer] = []
+    
+    # Get parent individuals from highest existing layer
+    parent_population = [ind for ind, _ in AlpsSettings.individuals_and_fitnesses_in_layers[max_layer]]
+    
+    # Generate offspring using variation operators
+    offspring, _ = varOr(parent_population, toolbox, 
+                     EvolutionSettings.POPULATION_SIZE_PER_LAYER, 
+                     EvolutionSettings.CX_PROB, 
+                     EvolutionSettings.MUTATION_PROB)
+    # Evaluate new offspring
+    invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+    if invalid_ind:
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+    
+    # Assign new layer to offspring
+    for ind in offspring:
+        ind.layer = new_layer
+    
+    # Update layer registry
+    update_individuals_and_fitnesses_in_layer(new_layer, offspring)
+    
+    return offspring
 
-        AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].append( (individual, individual.fitness.values[0]) )
+def update_layers(population):
+    """Controls layer switching for all layers after population has been settled"""
 
-    failures = []
-    # Now that the brackets are correct,
-    # we must see if individuals that have aged out of their brackets can move to the next one.
-    for individual in population:
-        if individual.age > AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket]:
-            # Now it's time to see if they move up a bracket or fail to do so.
-            successful = attempt_bracket_switch(individual)
+    for i in range(len(AlpsSettings.individuals_and_fitnesses_in_layers)-1):
 
-            if not successful:
-                failures.append(individual)
+        layer_population = [individual for individual in population if individual.layer==i]
 
-    for failure in failures:
-        population.remove(failure)
-        AlpsSettings.individuals_and_fitnesses_in_brackets[failure.bracket].remove( (failure, failure.fitness.values[0]) )
+        failures = []
+        for individual in layer_population:
+            if individual.age >= AlpsSettings.MAX_AGE_IN_LAYERS[individual.layer]:
+                # Now it's time to see if they move up a layer or fail to do so.
+                successful = attempt_layer_switch(individual, population)
 
-def attempt_bracket_switch(individual):
+                if not successful:
+                    failures.append(individual)
+
+        for failure in failures:
+            population.remove(failure)
+            AlpsSettings.individuals_and_fitnesses_in_layers[failure.layer].remove( (failure, failure.fitness.values[0]) )
+
+def attempt_layer_switch(individual, population):
+    individuals_in_above_layer = AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer + 1]
+    replace = False
+
+    if FitnessFunctions.MINIMIZE_FITNESS:
+        worst_individual_in_above_layer = max(individuals_in_above_layer, key=lambda x: x[1])
+        if worst_individual_in_above_layer[1] > individual.fitness.values[0]:
+            replace = True
+
+    else:
+        worst_individual_in_above_layer = min(individuals_in_above_layer, key=lambda x: x[1])
+        if worst_individual_in_above_layer[1] < individual.fitness.values[0]:
+            replace = True
+    
+    if replace:
+        print(f"Replacing {worst_individual_in_above_layer[0]} with {individual}")
+        population.remove(worst_individual_in_above_layer[0])
+        AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer + 1].remove( worst_individual_in_above_layer )
+        AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer].remove( (individual, individual.fitness.values[0]) )
+        AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer + 1].append( (individual, individual.fitness.values[0]) )
         
-        # If a new bracket JUST opened, we're allowed in
-        if LoggingSettings.current_generation_id == (AlpsSettings.MAX_AGE_IN_BRACKETS[individual.bracket] + 1):
+        individual.layer += 1
 
-            if individual.bracket + 1 not in AlpsSettings.individuals_and_fitnesses_in_brackets:
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1] = []
-
-            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].remove( (individual, individual.fitness.values[0]) )
-            AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].append( (individual, individual.fitness.values[0]) )
-
-            individual.bracket += 1
-
-            return True
-        
-        # If the bracket is not new, the individual must be better than the worst person in the above bracket
-        else:
-            individuals_in_above_bracket = AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1]
-            replace = False
-
-            if FitnessFunctions.MINIMIZE_FITNESS:
-                worst_individual_in_above_bracket = max(individuals_in_above_bracket, key=lambda x: x[1])
-                if worst_individual_in_above_bracket[1] > individual.fitness.values[0]:
-                    replace = True
-
-            else:
-                worst_individual_in_above_bracket = min(individuals_in_above_bracket, key=lambda x: x[1])
-                if worst_individual_in_above_bracket[1] < individual.fitness.values[0]:
-                    replace = True
-                    
-                    
-            if replace:
-                print("Replacing")
-                print(worst_individual_in_above_bracket)
-                print("with")
-                print(individual)
-
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket].remove( (individual, individual.fitness.values[0]) )
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].remove( worst_individual_in_above_bracket )
-                AlpsSettings.individuals_and_fitnesses_in_brackets[individual.bracket + 1].append( (individual, individual.fitness.values[0]) )
-                
-                individual.bracket += 1
-
-                return True
-            
-        # If the bracket wasn't new, and the individual didn't get in, it will not be a part of the population anymore.
-        return False
+        return True
+    
+    # If the individual didn't get in, it will not be a part of the population anymore.
+    return False

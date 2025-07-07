@@ -183,7 +183,7 @@ class SLEAP:
         print(f"{'Kernel count range:':30} {ModelSettings.NUMBER_OF_KERNELS_RANGE}")
 
         print("\n🧬 Evolution Settings")
-        print(f"{'Population size:':30} {EvolutionSettings.POPULATION_SIZE}")
+        print(f"{'Population size per layer:':30} {EvolutionSettings.POPULATION_SIZE_PER_LAYER}")
         print(f"{'Generations:':30} {EvolutionSettings.GENERATIONS}")
         print(f"{'Tournament size:':30} {EvolutionSettings.SELECTION_TOURNAMENT_SIZE}")
         print(f"{'Hall of Fame members:':30} {EvolutionSettings.HALL_OF_FAME_MEMBERS}")

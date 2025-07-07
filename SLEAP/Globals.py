@@ -29,8 +29,8 @@ class Signal:
 
 class ModelSettings:
     # Base
-    NUMBER_OF_BRANCHES_RANGE = (1, 2)
-    NUMBER_OF_KERNELS_RANGE = (1, 3)
+    NUMBER_OF_BRANCHES_RANGE = (1, 3)
+    NUMBER_OF_KERNELS_RANGE = (2, 4)
     BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
     MAX_TIME_SPENT_TRAINING = 6
@@ -47,9 +47,10 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 10
+    POPULATION_SIZE_PER_LAYER: int = 10
     GENERATIONS: int = 20
-    SELECTION_TOURNAMENT_SIZE = 5
+    SELECTION_TOURNAMENT_SIZE = 7
+    ELITISM = 3
     HALL_OF_FAME_MEMBERS = 3
 
     MAX_NUMBER_OF_MUTATIONS = 3
@@ -68,7 +69,7 @@ class EvolutionSettings:
     ALPHA_BETA = [1.0, 0.0]
     alpha = ALPHA_BETA [0]
     beta = ALPHA_BETA[1]
-    BETA_SWITCH = 1/2
+    BETA_SWITCH = 1/2           # NEVER HAPPENS
 
     # Evolution settings
     CX_PROB: float = 0.5
@@ -77,7 +78,7 @@ class EvolutionSettings:
 class AlpsSettings:
     AGE_GAP = 3
 
-    MAX_AGE_IN_BRACKETS = [
+    MAX_AGE_IN_LAYERS = [
         1 * AGE_GAP, 
         2 * AGE_GAP, 
         3 * AGE_GAP, 
@@ -87,7 +88,7 @@ class AlpsSettings:
         21 * AGE_GAP
     ]
 
-    TRAINING_SETTINGS_FOR_BRACKETS = {
+    TRAINING_SETTINGS_FOR_LAYERS = {
         0: {"dataset_percentage": 0.15,  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
         1: {"dataset_percentage": 0.20,  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
         2: {"dataset_percentage": 0.30, "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
@@ -97,7 +98,7 @@ class AlpsSettings:
         6: {"dataset_percentage": 1.0,  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE},
     }
 
-    individuals_and_fitnesses_in_brackets = {}
+    individuals_and_fitnesses_in_layers = {}
     
 class DataSettings:
     class DatasetNames:
@@ -157,7 +158,7 @@ class UniquenessFunctions:
                 min_distance = dist
 
         steepness = 0.01
-        transition = ModelSettings.MAX_KERNEL_SIZE / pow(EvolutionSettings.POPULATION_SIZE, 1/3)
+        transition = ModelSettings.MAX_KERNEL_SIZE / pow(EvolutionSettings.POPULATION_SIZE_PER_LAYER, 1/3)
 
         return 1 / (1 + math.exp(-steepness * (min_distance - transition)))
 

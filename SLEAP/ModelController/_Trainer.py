@@ -13,6 +13,7 @@ from Globals import ModelSettings
 
 def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1, verbose=False, have_time_limit = True):
 
+    verbose = False
     training_time_start = datetime.datetime.now()
 
     if device.type == "cpu":
