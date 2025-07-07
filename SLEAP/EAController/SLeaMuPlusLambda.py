@@ -34,7 +34,7 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
     record = stats.compile(population) if stats is not None else {}
 
-    update_individuals_and_fitnesses_in_layer(0, population)
+    update_individuals_and_fitnesses_in_layer(population, 0)
 
     if LoggingSettings.LOGGING:
         for individual in population:
@@ -97,13 +97,12 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
             population = [indi for indi in population if indi.layer != layer]
             population.extend(new_chosen_population)
-            update_individuals_and_fitnesses_in_layer(layer, new_chosen_population)
+            update_individuals_and_fitnesses_in_layer(population, layer)
 
-        update_layers(population)
+        manage_layer_transitions(population)
 
         if gen in AlpsSettings.MAX_AGE_IN_LAYERS:
-            new_offspring = create_new_layer(toolbox)
-            population.extend(new_offspring)
+            create_new_layer(population, toolbox)
 
 
         # Replace Layer 0 every AGE_GAP generations
@@ -120,7 +119,7 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
             # Remove old layer 0 individuals from population
             population = [ind for ind in population if ind.layer != 0]
             population.extend(new_individuals)
-            update_individuals_and_fitnesses_in_layer(0, new_individuals)
+            update_individuals_and_fitnesses_in_layer(population, 0)
 
         # Update the statistics with the new population
         record = stats.compile(population) if stats is not None else {}
@@ -130,13 +129,13 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
     return population
 
-def update_individuals_and_fitnesses_in_layer(layer_to_update, new_layer_population):
-    """Clears out the layer_to_update index in the individuals_and_fitnesses_in_layers dictionary 
-    and replaces it with the new__layer_population"""
-
-    AlpsSettings.individuals_and_fitnesses_in_layers[layer_to_update] = []
-    for individual in new_layer_population:
-        AlpsSettings.individuals_and_fitnesses_in_layers[layer_to_update].append( (individual, individual.fitness.values[0]) )
+def update_individuals_and_fitnesses_in_layer(population, layer_to_update):
+    """Update a layer's population by filtering the global population"""
+    AlpsSettings.individuals_and_fitnesses_in_layers[layer_to_update] = [
+        (ind, ind.fitness.values[0])
+        for ind in population 
+        if ind.layer == layer_to_update
+    ]
 
 def varOr(population, toolbox, lambda_, cxpb, mutpb):
     assert (cxpb + mutpb) <= 1.0, (
@@ -244,8 +243,8 @@ def emptyValues(offspring):
     if hasattr(offspring, "uniqueness"):
         del offspring.uniqueness
 
-def create_new_layer(toolbox):
-
+def create_new_layer(population, toolbox):
+    print("Creating new layer")
     # Get the current maximum layer
     max_layer = max(AlpsSettings.individuals_and_fitnesses_in_layers.keys())
     new_layer = max_layer + 1
@@ -271,13 +270,14 @@ def create_new_layer(toolbox):
     # Assign new layer to offspring
     for ind in offspring:
         ind.layer = new_layer
+
+    population.extend(offspring)
     
     # Update layer registry
-    update_individuals_and_fitnesses_in_layer(new_layer, offspring)
-    
-    return offspring
+    update_individuals_and_fitnesses_in_layer(population, new_layer)
 
-def update_layers(population):
+
+def manage_layer_transitions(population):
     """Controls layer switching for all layers after population has been settled"""
 
     for i in range(len(AlpsSettings.individuals_and_fitnesses_in_layers)-1):

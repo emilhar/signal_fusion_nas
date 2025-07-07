@@ -49,7 +49,7 @@ class EvolutionSettings:
     # Overview settings
     POPULATION_SIZE_PER_LAYER: int = 10
     GENERATIONS: int = 20
-    SELECTION_TOURNAMENT_SIZE = 7
+    SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
     ELITISM = 3
     HALL_OF_FAME_MEMBERS = 3
 
@@ -198,7 +198,7 @@ class FitnessFunctions:
 
         return TL + time
         
-        
+    
     @staticmethod
     def no_normalization(individual, population):
         pass

@@ -53,7 +53,7 @@ class TrainedModelMaker:
         model = CNN_BinaryClassifier(**model_args).to(self.device)
 
         if verbose:
-            pass #print(f"\n\nTraining model: {branches=}, Generation: {LoggingSettings.current_generation_id}/{EvolutionSettings.GENERATIONS}, Generation Completeness: {LoggingSettings.current_individual_id}/{LoggingSettings.population_size}")
+            print(f"\n\nTraining model: {branches=}, Generation: {LoggingSettings.current_generation_id}/{EvolutionSettings.GENERATIONS}, Generation Completeness: {LoggingSettings.current_individual_id}/{LoggingSettings.population_size}")
 
         self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, self.lr, epochs=epochs, verbose=verbose, have_time_limit=have_time_limit)
 
