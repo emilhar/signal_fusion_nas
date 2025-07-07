@@ -13,6 +13,7 @@ from Globals import ModelSettings
 
 def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1, verbose=False, have_time_limit = True):
 
+    verbose = False
     training_time_start = datetime.datetime.now()
 
     if device.type == "cpu":
@@ -96,7 +97,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
                 print(f"Epoch {epoch+1:2}/{epochs} -> "
                     f"Train Loss: {train_loss:.4f} | Test Loss: {test_loss:2.4f} | "
                     f"Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f} | "
-                    f"Time: {round(elapsed, 3)}sec "
+                    f"Time: {round(elapsed, 3)}sec | "
                     f"Accuracy: {accuracy:.3f} ---> Learning rate: \x1b[31m{current_lr}\x1b[0m")
 
     kernel_sizes = []

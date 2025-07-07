@@ -9,6 +9,11 @@ from Globals import Signal, ModelSettings, EvolutionSettings, AlpsSettings, Logg
 from EAController.SLeaMuPlusLambda import eaMuPlusLambda
 from Logs.LogManager import LogManager
 
+
+"""""
+Færa fyrst, svo búa til nýtt layer
+"""""
+
 class KernelSizeEvolutionaryOptimizer:
 
     def __init__(self, sleepstage: str, signal_type: str):
@@ -56,7 +61,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", self.select)
+        self.toolbox.register("select", self.select, tournsize=EvolutionSettings.SELECTION_TOURNAMENT_SIZE, elitism=EvolutionSettings.ELITISM)
         
         # Genetic operatorss
         self.toolbox.register("evaluate", self.evaluate_individual)
@@ -96,10 +101,6 @@ class KernelSizeEvolutionaryOptimizer:
         individual.uniqueness = None
         individual.age =  0
         individual.layer = 0
-        if individual.layer not in AlpsSettings.individuals_and_fitnesses_in_layers:
-            AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer] = []
-            
-        AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer].append( (individual, None) )
 
         if EvolutionSettings.beta <= 0:
             individual.alpha_beta_fitness = None
@@ -160,36 +161,27 @@ class KernelSizeEvolutionaryOptimizer:
 
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)
-                
-    def select(self, population, k):
-        """
-        Selects the best k individuals based on updated selection criteria 
-        that includes both fitness and uniqueness. Uniqueness is recalculated 
-        every time a new individual is added.
-        """
-            
-        if k <= 0:
+
+    def select(self, population, number_of_people_to_select, tournsize, elitism):
+        """Tournament selection"""
+
+        if number_of_people_to_select <= 0:
             return []
         
+        map(lambda x: FitnessFunctions.normalization_function(x, population), population)
         min_or_max = min if FitnessFunctions.MINIMIZE_FITNESS else max
         
-        # Normalize all fitnesses:
-        map(lambda x: FitnessFunctions.normalization_function(x, population), population)
-
         self.chosen_for_next_generation = []
-        remaining = population[:]
-
-        for _ in range(k):
-            best_individual = min_or_max(remaining, 
-                key=lambda ind: self._selection_criteria(ind))
-
-            self.chosen_for_next_generation.append(best_individual)
-            remaining.remove(best_individual)
+        
+        for _ in range(number_of_people_to_select):
+            aspirants = [random.choice(population) for _ in range(tournsize)]
+            chosen = min_or_max(aspirants, key=lambda x: self._selection_criteria(x))
+            self.chosen_for_next_generation.append( chosen )
 
         if LoggingSettings.LOGGING:
             for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)
-
+        
         return self.chosen_for_next_generation
 
     def _selection_criteria(self, individual):
@@ -357,10 +349,10 @@ class KernelSizeEvolutionaryOptimizer:
     def run_evolution(self):
         """Run the evolutionary algorithm"""
         if ModelSettings.VERBOSE:
-            print(f"Starting evolution with {EvolutionSettings.POPULATION_SIZE} individuals for {EvolutionSettings.GENERATIONS} generations")
+            print(f"Starting evolution with {EvolutionSettings.POPULATION_SIZE_PER_LAYER} individuals for {EvolutionSettings.GENERATIONS} generations")
 
         # Create initial population
-        population = self.toolbox.population(n=EvolutionSettings.POPULATION_SIZE)
+        population = self.toolbox.population(n=EvolutionSettings.POPULATION_SIZE_PER_LAYER)
         
         # Run evolution
         result_pop = eaMuPlusLambda(

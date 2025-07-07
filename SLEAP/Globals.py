@@ -47,9 +47,10 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE: int = 10
+    POPULATION_SIZE_PER_LAYER: int = 10
     GENERATIONS: int = 20
-    SELECTION_TOURNAMENT_SIZE = 5
+    SELECTION_TOURNAMENT_SIZE = 7
+    ELITISM = 3
     HALL_OF_FAME_MEMBERS = 3
 
     MAX_NUMBER_OF_MUTATIONS = 3
@@ -68,7 +69,7 @@ class EvolutionSettings:
     ALPHA_BETA = [1.0, 0.0]
     alpha = ALPHA_BETA [0]
     beta = ALPHA_BETA[1]
-    BETA_SWITCH = 1/2
+    BETA_SWITCH = 1/2           # NEVER HAPPENS
 
     # Evolution settings
     CX_PROB: float = 0.5
@@ -157,7 +158,7 @@ class UniquenessFunctions:
                 min_distance = dist
 
         steepness = 0.01
-        transition = ModelSettings.MAX_KERNEL_SIZE / pow(EvolutionSettings.POPULATION_SIZE, 1/3)
+        transition = ModelSettings.MAX_KERNEL_SIZE / pow(EvolutionSettings.POPULATION_SIZE_PER_LAYER, 1/3)
 
         return 1 / (1 + math.exp(-steepness * (min_distance - transition)))
 

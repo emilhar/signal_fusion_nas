@@ -90,7 +90,7 @@ class LogManager:
             "Signal_Type": signal_type,
             "Batch_Size": ModelSettings.BATCH_SIZE,
             "Epochs_Per_Individual": ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
-            "Population_Size": EvolutionSettings.POPULATION_SIZE,
+            "Population_Size": EvolutionSettings.POPULATION_SIZE_PER_LAYER,
             "Generations": EvolutionSettings.GENERATIONS,
             "Crossover_Prob": EvolutionSettings.CX_PROB,
             "Mutation_Prob": EvolutionSettings.MUTATION_PROB,
