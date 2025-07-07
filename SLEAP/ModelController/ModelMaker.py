@@ -101,8 +101,9 @@ class CNN_BinaryClassifier(nn.Module):
             nn.ReLU(),
             nn.Dropout(0.1),
             nn.Linear(64, 32),
-            nn.ReLU(),
+            nn.ReLU()
         )
+
 
         self.classifier = nn.Linear(32, 1)
 

@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+from sklearn.metrics import precision_recall_fscore_support, accuracy_score, roc_auc_score
 
 import datetime # For max training time
 from Globals import ModelSettings
@@ -21,9 +21,11 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(device))
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=p, factor=f)
-    best_f1 = 0.0
+    best_f1, best_auc = 0.0, 0.0
 
     train_losses_data, test_losses_data = [], []
+
+    best_true, best_scores = None, None
 
     for epoch in range(epochs):
         model.train()
@@ -31,10 +33,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
         for X_batch, y_batch in train_loader:
             X_batch, y_batch = X_batch.to(device), y_batch.to(device).float()
             optimizer.zero_grad()
-            try:
-                outputs = model(X_batch).squeeze(-1)
-            except ValueError:
-                print("Balls")
+            outputs = model(X_batch).squeeze(-1)
             loss = criterion(outputs, y_batch)
             loss.backward()
             optimizer.step()
@@ -47,10 +46,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
         with torch.inference_mode():
             for X_batch, y_batch in test_loader:
                 X_batch, y_batch = X_batch.to(device), y_batch.to(device).float()
-                try:
-                    outputs = model(X_batch).squeeze(-1)
-                except ValueError:
-                    print("Balls")
+                outputs = model(X_batch).squeeze(-1)
                 loss = criterion(outputs, y_batch)
                 test_loss += loss.item() * X_batch.size(0)
 
@@ -68,13 +64,14 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
 
         all_targets_np = np.array(all_targets)
         all_preds_np = np.array(all_preds)
+        all_probs_np = np.array(all_probs)
 
         precision, recall, f1, _ = precision_recall_fscore_support(
             all_targets_np, all_preds_np, average='binary', zero_division=0
         )
-
+        auc_score = roc_auc_score(all_targets_np, all_probs_np)
         accuracy = accuracy_score(all_targets_np, all_preds_np)
-        scheduler.step(f1)
+        scheduler.step(auc_score)
         current_lr = optimizer.param_groups[0]['lr']
 
         kernel_sizes = []
@@ -83,6 +80,10 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
                 
         if f1 > best_f1:
             best_f1 = f1
+        if auc_score > best_auc:
+            best_auc = auc_score
+            best_true = all_targets_np
+            best_scores = all_probs_np
 
         elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
         if have_time_limit:
@@ -96,23 +97,29 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
                 print(f"Epoch {epoch+1:2}/{epochs} -> "
                     f"Train Loss: {train_loss:.4f} | Test Loss: {test_loss:2.4f} | "
                     f"Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f} | "
-                    f"Time: {round(elapsed, 3)}sec "
+                    f"Time: {elapsed:.4f}sec | "
+                    f"AUC score: {auc_score:.4f} | "
                     f"Accuracy: {accuracy:.3f} ---> Learning rate: \x1b[31m{current_lr}\x1b[0m")
 
     kernel_sizes = []
     for branch in model.branches.values():
         kernel_sizes.append(_get_kernel_sizes(branch))
-    output = {"Epoch": epoch,
-            "Train Loss": train_loss,
-            "Test Loss": test_loss,
-            "Precision": precision,
-            "Recall": recall,
-            "F1": f1,
-            "Accuracy": accuracy,
-            "Learning rate": current_lr,
-            "Branches": kernel_sizes[0],
-            "Best F1": best_f1,
-            "Time": elapsed}
+    output = {
+        "Epoch": epoch,
+        "Train Loss": train_loss,
+        "Test Loss": test_loss,
+        "Precision": precision,
+        "Recall": recall,
+        "F1": f1,
+        "Accuracy": accuracy,
+        "Learning rate": current_lr,
+        "Branches": kernel_sizes[0],
+        "Best F1": best_f1,
+        "Best AUC": best_auc,
+        "True Labels": best_true,
+        "Best Scores": best_scores,
+        "Time": elapsed,
+    }
 
     return output
 
