@@ -6,7 +6,7 @@ from EAController.SleepDataLoader import SleepDataLoader
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from Globals import Signal, ModelSettings, EvolutionSettings, AlpsSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
-from EAController.SLeaMuPlusLambda import eaMuPlusLambda
+from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
 
 
@@ -355,16 +355,20 @@ class KernelSizeEvolutionaryOptimizer:
         population = self.toolbox.population(n=EvolutionSettings.POPULATION_SIZE_PER_LAYER)
         
         # Run evolution
-        result_pop = eaMuPlusLambda(
-            population, 
-            self.toolbox,
-            cxpb=EvolutionSettings.CX_PROB,
-            mutpb=EvolutionSettings.MUTATION_PROB,
-            ngen=EvolutionSettings.GENERATIONS,
-            LogManager=self.LogManager,
-            stats=self.stats,
-            halloffame=self.hall_of_fame,
-            verbose=ModelSettings.VERBOSE
+        evolver = SLeaMuPlusLambda(
+            population=population,
+            toolbox=self.toolbox
+        )
+        
+        result_pop = evolver.main(
+            cxpb= EvolutionSettings.CX_PROB,
+            mutpb= EvolutionSettings.MUTATION_PROB,
+            ngen= EvolutionSettings.GENERATIONS,
+            LogManager= self.LogManager,
+            stats= self.stats,
+            halloffame= self.hall_of_fame,
+            verbose= ModelSettings.VERBOSE
+
         )
         
         return result_pop, self.hall_of_fame, self.stats
