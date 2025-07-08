@@ -8,8 +8,12 @@ GECCO 2006 - Genetic and Evolutionary Computation Conference. 1.
 10.1145/1143997.1144142. 
 """
 
+
+
+""" Taka út max age í síðasta layer """
+
 import random
-from Globals import EvolutionSettings, AlpsSettings, LoggingSettings, FitnessFunctions
+from Globals import EvolutionSettings, AlpsSettings, LoggingSettings, FitnessFunctions, SLEAP_Exception
 
 def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
                    stats=None, halloffame=None, verbose=__debug__):
@@ -19,6 +23,8 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
     mu = EvolutionSettings.POPULATION_SIZE_PER_LAYER
     lambda_ = mu // 2
+
+    __dev_check(function=eaMuPlusLambda.__name__, line=23)
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in population if not ind.fitness.valid]
@@ -42,9 +48,10 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
             
         LogManager.log_generation_stats(len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
 
-
+    __dev_check(function=eaMuPlusLambda.__name__, line=47)
     # Begin the generational process
     for gen in range(1, ngen + 1):
+        __dev_check(function=eaMuPlusLambda.__name__, line=50)
 
         LoggingSettings.population_size =       len(population)
         LoggingSettings.current_generation_id = gen
@@ -58,11 +65,11 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
             want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
             print(" ".join(want_to_print))
 
-
+        __dev_check(function=eaMuPlusLambda.__name__, line=64)
         for layer in sorted(AlpsSettings.individuals_and_fitnesses_in_layers.keys()):
             if verbose: print(f"\nWorking on layer {layer}")
 
-            layer_population = [indi for indi in population if indi.layer == layer]
+            layer_population = [toolbox.clone(indi) for indi in population if indi.layer == layer]
 
             # Vary the population
             offspring, genetic_material_used = varOr(layer_population, toolbox, lambda_, cxpb, mutpb)
@@ -77,18 +84,21 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
             if halloffame is not None:
                 halloffame.update(offspring)
 
+            __dev_check(function=eaMuPlusLambda.__name__, line=83)
+
             # Select the next generation population
             combined_population = layer_population + offspring
             new_chosen_population =  toolbox.select(combined_population, mu)
-
+            __dev_check(function=eaMuPlusLambda.__name__, line=88)
+            
             individuals_to_age = []
     
             for individual in new_chosen_population:
-                str_ind = str(individual)
-                if str_ind not in genetic_material_used.keys():
+                ind_id = id(individual)
+                if ind_id not in genetic_material_used.keys():
                     continue
 
-                for parent in genetic_material_used[str_ind]:
+                for parent in genetic_material_used[ind_id]:
                     if parent not in individuals_to_age:
                         individuals_to_age.append(parent)
 
@@ -96,14 +106,22 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
                 individual.age += 1
 
             population = [indi for indi in population if indi.layer != layer]
-            population.extend(new_chosen_population)
+
+            for new_individual in new_chosen_population:
+                if individual not in population:
+                    population.append(new_individual)
+
+            __dev_check(function=eaMuPlusLambda.__name__, line=106)
             update_individuals_and_fitnesses_in_layer(population, layer)
-
-        manage_layer_transitions(population)
-
-        if gen in AlpsSettings.MAX_AGE_IN_LAYERS:
+            __dev_check(function=eaMuPlusLambda.__name__, line=108)
+        
+        if gen in AlpsSettings.LAYER_CREATION_THRESHOLDS:
             create_new_layer(population, toolbox)
-
+        __dev_check(function=eaMuPlusLambda.__name__, line=112)
+        manage_layer_transitions(population)
+        __dev_check(function=eaMuPlusLambda.__name__, line=114)
+        population = check_for_empty_layers(population, toolbox)
+        __dev_check(function=eaMuPlusLambda.__name__, line=116)
 
         # Replace Layer 0 every AGE_GAP generations
         if (gen % AlpsSettings.AGE_GAP == 0):
@@ -120,7 +138,7 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
             population = [ind for ind in population if ind.layer != 0]
             population.extend(new_individuals)
             update_individuals_and_fitnesses_in_layer(population, 0)
-
+        __dev_check(function=eaMuPlusLambda.__name__, line=133)
         # Update the statistics with the new population
         record = stats.compile(population) if stats is not None else {}
         if LoggingSettings.LOGGING:
@@ -131,6 +149,7 @@ def eaMuPlusLambda(population, toolbox, cxpb, mutpb, ngen, LogManager,
 
 def update_individuals_and_fitnesses_in_layer(population, layer_to_update):
     """Update a layer's population by filtering the global population"""
+
     AlpsSettings.individuals_and_fitnesses_in_layers[layer_to_update] = [
         (ind, ind.fitness.values[0])
         for ind in population 
@@ -151,18 +170,19 @@ def varOr(population, toolbox, lambda_, cxpb, mutpb):
             crossover_child, parent_1, parent_2 = crossover(population, toolbox)
 
             offspring.append(crossover_child)
-            genetic_material_used[str(crossover_child)] = [parent_1, parent_2]
+            genetic_material_used[id(crossover_child)] = [parent_1, parent_2]
 
         elif op_choice < cxpb + mutpb:  # Apply mutation
 
             mutant, ind_pre_mutation = mutate(population, toolbox)
 
             offspring.append(mutant)
-            genetic_material_used[str(mutant)] = [ind_pre_mutation]
+            genetic_material_used[id(mutant)] = [ind_pre_mutation]
 
         else:                           # Apply reproduction
             offspring.append(random.choice(population))
 
+    __dev_check(function=varOr.__name__)
     return offspring, genetic_material_used
 
 def print_individual_dict():
@@ -277,16 +297,19 @@ def create_new_layer(population, toolbox):
     update_individuals_and_fitnesses_in_layer(population, new_layer)
 
 
+
+    __dev_check(function=create_new_layer.__name__, line=293)
+
 def manage_layer_transitions(population):
     """Controls layer switching for all layers after population has been settled"""
 
-    for i in range(len(AlpsSettings.individuals_and_fitnesses_in_layers)-1):
+    for i in range(len(AlpsSettings.individuals_and_fitnesses_in_layers)):
 
-        layer_population = [individual for individual in population if individual.layer==i]
+        layer_population = [toolbox.clone(individual) for individual in population if individual.layer==i]
 
         failures = []
         for individual in layer_population:
-            if individual.age >= AlpsSettings.MAX_AGE_IN_LAYERS[individual.layer]:
+            if individual.age > AlpsSettings.MAX_AGE_IN_LAYERS[individual.layer]:
                 # Now it's time to see if they move up a layer or fail to do so.
                 successful = attempt_layer_switch(individual, population)
 
@@ -295,7 +318,38 @@ def manage_layer_transitions(population):
 
         for failure in failures:
             population.remove(failure)
-            AlpsSettings.individuals_and_fitnesses_in_layers[failure.layer].remove( (failure, failure.fitness.values[0]) )
+            update_individuals_and_fitnesses_in_layer(population, failure.layer)
+        
+    __dev_check(function=manage_layer_transitions.__name__)
+
+def check_for_empty_layers(population, toolbox):
+
+    # Reset the dictionary based on the current population
+    number_of_current_layers = len(AlpsSettings.individuals_and_fitnesses_in_layers)
+    
+    for i in range(number_of_current_layers):
+        AlpsSettings.individuals_and_fitnesses_in_layers[i] = [
+            (ind, ind.fitness.values[0])
+            for ind in population 
+            if ind.layer == i
+        ]
+
+
+    for layer in AlpsSettings.individuals_and_fitnesses_in_layers.keys():
+        layer_population = [indi for indi in population if indi.layer == layer]
+
+        if len(layer_population) < 2:
+            print("Missing individuals in layer", layer, ". Refilling")
+            new_individuals = [toolbox.individual() for _ in range( 2 - len(layer_population) )]
+            fitnesses = toolbox.map(toolbox.evaluate, new_individuals)
+            for ind, fit in zip(new_individuals, fitnesses):
+                ind.fitness.values = fit
+
+            population.extend(new_individuals)
+
+    __dev_check(function=check_for_empty_layers.__name__, line=342)
+
+    return population
 
 def attempt_layer_switch(individual, population):
     individuals_in_above_layer = AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer + 1]
@@ -311,16 +365,33 @@ def attempt_layer_switch(individual, population):
         if worst_individual_in_above_layer[1] < individual.fitness.values[0]:
             replace = True
     
+    __dev_check(function=attempt_layer_switch.__name__, line=360)
     if replace:
         print(f"Replacing {worst_individual_in_above_layer[0]} with {individual}")
-        population.remove(worst_individual_in_above_layer[0])
-        AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer + 1].remove( worst_individual_in_above_layer )
-        AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer].remove( (individual, individual.fitness.values[0]) )
-        AlpsSettings.individuals_and_fitnesses_in_layers[individual.layer + 1].append( (individual, individual.fitness.values[0]) )
-        
-        individual.layer += 1
 
+        population.remove(worst_individual_in_above_layer[0])
+        individual.layer += 1
+        update_individuals_and_fitnesses_in_layer(population, individual.layer - 1)
+        update_individuals_and_fitnesses_in_layer(population, individual.layer)
+        
+        __dev_check(function=attempt_layer_switch.__name__, line=369)
         return True
     
     # If the individual didn't get in, it will not be a part of the population anymore.
     return False
+
+def __dev_check(**kwargs):
+    for item in AlpsSettings.individuals_and_fitnesses_in_layers:
+        for individual,_ in AlpsSettings.individuals_and_fitnesses_in_layers[item]:
+            if individual.layer > item:
+                raise SLEAP_Exception(**kwargs)
+            
+    people = []
+
+    for item in AlpsSettings.individuals_and_fitnesses_in_layers:
+        for myTuple in AlpsSettings.individuals_and_fitnesses_in_layers[item]:
+            if myTuple not in people:
+                people.append(myTuple)
+            else:
+                print("Second error")
+                raise SLEAP_Exception(**kwargs)

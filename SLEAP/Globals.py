@@ -38,7 +38,7 @@ class ModelSettings:
 
     # Kernel size constraints
     MIN_KERNEL_SIZE = 1
-    MAX_KERNEL_SIZE = None
+    MAX_KERNEL_SIZE = 50
 
     # Misc
     SMALLER_FILES = False
@@ -76,26 +76,33 @@ class EvolutionSettings:
     MUTATION_PROB: float = 0.5
     
 class AlpsSettings:
-    AGE_GAP = 3
+    AGE_GAP = 1
 
-    MAX_AGE_IN_LAYERS = [
-        1 * AGE_GAP, 
-        2 * AGE_GAP, 
-        3 * AGE_GAP, 
-        5 * AGE_GAP, 
-        8 * AGE_GAP, 
-        13 * AGE_GAP, 
-        21 * AGE_GAP
-    ]
+    class AgingScheme:
+        FIBBONACCI = [1, 2, 3, 5, 8, 13, 21]
+        LINEAR = [1, 2, 3, 4, 5, 6]
+        
 
+    MAX_AGE_IN_LAYERS = []
+    for x in AgingScheme.FIBBONACCI:
+        MAX_AGE_IN_LAYERS.append(x * AGE_GAP)
+
+
+    # Create layers just before individuals try to move into them
+    LAYER_CREATION_THRESHOLDS = [max_age for max_age in MAX_AGE_IN_LAYERS]
+
+    DATASET_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
+    TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+
+    percentages = TEST_PERCENTAGES
     TRAINING_SETTINGS_FOR_LAYERS = {
-        0: {"dataset_percentage": 0.15,  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
-        1: {"dataset_percentage": 0.20,  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
-        2: {"dataset_percentage": 0.30, "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
-        3: {"dataset_percentage": 0.40, "training_epochs": 4,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
-        4: {"dataset_percentage": 0.5,  "training_epochs": 5,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE},
-        5: {"dataset_percentage": 0.6,  "training_epochs": 6,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE},
-        6: {"dataset_percentage": 1.0,  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE},
+        0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
+        1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
+        3: {"dataset_percentage": percentages[3], "training_epochs": 4,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
+        4: {"dataset_percentage": percentages[4],  "training_epochs": 5,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE},
+        5: {"dataset_percentage": percentages[5],  "training_epochs": 6,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE},
+        6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE},
     }
 
     individuals_and_fitnesses_in_layers = {}
@@ -207,3 +214,31 @@ class FitnessFunctions:
     fitness_function = train_loss
     normalization_function = no_normalization
 
+import inspect
+
+class SLEAP_Exception(Exception):
+    def __init__(self, **kwargs):
+        super().__init__()
+        print("All classes and their contents in Globals.py:")
+
+        for k, v in kwargs.items():
+            print(f"{k}: {v}")
+
+        # Collect all top-level classes in the module
+        module_classes = {
+            name: obj for name, obj in globals().items()
+            if inspect.isclass(obj) and obj.__module__ == __name__
+        }
+
+        for class_name, cls in module_classes.items():
+            print(f"\nClass: {class_name}")
+            for attr_name, attr_value in inspect.getmembers(cls):
+                if attr_name.startswith("__") and attr_name.endswith("__"):
+                    continue  # Skip dunder methods
+
+                if inspect.isfunction(attr_value):
+                    print(f"  Method: {attr_name}()")
+                elif isinstance(attr_value, (int, float, str, list, dict, tuple, bool)):
+                    print(f"  Variable: {attr_name} = {repr(attr_value)}")
+                elif inspect.isclass(attr_value):
+                    print(f"  Nested Class: {attr_name}")

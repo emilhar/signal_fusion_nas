@@ -113,7 +113,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         # If the individual has passed the maximum age in their layer, then they train as if they are in the layer above.
         # This is then used in the comparison later.
-        if individual.age >= AlpsSettings.MAX_AGE_IN_LAYERS[individual.layer]:
+        if individual.age > AlpsSettings.MAX_AGE_IN_LAYERS[individual.layer]:
             fake_layer = individual.layer + 1
             model_performance = self.create_trained_individual(individual, fake_layer)
         else:

@@ -2,7 +2,7 @@
 Gives IO for SLEAP
 """
 
-from Globals import Sleepstage, Signal
+from Globals import Sleepstage, Signal, SLEAP_Exception
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
 from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
 
@@ -222,4 +222,9 @@ def main():
 
 
 if __name__ == "__main__":
-    sleap_instance = main()
+    
+    try:
+        sleap_instance = main()
+    except SLEAP_Exception as e:
+        print("Exception occured during run.")
+        print(e)
