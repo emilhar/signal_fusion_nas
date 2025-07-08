@@ -187,3 +187,21 @@ class SLEAP_Exception(Exception):
                     print(f"  Variable: {attr_name} = {repr(attr_value)}")
                 elif inspect.isclass(attr_value):
                     print(f"  Nested Class: {attr_name}")
+
+
+class Clr:
+    def __init__(self, string, color):
+        self.string = str(string)
+        self.color = color.lower()
+    
+    def __str__(self):
+        color_codes = {
+            "red": "\033[0;31m",
+            "blue": "\033[0;34m",
+            "green": "\033[0;32m",
+        }
+        reset_code = "\x1b[0m"
+        color_code = color_codes.get(self.color, "")  # default to no color if not found
+        return f"{color_code}{self.string}{reset_code}"
+
+
