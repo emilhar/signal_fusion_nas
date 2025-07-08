@@ -144,21 +144,37 @@ class KernelSizeEvolutionaryOptimizer:
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)
 
-    def select(self, population, number_of_people_to_select, tournsize, elitism):
-        """Tournament selection"""
-
+    def select(self, population, number_of_people_to_select, tournsize):
+        """Tournament selection with elitism"""
+        
         if number_of_people_to_select <= 0:
             return []
         
+        # Normalize fitness values
         map(lambda x: FitnessFunctions.normalization_function(x, population), population)
         min_or_max = min if FitnessFunctions.MINIMIZE_FITNESS else max
+
         
         self.chosen_for_next_generation = []
+        elitism = EvolutionSettings.ELITISM
+
+        # Elitism: preserve the best individuals
+        if elitism > 0:
+            # Sort population based on fitness (ascending for minimization, descending for maximization)
+            sorted_pop = sorted(population, key=lambda x: x.fitness.values[0], reverse=not FitnessFunctions.MINIMIZE_FITNESS)
+            elites = sorted_pop[:elitism]
+            self.chosen_for_next_generation.extend(elites)
+            
+            # Adjust number of individuals to select through tournament
+            remaining_to_select = number_of_people_to_select - elitism
+        else:
+            remaining_to_select = number_of_people_to_select
         
-        for _ in range(number_of_people_to_select):
+        # Perform tournament selection for remaining individuals
+        for _ in range(remaining_to_select):
             aspirants = [random.choice(population) for _ in range(tournsize)]
             chosen = min_or_max(aspirants, key=lambda x: x.fitness.values[0])
-            self.chosen_for_next_generation.append( chosen )
+            self.chosen_for_next_generation.append(chosen)
 
         if LoggingSettings.LOGGING:
             for individual in population:
