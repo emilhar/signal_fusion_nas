@@ -43,8 +43,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE_PER_LAYER: int = 10
-    GENERATIONS: int = 20
+    POPULATION_SIZE_PER_LAYER: int = 23
+    GENERATIONS: int = 40
     SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
     ELITISM = 3
     HALL_OF_FAME_MEMBERS = 3
@@ -65,25 +65,25 @@ class EvolutionSettings:
     VERBOSE = True
     
 class AlpsSettings:
-    AGE_GAP = 1
+    AGE_GAP = 3
 
     class AgingScheme:
-        FIBBONACCI = [1, 2, 3, 5, 8, 13, float('inf')]
-        LINEAR = [1, 2, 3, 4, 5, float('inf')]
+        FIBBONACCI = [1, 2, 3, 5, 8, 13, 9999]
+        LINEAR = [1, 2, 3, 4, 5, 9999]
         
 
     MAX_AGE_IN_LAYERS = []
-    for x in AgingScheme.FIBBONACCI:
+    for x in AgingScheme.LINEAR:
         MAX_AGE_IN_LAYERS.append(x * AGE_GAP)
 
 
     # Create layers just before individuals try to move into them
     LAYER_CREATION_THRESHOLDS = [max_age for max_age in MAX_AGE_IN_LAYERS]
 
-    DATASET_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
+    REAL_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
     TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
 
-    percentages = TEST_PERCENTAGES
+    percentages = REAL_PERCENTAGES
     TRAINING_SETTINGS_FOR_LAYERS = {
         0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
         1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
