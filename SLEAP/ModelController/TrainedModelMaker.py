@@ -32,7 +32,7 @@ class TrainedModelMaker:
                  learning_rate:int = ModelSettings.LEARNING_RATE,
 
                  have_time_limit:bool = False,
-                 verbose:bool = ModelSettings.VERBOSE
+                 verbose:bool = EvolutionSettings.VERBOSE
         ):
         
         self.STAGE = sleepstage

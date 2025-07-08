@@ -1,7 +1,7 @@
 import csv
 import os
 from datetime import datetime
-from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
+from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, FitnessFunctions
 
 INDIVIDUAL_TEMPLATE = {
     "Experiment_ID": 0,
@@ -18,8 +18,6 @@ INDIVIDUAL_TEMPLATE = {
     "Accuracy": 0,
     "Fitness": 0,
     "Fully_Trained": 0,
-    "Uniqueness": 0.0,
-    "AlphaBetaFitness": 0.0,
 }
 
 class LogManager:
@@ -103,10 +101,6 @@ class LogManager:
             "Dataset_Name": DataSettings.DATASET,
             "Max_Time_Spent_Training": ModelSettings.MAX_TIME_SPENT_TRAINING,
             "Fitness_Function": FitnessFunctions.fitness_function.__name__,
-            "Uniqueness_Function": UniquenessFunctions.uniqueness_function.__name__,
-            'Alpha': EvolutionSettings.ALPHA_BETA[0],
-            'Beta': EvolutionSettings.ALPHA_BETA[1],
-            'AB_Switch': EvolutionSettings.BETA_SWITCH
         }
 
         self._write_with_config(filetype="Experiment", config=config)
@@ -133,9 +127,7 @@ class LogManager:
 
     def check_for_best_in_gen(self, individual):
 
-        fitness = individual.raw_fitness or individual.fitness.values[0]
-        uniqueness = individual.uniqueness if hasattr(individual, 'uniqueness') else None
-        alpha_beta_fitness = individual.alpha_beta_fitness if hasattr(individual, 'alpha_beta_fitness') else None
+        fitness = individual.fitness.values[0]
         ind_id = individual.individual_id
 
         train_loss = individual.model_performance.get("Train Loss", 0.0)
@@ -162,8 +154,6 @@ class LogManager:
                 "F1": round(f1, 4),
                 "Accuracy": round(accuracy, 4),
                 "Fitness": round(fitness, 4),
-                "Uniqueness": round(uniqueness, 4) if uniqueness else None,
-                "AlphaBetaFitness": round(alpha_beta_fitness, 4) if alpha_beta_fitness else None,
         }
 
         if (best["Fitness"] <= fitness):

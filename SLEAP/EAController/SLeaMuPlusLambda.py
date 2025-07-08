@@ -48,7 +48,7 @@ class SLeaMuPlusLambda:
         if LoggingSettings.LOGGING:
             for individual in self.population:
                 LogManager.check_for_best_in_gen(individual)
-                
+        
             LogManager.log_generation_stats(len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
 
         self.__dev_check(function="main", line=47)
@@ -189,7 +189,7 @@ class SLeaMuPlusLambda:
         for layer in sorted(AlpsSettings.individuals_and_fitnesses_in_layers.keys()):
             layer_data = AlpsSettings.individuals_and_fitnesses_in_layers[layer]
             if not layer_data:
-                continue
+                print("NO DATA IN LAYER", layer)
             
             # Calculate max lengths for each column
             max_ind_len = max(len(str(indi)) for (indi, _) in layer_data)
@@ -251,15 +251,6 @@ class SLeaMuPlusLambda:
         ind.layer = pre_mutation_ind.layer
 
         return ind, pre_mutation_ind
-
-    def emptyValues(self, offspring):
-        del offspring.fitness.values
-
-        if hasattr(offspring, "raw_fitness"):
-            del offspring.raw_fitness
-        
-        if hasattr(offspring, "uniqueness"):
-            del offspring.uniqueness
 
     def create_new_layer(self):
         print("Creating new layer")

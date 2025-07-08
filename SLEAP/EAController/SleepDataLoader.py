@@ -19,7 +19,7 @@ class SleepDataLoader:
 
         self.batch_size = ModelSettings.BATCH_SIZE
 
-        if ModelSettings.VERBOSE: print("Loading Training data")
+        if EvolutionSettings.VERBOSE: print("Loading Training data")
         try:
             try_sleap=True
             train_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Training")            
@@ -30,7 +30,7 @@ class SleepDataLoader:
             train_file_path = self.get_filepath(SLEAP=False, data_type="Training") # try other filepath
             self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
             
-        if ModelSettings.VERBOSE: print("Loading Testing data")
+        if EvolutionSettings.VERBOSE: print("Loading Testing data")
         test_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Testing")
         
         self.test_loader, _, _ = self._load_data(filepath=test_file_path, training=False)
@@ -57,13 +57,13 @@ class SleepDataLoader:
             X = (data['X']).astype(np.float32)
             y = data['y']
 
-            if ModelSettings.VERBOSE: print("Data split. Preparing data")
+            if EvolutionSettings.VERBOSE: print("Data split. Preparing data")
 
             loader, pos_weight, n_samples = self._prepare(X, y, training)
             
         if DataSettings.EVEN_DATA_SPLIT:
 
-            if ModelSettings.VERBOSE: print("Preparing for even data split")
+            if EvolutionSettings.VERBOSE: print("Preparing for even data split")
             if training:
                 self.training_indices_class_0 = []
                 self.training_indices_class_1 = []

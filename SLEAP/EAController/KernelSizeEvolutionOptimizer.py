@@ -4,15 +4,10 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelSettings, EvolutionSettings, AlpsSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
+from Globals import Signal, ModelSettings, EvolutionSettings, AlpsSettings, LoggingSettings, FitnessFunctions
 
-from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
+from EAController.algo2 import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
-
-
-"""""
-Færa fyrst, svo búa til nýtt layer
-"""""
 
 class KernelSizeEvolutionaryOptimizer:
 
@@ -24,7 +19,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         if ModelSettings.MAX_KERNEL_SIZE == None:
             ModelSettings.MAX_KERNEL_SIZE = self.find_max_kernel_size()
-            if ModelSettings.VERBOSE: print(f"Max kernel size set at {ModelSettings.MAX_KERNEL_SIZE}")
+            if EvolutionSettings.VERBOSE: print(f"Max kernel size set at {ModelSettings.MAX_KERNEL_SIZE}")
         
         self.SDL = SleepDataLoader(
             signal_type=self.signal_type, 
@@ -97,13 +92,8 @@ class KernelSizeEvolutionaryOptimizer:
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
 
         individual = creator.Individual(branches)
-        individual.raw_fitness = None
-        individual.uniqueness = None
         individual.age =  0
         individual.layer = 0
-
-        if EvolutionSettings.beta <= 0:
-            individual.alpha_beta_fitness = None
 
         return individual
     
@@ -111,22 +101,14 @@ class KernelSizeEvolutionaryOptimizer:
         """Evaluate an individual by training a model
         arg: individual"""
 
-        # If the individual has passed the maximum age in their layer, then they train as if they are in the layer above.
-        # This is then used in the comparison later.
-        if individual.age > AlpsSettings.MAX_AGE_IN_LAYERS[individual.layer]:
-            fake_layer = individual.layer + 1
-            model_performance = self.create_trained_individual(individual, fake_layer)
-        else:
-            model_performance = self.create_trained_individual(individual, individual.layer)
-
-        raw_fitness = self.calculate_fitness(model_performance)
+        model_performance = self.create_trained_individual(individual, individual.layer)
+        fitness = self.calculate_fitness(model_performance)
 
         individual.model_performance = model_performance
-        individual.raw_fitness = raw_fitness
         individual.individual_id = LoggingSettings.current_individual_id
         LoggingSettings.current_individual_id += 1
 
-        return (raw_fitness,)
+        return (fitness,)
     
     def create_trained_individual(self, individual, layer):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
@@ -151,7 +133,7 @@ class KernelSizeEvolutionaryOptimizer:
             test_loader = individual_test_set,
             epochs= epochs,
             learning_rate=learning_rate,
-            verbose= ModelSettings.VERBOSE,
+            verbose= EvolutionSettings.VERBOSE,
             N_SAMPLES= n_samples,
             pos_weight= pos_weight,
             have_time_limit = time_limit
@@ -175,7 +157,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         for _ in range(number_of_people_to_select):
             aspirants = [random.choice(population) for _ in range(tournsize)]
-            chosen = min_or_max(aspirants, key=lambda x: self._selection_criteria(x))
+            chosen = min_or_max(aspirants, key=lambda x: x.fitness.values[0])
             self.chosen_for_next_generation.append( chosen )
 
         if LoggingSettings.LOGGING:
@@ -183,22 +165,6 @@ class KernelSizeEvolutionaryOptimizer:
                 self.LogManager.check_for_best_in_gen(individual)
         
         return self.chosen_for_next_generation
-
-    def _selection_criteria(self, individual):
-        if self.chosen_for_next_generation == []:
-            return individual.fitness.values[0]
-        
-        uniqueness = UniquenessFunctions.uniqueness_function(individual, self.chosen_for_next_generation)
-
-        alpha_beta_fitness = (
-            EvolutionSettings.alpha * individual.fitness.values[0] + 
-            EvolutionSettings.beta * uniqueness
-        )
-
-        individual.uniqueness = uniqueness
-        individual.alpha_beta_fitness = alpha_beta_fitness
-        
-        return alpha_beta_fitness
 
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
@@ -322,10 +288,6 @@ class KernelSizeEvolutionaryOptimizer:
                 new_value = min(max(current_value + change, ModelSettings.MIN_KERNEL_SIZE), ModelSettings.MAX_KERNEL_SIZE)
                 mutant[branch_idx][kernel_idx] = new_value
 
-        mutant.raw_fitness = None
-        mutant.uniqueness = None
-        mutant.alpha_beta_fitness = None
-
         return (mutant,)
 
     def _mutation_choice(self):
@@ -348,27 +310,27 @@ class KernelSizeEvolutionaryOptimizer:
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
-        if ModelSettings.VERBOSE:
+        if EvolutionSettings.VERBOSE:
             print(f"Starting evolution with {EvolutionSettings.POPULATION_SIZE_PER_LAYER} individuals for {EvolutionSettings.GENERATIONS} generations")
 
         # Create initial population
         population = self.toolbox.population(n=EvolutionSettings.POPULATION_SIZE_PER_LAYER)
+
+        mu= EvolutionSettings.POPULATION_SIZE_PER_LAYER
+        lambda_ = mu // 2
         
         # Run evolution
         evolver = SLeaMuPlusLambda(
             population=population,
-            toolbox=self.toolbox
+            toolbox=self.toolbox,
+            mu= mu,
+            lambda_ = lambda_,
+            halloffame= self.hall_of_fame,
+            LogManager= self.LogManager,
         )
         
         result_pop = evolver.main(
-            cxpb= EvolutionSettings.CX_PROB,
-            mutpb= EvolutionSettings.MUTATION_PROB,
-            ngen= EvolutionSettings.GENERATIONS,
-            LogManager= self.LogManager,
             stats= self.stats,
-            halloffame= self.hall_of_fame,
-            verbose= ModelSettings.VERBOSE
-
         )
         
         return result_pop, self.hall_of_fame, self.stats

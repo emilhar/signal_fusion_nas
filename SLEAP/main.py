@@ -4,7 +4,7 @@ Gives IO for SLEAP
 
 from Globals import Sleepstage, Signal, SLEAP_Exception
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
-from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, UniquenessFunctions, FitnessFunctions
+from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, FitnessFunctions
 
 class SLEAP:
     """
@@ -81,7 +81,7 @@ class SLEAP:
                 print("❌ Please enter a valid number")
         
         # Signal type selection
-        if ModelSettings.SMALLER_FILES:
+        if EvolutionSettings.SMALLER_FILES:
             print("\nWARNING: YOU ARE USING SMALLER FILES, file 'sleepEDFX/smaller_EEG_Fpz_CZ' automatically chosen")
             self.signal_type = f"smaller_{Signal.EEG.Fpz_Cz}"
         
@@ -169,7 +169,7 @@ class SLEAP:
         # Basic experiment info
         print(f"{'Sleep stage:':30} {self.sleepstage}")
         print(f"{'Signal type:':30} {self.signal_type}")
-        print(f"{'Verbose:':30} {ModelSettings.VERBOSE}")
+        print(f"{'Verbose:':30} {EvolutionSettings.VERBOSE}")
 
         print("\n📦 Model Settings")
         print(f"{'Batch size:':30} {ModelSettings.BATCH_SIZE}")
@@ -178,7 +178,7 @@ class SLEAP:
         print(f"{'Learning rate:':30} {ModelSettings.LEARNING_RATE}")
         print(f"{'Min kernel size:':30} {ModelSettings.MIN_KERNEL_SIZE}")
         print(f"{'Max kernel size:':30} {ModelSettings.MAX_KERNEL_SIZE}")
-        print(f"{'Smaller files:':30} {ModelSettings.SMALLER_FILES}")
+        print(f"{'Smaller files:':30} {EvolutionSettings.SMALLER_FILES}")
         print(f"{'Branch count range:':30} {ModelSettings.NUMBER_OF_BRANCHES_RANGE}")
         print(f"{'Kernel count range:':30} {ModelSettings.NUMBER_OF_KERNELS_RANGE}")
 
@@ -188,9 +188,6 @@ class SLEAP:
         print(f"{'Tournament size:':30} {EvolutionSettings.SELECTION_TOURNAMENT_SIZE}")
         print(f"{'Hall of Fame members:':30} {EvolutionSettings.HALL_OF_FAME_MEMBERS}")
         print(f"{'Max mutations:':30} {EvolutionSettings.MAX_NUMBER_OF_MUTATIONS}")
-        print(f"{'Alpha:':30} {EvolutionSettings.alpha}")
-        print(f"{'Beta:':30} {EvolutionSettings.beta}")
-        print(f"{'Beta switch point:':30} {EvolutionSettings.BETA_SWITCH}")
         print(f"{'Crossover prob:':30} {EvolutionSettings.CX_PROB}")
         print(f"{'Mutation prob:':30} {EvolutionSettings.MUTATION_PROB}")
 
@@ -206,10 +203,7 @@ class SLEAP:
         print(f"{'Logger ID:':30} {LoggingSettings.LOGGER_ID}")
         print(f"{'Log all individuals:':30} {LoggingSettings.LOG_ALL_INDIVIDUALS}")
         print(f"{'Experiment name:':30} {LoggingSettings.experiment_name}")
-
-        print("\n🦠 Uniqueness Settings")
-        print(f"{'Uniqueness function:':30} {UniquenessFunctions.uniqueness_function.__name__}")
-
+        
         print("\n💖 Fitness Settings")
         print(f"{'Fitness function:':30} {FitnessFunctions.fitness_function.__name__}")
         print(f"{'Normalization function:':30} {FitnessFunctions.normalization_function.__name__}")

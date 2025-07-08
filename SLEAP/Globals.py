@@ -40,10 +40,6 @@ class ModelSettings:
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = 50
 
-    # Misc
-    SMALLER_FILES = False
-    VERBOSE = True
-
 class EvolutionSettings:
 
     # Overview settings
@@ -60,27 +56,20 @@ class EvolutionSettings:
     DATA_SPLIT_TESTING = 0.3
     VALID_DATA_SPLIT = (DATA_SPLIT_TRAINING + DATA_SPLIT_TESTING == 1)
 
-    # Fitness Settings:
-    # alpha and beta are used in the fitness function
-    #   alpha is how much you value fitness score
-    #   beta is how much you value uniqueness
-    # these values change over time as generations come and go
-
-    ALPHA_BETA = [1.0, 0.0]
-    alpha = ALPHA_BETA [0]
-    beta = ALPHA_BETA[1]
-    BETA_SWITCH = 1/2           # NEVER HAPPENS
-
     # Evolution settings
     CX_PROB: float = 0.5
     MUTATION_PROB: float = 0.5
+
+    # Misc
+    SMALLER_FILES = False
+    VERBOSE = True
     
 class AlpsSettings:
     AGE_GAP = 1
 
     class AgingScheme:
-        FIBBONACCI = [1, 2, 3, 5, 8, 13, 21]
-        LINEAR = [1, 2, 3, 4, 5, 6]
+        FIBBONACCI = [1, 2, 3, 5, 8, 13, float('inf')]
+        LINEAR = [1, 2, 3, 4, 5, float('inf')]
         
 
     MAX_AGE_IN_LAYERS = []
@@ -96,16 +85,14 @@ class AlpsSettings:
 
     percentages = TEST_PERCENTAGES
     TRAINING_SETTINGS_FOR_LAYERS = {
-        0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
-        1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
-        3: {"dataset_percentage": percentages[3], "training_epochs": 4,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE},
-        4: {"dataset_percentage": percentages[4],  "training_epochs": 5,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE},
-        5: {"dataset_percentage": percentages[5],  "training_epochs": 6,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE},
-        6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE},
+        0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
+        1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
+        3: {"dataset_percentage": percentages[3], "training_epochs": 4,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
+        4: {"dataset_percentage": percentages[4],  "training_epochs": 5,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
+        5: {"dataset_percentage": percentages[5],  "training_epochs": 6,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
+        6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE, "mu": 5, "lambda_": 1},
     }
-
-    individuals_and_fitnesses_in_layers = {}
     
 class DataSettings:
     class DatasetNames:
@@ -129,48 +116,6 @@ class LoggingSettings:
 
     experiment_name = "Unnamed"
 
-class UniquenessFunctions:
-
-    @staticmethod
-    def gargoyle(individual, comparisons):
-        if not comparisons:
-            return 1.0
-
-        min_distance = float("inf")
-        sorted_individual_copy = sorted(copy.deepcopy(individual), key=lambda x: len(x))
-
-        for other in comparisons:
-            sorted_other_copy = sorted(copy.deepcopy(other), key=lambda x: len(x))
-            max_branch_count = max(len(sorted_individual_copy), len(sorted_other_copy))
-
-            total_distance = 0
-
-            for i in range(max_branch_count):
-                # Get branches or empty list if not present
-                branch_a = sorted_individual_copy[i] if i < len(sorted_individual_copy) else []
-                branch_b = sorted_other_copy[i] if i < len(sorted_other_copy) else []
-
-                max_len = max(len(branch_a), len(branch_b))
-
-                # Pad with zeros
-                padded_a = branch_a + [0] * (max_len - len(branch_a))
-                padded_b = branch_b + [0] * (max_len - len(branch_b))
-
-                # Euclidean distance between the padded branches
-                total_distance += sum((a - b) ** 2 for a, b in zip(padded_a, padded_b))
-
-            dist = math.sqrt(total_distance)
-
-            if dist < min_distance:
-                min_distance = dist
-
-        steepness = 0.01
-        transition = ModelSettings.MAX_KERNEL_SIZE / pow(EvolutionSettings.POPULATION_SIZE_PER_LAYER, 1/3)
-
-        return 1 / (1 + math.exp(-steepness * (min_distance - transition)))
-
-    uniqueness_function = gargoyle
-
 class FitnessFunctions:
     @staticmethod
     def f1(individual_performance):
@@ -179,8 +124,8 @@ class FitnessFunctions:
     
     @staticmethod
     def train_loss(individual_performance):
-        raw_fitness = individual_performance.get("Train Loss", 0.0)
-        return raw_fitness
+        fitness = individual_performance.get("Train Loss", 0.0)
+        return fitness
     
     @staticmethod
     def train_loss_normalize(individual, population):
