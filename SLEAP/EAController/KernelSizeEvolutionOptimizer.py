@@ -242,11 +242,9 @@ class KernelSizeEvolutionaryOptimizer:
 
     def mutate(self, individual):
         """Mutate an individual by randomly modifying branches or kernel sizes."""
-        mutant_age = individual.age
         
         # Clone the individual to avoid in-place issues
         mutant = creator.Individual([branch[:] for branch in individual])
-        mutant.age = mutant_age
 
         mutation_number_options = [i + 1 for i in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS)
               for _ in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS - i)]
