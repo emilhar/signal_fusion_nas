@@ -56,7 +56,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", self.select, tournsize=EvolutionSettings.SELECTION_TOURNAMENT_SIZE, elitism=EvolutionSettings.ELITISM)
+        self.toolbox.register("select", self.select, tournsize=EvolutionSettings.SELECTION_TOURNAMENT_SIZE)
         
         # Genetic operatorss
         self.toolbox.register("evaluate", self.evaluate_individual)
@@ -167,6 +167,8 @@ class KernelSizeEvolutionaryOptimizer:
             
             # Adjust number of individuals to select through tournament
             remaining_to_select = number_of_people_to_select - elitism
+
+            print("Elites", elites)
         else:
             remaining_to_select = number_of_people_to_select
         
