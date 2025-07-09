@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.metrics import precision_recall_curve, roc_curve
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from ModelController._Trainer import train_model
-from ModelController.BranchSettings import get_branch_configs
+from ModelController.BranchManager import get_branch_configs
 from pnel import load_data
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

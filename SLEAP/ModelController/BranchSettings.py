@@ -1,10 +1,10 @@
 """
-This file contains the settings needed to make a model
+This file contains the Manager needed to make a model
 """
 
 def get_branch_configs(branches:list[list[int]], name:str, sample_count:int):
   """ 
-    Get full settings for a model given
+    Get full Manager for a model given
       left_kernel_size: A list of 3 numbers for the kernel sizes of the left branch. e.g. [1, 2, 3]
       right_kernel_size: A list of 3 numbers for the kernel sizes of the right branch. e.g. [1, 2, 3]
       name: The name of the model. e.g. "MyN3Classifier

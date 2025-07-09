@@ -27,7 +27,7 @@ class Signal:
 
     SIGNAL_COUNT = 3000
 
-class ModelSettings:
+class ModelManager:
     # Base
     NUMBER_OF_BRANCHES_RANGE = (1, 3)
     NUMBER_OF_KERNELS_RANGE = (2, 4)
@@ -40,9 +40,9 @@ class ModelSettings:
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = 50
 
-class EvolutionSettings:
+class EvolutionManager:
 
-    # Overview settings
+    # Overview Manager
     POPULATION_SIZE_PER_LAYER: int = 23
     GENERATIONS: int = 40
     SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
@@ -56,7 +56,7 @@ class EvolutionSettings:
     DATA_SPLIT_TESTING = 0.3
     VALID_DATA_SPLIT = (DATA_SPLIT_TRAINING + DATA_SPLIT_TESTING == 1)
 
-    # Evolution settings
+    # Evolution Manager
     CX_PROB: float = 0.5
     MUTATION_PROB: float = 0.5
 
@@ -64,7 +64,7 @@ class EvolutionSettings:
     SMALLER_FILES = False
     VERBOSE = True
     
-class AlpsSettings:
+class AlpsManager:
     AGE_GAP = 3
 
     class AgingScheme:
@@ -84,17 +84,17 @@ class AlpsSettings:
     TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
 
     percentages = REAL_PERCENTAGES
-    TRAINING_SETTINGS_FOR_LAYERS = {
-        0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        3: {"dataset_percentage": percentages[3], "training_epochs": 4,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        4: {"dataset_percentage": percentages[4],  "training_epochs": 5,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        5: {"dataset_percentage": percentages[5],  "training_epochs": 6,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE, "mu": 5, "lambda_": 1},
+    TRAINING_Manager_FOR_LAYERS = {
+        0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        3: {"dataset_percentage": percentages[3], "training_epochs": 4,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        4: {"dataset_percentage": percentages[4],  "training_epochs": 5,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        5: {"dataset_percentage": percentages[5],  "training_epochs": 6,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
     }
     
-class DataSettings:
+class DataManager:
     class DatasetNames:
         TELEMETRY = "telemetry"
         SLEEPEDFX = "sleepEDFX"
@@ -104,7 +104,7 @@ class DataSettings:
 
     EVEN_DATA_SPLIT = False
 
-class LoggingSettings:
+class LoggingManager:
     LOG_IDS = ['O', 'T']
     LOGGER_ID = ""
     LOGGING = True

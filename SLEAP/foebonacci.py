@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from ModelController._Trainer import train_model
-from ModelController.BranchSettings import get_branch_configs
+from ModelController.BranchManager import get_branch_configs
 import pandas as pd
 from pnel import load_data
 import os

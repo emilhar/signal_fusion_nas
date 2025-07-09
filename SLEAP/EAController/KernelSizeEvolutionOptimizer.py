@@ -4,7 +4,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelSettings, EvolutionSettings, AlpsSettings, LoggingSettings, FitnessFunctions
+from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingManager, FitnessFunctions
 
 from EAController.algo2 import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -17,15 +17,15 @@ class KernelSizeEvolutionaryOptimizer:
         self.sleepstage = sleepstage
         self.signal_type = signal_type
 
-        if ModelSettings.MAX_KERNEL_SIZE == None:
-            ModelSettings.MAX_KERNEL_SIZE = self.find_max_kernel_size()
-            if EvolutionSettings.VERBOSE: print(f"Max kernel size set at {ModelSettings.MAX_KERNEL_SIZE}")
+        if ModelManager.MAX_KERNEL_SIZE == None:
+            ModelManager.MAX_KERNEL_SIZE = self.find_max_kernel_size()
+            if EvolutionManager.VERBOSE: print(f"Max kernel size set at {ModelManager.MAX_KERNEL_SIZE}")
         
         self.SDL = SleepDataLoader(
             signal_type=self.signal_type, 
             sleepstage=self.sleepstage)
 
-        if LoggingSettings.LOGGING:
+        if LoggingManager.LOGGING:
             self.LogManager = LogManager()
         else:
             self.LogManager = None
@@ -56,7 +56,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", self.select, tournsize=EvolutionSettings.SELECTION_TOURNAMENT_SIZE)
+        self.toolbox.register("select", self.select, tournsize=EvolutionManager.SELECTION_TOURNAMENT_SIZE)
         
         # Genetic operatorss
         self.toolbox.register("evaluate", self.evaluate_individual)
@@ -69,18 +69,18 @@ class KernelSizeEvolutionaryOptimizer:
         self.stats.register("min", np.min)
         self.stats.register("max", np.max)
         
-        self.hall_of_fame = tools.HallOfFame(EvolutionSettings.HALL_OF_FAME_MEMBERS)
+        self.hall_of_fame = tools.HallOfFame(EvolutionManager.HALL_OF_FAME_MEMBERS)
     
     def generate_individual(self):
         """Generate a random individual with kernel branches.
         Only used to create the first generation of individuals"""
 
         branches = []
-        number_of_branches = random.randint( ModelSettings.NUMBER_OF_BRANCHES_RANGE[0], ModelSettings.NUMBER_OF_BRANCHES_RANGE[1])
-        kernel_per_branch = [ random.randint( ModelSettings.NUMBER_OF_KERNELS_RANGE[0], ModelSettings.NUMBER_OF_KERNELS_RANGE[1]) for _ in range(number_of_branches) ]
+        number_of_branches = random.randint( ModelManager.NUMBER_OF_BRANCHES_RANGE[0], ModelManager.NUMBER_OF_BRANCHES_RANGE[1])
+        kernel_per_branch = [ random.randint( ModelManager.NUMBER_OF_KERNELS_RANGE[0], ModelManager.NUMBER_OF_KERNELS_RANGE[1]) for _ in range(number_of_branches) ]
 
         for i in range(number_of_branches):
-            first = max(1, random.choice( range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20) ) - 1)
+            first = max(1, random.choice( range(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE, 20) ) - 1)
             branch = [first]
             
             for _ in range(kernel_per_branch[i]-1):
@@ -105,8 +105,8 @@ class KernelSizeEvolutionaryOptimizer:
         fitness = self.calculate_fitness(model_performance)
 
         individual.model_performance = model_performance
-        individual.individual_id = LoggingSettings.current_individual_id
-        LoggingSettings.current_individual_id += 1
+        individual.individual_id = LoggingManager.current_individual_id
+        LoggingManager.current_individual_id += 1
 
         return (fitness,)
     
@@ -116,16 +116,16 @@ class KernelSizeEvolutionaryOptimizer:
         time_limit = False
 
         individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
-            dataset_percentage = AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["dataset_percentage"],
-            batch_size=AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]) 
+            dataset_percentage = AlpsManager.TRAINING_Manager_FOR_LAYERS[layer]["dataset_percentage"],
+            batch_size=AlpsManager.TRAINING_Manager_FOR_LAYERS[layer]["batch_size"]) 
         
-        batch_size = AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]
-        epochs =AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["training_epochs"]
-        learning_rate = ModelSettings.LEARNING_RATE
+        batch_size = AlpsManager.TRAINING_Manager_FOR_LAYERS[layer]["batch_size"]
+        epochs =AlpsManager.TRAINING_Manager_FOR_LAYERS[layer]["training_epochs"]
+        learning_rate = ModelManager.LEARNING_RATE
 
         new_model = TrainedModelMaker(
             branches = individual,
-            name=f"{individual}, {batch_size}batch, {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
+            name=f"{individual}, {batch_size}batch, {ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
             sleepstage = self.sleepstage,
             signal_type=self.signal_type,
             batch_size= batch_size,
@@ -133,7 +133,7 @@ class KernelSizeEvolutionaryOptimizer:
             test_loader = individual_test_set,
             epochs= epochs,
             learning_rate=learning_rate,
-            verbose= EvolutionSettings.VERBOSE,
+            verbose= EvolutionManager.VERBOSE,
             N_SAMPLES= n_samples,
             pos_weight= pos_weight,
             have_time_limit = time_limit
@@ -156,7 +156,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         
         self.chosen_for_next_generation = []
-        elitism = EvolutionSettings.ELITISM
+        elitism = EvolutionManager.ELITISM
 
         # Elitism: preserve the best individuals
         if elitism > 0:
@@ -178,7 +178,7 @@ class KernelSizeEvolutionaryOptimizer:
             chosen = min_or_max(aspirants, key=lambda x: x.fitness.values[0])
             self.chosen_for_next_generation.append(chosen)
 
-        if LoggingSettings.LOGGING:
+        if LoggingManager.LOGGING:
             for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)
         
@@ -264,8 +264,8 @@ class KernelSizeEvolutionaryOptimizer:
         # Clone the individual to avoid in-place issues
         mutant = creator.Individual([branch[:] for branch in individual])
 
-        mutation_number_options = [i + 1 for i in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS)
-              for _ in range(EvolutionSettings.MAX_NUMBER_OF_MUTATIONS - i)]
+        mutation_number_options = [i + 1 for i in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS)
+              for _ in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS - i)]
         
         number_of_mutations = random.choice(mutation_number_options)
 
@@ -273,27 +273,27 @@ class KernelSizeEvolutionaryOptimizer:
             mutation_type = self._mutation_choice()
         
             if mutation_type == "add_branch":
-                if len(mutant) < ModelSettings.NUMBER_OF_BRANCHES_RANGE[1]:
-                    branch_length = random.randint(*ModelSettings.NUMBER_OF_KERNELS_RANGE)
-                    first_kernel = max(1, random.choice(range(ModelSettings.MIN_KERNEL_SIZE, ModelSettings.MAX_KERNEL_SIZE, 20))-1)
+                if len(mutant) < ModelManager.NUMBER_OF_BRANCHES_RANGE[1]:
+                    branch_length = random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE)
+                    first_kernel = max(1, random.choice(range(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE, 20))-1)
                     new_branch = [first_kernel]
                     for _ in range(branch_length - 1):
                         new_branch.append(max( new_branch[-1] // 2, 1))
                     mutant.append(new_branch)
 
             elif mutation_type == "remove_branch":
-                if len(mutant) > ModelSettings.NUMBER_OF_BRANCHES_RANGE[0]:
+                if len(mutant) > ModelManager.NUMBER_OF_BRANCHES_RANGE[0]:
                     mutant.pop(random.randrange(len(mutant)))
 
             elif mutation_type == "add_kernel":
                 branch_idx = random.randrange(len(mutant))
-                if len(mutant[branch_idx]) < ModelSettings.NUMBER_OF_KERNELS_RANGE[1]:
-                    new_kernel = max(ModelSettings.MIN_KERNEL_SIZE, mutant[branch_idx][-1] // 2)
+                if len(mutant[branch_idx]) < ModelManager.NUMBER_OF_KERNELS_RANGE[1]:
+                    new_kernel = max(ModelManager.MIN_KERNEL_SIZE, mutant[branch_idx][-1] // 2)
                     mutant[branch_idx].append(new_kernel)
 
             elif mutation_type == "remove_kernel":
                 branch_idx = random.randrange(len(mutant))
-                if len(mutant[branch_idx]) > ModelSettings.NUMBER_OF_KERNELS_RANGE[0]:
+                if len(mutant[branch_idx]) > ModelManager.NUMBER_OF_KERNELS_RANGE[0]:
                     mutant[branch_idx].pop(random.randrange(len(mutant[branch_idx])))
 
             elif mutation_type == "change_kernel":
@@ -301,7 +301,7 @@ class KernelSizeEvolutionaryOptimizer:
                 kernel_idx = random.randrange(len(mutant[branch_idx]))
                 current_value = mutant[branch_idx][kernel_idx]
                 change = random.choice([-100, -50, 50, 100])
-                new_value = min(max(current_value + change, ModelSettings.MIN_KERNEL_SIZE), ModelSettings.MAX_KERNEL_SIZE)
+                new_value = min(max(current_value + change, ModelManager.MIN_KERNEL_SIZE), ModelManager.MAX_KERNEL_SIZE)
                 mutant[branch_idx][kernel_idx] = new_value
 
         return (mutant,)
@@ -326,13 +326,13 @@ class KernelSizeEvolutionaryOptimizer:
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
-        if EvolutionSettings.VERBOSE:
-            print(f"Starting evolution with {EvolutionSettings.POPULATION_SIZE_PER_LAYER} individuals for {EvolutionSettings.GENERATIONS} generations")
+        if EvolutionManager.VERBOSE:
+            print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE_PER_LAYER} individuals for {EvolutionManager.GENERATIONS} generations")
 
         # Create initial population
-        population = self.toolbox.population(n=EvolutionSettings.POPULATION_SIZE_PER_LAYER)
+        population = self.toolbox.population(n=EvolutionManager.POPULATION_SIZE_PER_LAYER)
 
-        mu= EvolutionSettings.POPULATION_SIZE_PER_LAYER
+        mu= EvolutionManager.POPULATION_SIZE_PER_LAYER
         lambda_ = mu // 2
         
         # Run evolution
@@ -360,7 +360,7 @@ class KernelSizeEvolutionaryOptimizer:
         self.LogManager.log_experiment(
             sleepstage= self.sleepstage,
             signal_type= self.signal_type,
-            max_kernel_size= ModelSettings.MAX_KERNEL_SIZE,
+            max_kernel_size= ModelManager.MAX_KERNEL_SIZE,
             best= get_hall_of_fame_format(0),
             second_best= get_hall_of_fame_format(1),
             third_best= get_hall_of_fame_format(2),

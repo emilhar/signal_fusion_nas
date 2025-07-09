@@ -1,7 +1,7 @@
 import csv
 import os
 from datetime import datetime
-from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, FitnessFunctions
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingManager, FitnessFunctions
 
 INDIVIDUAL_TEMPLATE = {
     "Experiment_ID": 0,
@@ -55,11 +55,11 @@ class LogManager:
     def _get_filepath(self, filetype):
 
         if filetype == "Experiment":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ExperimentStatsLog.csv"
+            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/ExperimentStatsLog.csv"
         elif filetype == "Generation":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/GenerationStatsLog.csv"
+            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/GenerationStatsLog.csv"
         elif filetype == "Individual":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv"
+            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/IndividualLog.csv"
 
         else:
             raise ValueError(f"Unknown filetype: {filetype}")
@@ -80,26 +80,26 @@ class LogManager:
         """Log the experiment configuration"""
 
         config = {
-            "Name": LoggingSettings.experiment_name,
+            "Name": LoggingManager.experiment_name,
             "Experiment_ID": self.Experiment_ID,
             "Start_Time": self.start_time,
             "End_Time": datetime.now(),
             "Sleepstage": sleepstage,
             "Signal_Type": signal_type,
-            "Batch_Size": ModelSettings.BATCH_SIZE,
-            "Epochs_Per_Individual": ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
-            "Population_Size": EvolutionSettings.POPULATION_SIZE_PER_LAYER,
-            "Generations": EvolutionSettings.GENERATIONS,
-            "Crossover_Prob": EvolutionSettings.CX_PROB,
-            "Mutation_Prob": EvolutionSettings.MUTATION_PROB,
-            "Tournament_Size": EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
-            "Min_Kernel_Size": ModelSettings.MIN_KERNEL_SIZE,
+            "Batch_Size": ModelManager.BATCH_SIZE,
+            "Epochs_Per_Individual": ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL,
+            "Population_Size": EvolutionManager.POPULATION_SIZE_PER_LAYER,
+            "Generations": EvolutionManager.GENERATIONS,
+            "Crossover_Prob": EvolutionManager.CX_PROB,
+            "Mutation_Prob": EvolutionManager.MUTATION_PROB,
+            "Tournament_Size": EvolutionManager.SELECTION_TOURNAMENT_SIZE,
+            "Min_Kernel_Size": ModelManager.MIN_KERNEL_SIZE,
             "Max_Kernel_Size": max_kernel_size,
             "Best": best,
             "Second_Best": second_best,
             "Third_Best": third_best,
-            "Dataset_Name": DataSettings.DATASET,
-            "Max_Time_Spent_Training": ModelSettings.MAX_TIME_SPENT_TRAINING,
+            "Dataset_Name": DataManager.DATASET,
+            "Max_Time_Spent_Training": ModelManager.MAX_TIME_SPENT_TRAINING,
             "Fitness_Function": FitnessFunctions.fitness_function.__name__,
         }
 
@@ -107,17 +107,17 @@ class LogManager:
 
     def log_generation_stats(self, population_size:int, mean, std_deviation, median, min, fit_max):
 
-        LoggingSettings.current_generation_id
+        LoggingManager.current_generation_id
         generation_configs = {
             "Experiment_ID": self.Experiment_ID,
-            "Generation": LoggingSettings.current_generation_id,
+            "Generation": LoggingManager.current_generation_id,
             "Population_Size": population_size,
             "Fitness_Mean": mean,
             "Fitness_Std": std_deviation,
             "Fitness_Median": median,
             "Fitness_Min": min,
             "Fitness_Max": fit_max,
-            "Best_Individual_ID": f"(exp:{self.Experiment_ID},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation['Individual_ID']}), fitness:{round(self.best_individual_in_generation['Fitness'], 7)}, kernels:{str(self.best_individual_in_generation['Individual'])}",
+            "Best_Individual_ID": f"(exp:{self.Experiment_ID},gen:{LoggingManager.current_generation_id},id:{self.best_individual_in_generation['Individual_ID']}), fitness:{round(self.best_individual_in_generation['Fitness'], 7)}, kernels:{str(self.best_individual_in_generation['Individual'])}",
         }
 
         self._write_with_config(filetype="Generation", config=generation_configs)
@@ -138,7 +138,7 @@ class LogManager:
         accuracy = individual.model_performance.get("Accuracy", 0.0)
 
         best = self.best_individual_in_generation
-        generation = LoggingSettings.current_generation_id
+        generation = LoggingManager.current_generation_id
 
         individual_log_entry = {
                 "Experiment_ID": self.Experiment_ID,
@@ -159,6 +159,6 @@ class LogManager:
         if (best["Fitness"] <= fitness):
             self.best_individual_in_generation = individual_log_entry
 
-        if (LoggingSettings.LOG_ALL_INDIVIDUALS):
+        if (LoggingManager.LOG_ALL_INDIVIDUALS):
             self._write_with_config(filetype="Individual", config=individual_log_entry)
             return
