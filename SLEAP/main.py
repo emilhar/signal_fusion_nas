@@ -172,8 +172,7 @@ class SLEAP:
         print(f"{'Verbose:':30} {EvolutionSettings.VERBOSE}")
 
         print("\n📦 Model Settings")
-        print(f"{'Batch size:':30} {ModelSettings.BATCH_SIZE}")
-        print(f"{'Epochs per individual:':30} {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}")
+        print(f"{'Base batch size:':30} {ModelSettings.BATCH_SIZE}")
         print(f"{'Max training time:':30} {ModelSettings.MAX_TIME_SPENT_TRAINING}")
         print(f"{'Learning rate:':30} {ModelSettings.LEARNING_RATE}")
         print(f"{'Min kernel size:':30} {ModelSettings.MIN_KERNEL_SIZE}")

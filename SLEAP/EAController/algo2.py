@@ -50,7 +50,7 @@ class SLeaMuPlusLambda:
             for individual in self.population:
                 self.LogManager.check_for_best_in_gen(individual)
                 
-            self.LogManager.log_generation_stats(len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
+            self.LogManager.log_generation_stats(self.population, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
 
         # Show status
         if EvolutionSettings.VERBOSE: 
@@ -97,7 +97,7 @@ class SLeaMuPlusLambda:
 
             # Log generation
             if LoggingSettings.LOGGING:
-                self.LogManager.log_generation_stats(len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
+                self.LogManager.log_generation_stats(self.population, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
 
         return self.population
 

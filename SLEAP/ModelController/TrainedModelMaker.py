@@ -27,9 +27,9 @@ class TrainedModelMaker:
                  train_loader:DataLoader, 
                  test_loader:DataLoader,
 
-                 batch_size:int = ModelSettings.BATCH_SIZE,
-                 epochs:int = ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL,
-                 learning_rate:int = ModelSettings.LEARNING_RATE,
+                 epochs:int,
+                 batch_size:int,
+                 learning_rate:int,
 
                  have_time_limit:bool = False,
                  verbose:bool = EvolutionSettings.VERBOSE

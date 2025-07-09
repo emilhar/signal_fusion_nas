@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score, roc_auc_score
 
 import datetime # For max training time
-from Globals import ModelSettings
+from Globals import ModelSettings, LoggingTemplate
 
 def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1, verbose=False, have_time_limit = True):
 
@@ -104,23 +104,23 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
     kernel_sizes = []
     for branch in model.branches.values():
         kernel_sizes.append(_get_kernel_sizes(branch))
+    
+    it = LoggingTemplate()
     output = {
-        "Epoch": epoch,
-        "Train Loss": train_loss,
-        "Test Loss": test_loss,
-        "Precision": precision,
-        "Recall": recall,
-        "F1": f1,
-        "Accuracy": accuracy,
-        "Learning rate": current_lr,
-        "Branches": kernel_sizes[0],
-        "Best F1": best_f1,
-        "Best AUC": best_auc,
-        "True Labels": best_true,
-        "Best Scores": best_scores,
-        "Time": elapsed,
+        it.epoch: epoch,
+        it.train_loss: train_loss,
+        it.test_loss: test_loss,
+        it.precision: precision,
+        it.recall: recall,
+        it.accuracy: accuracy,
+        it.lr: current_lr,
+        it.branches: kernel_sizes[0],
+        it.best_f1: best_f1,
+        it.best_auc: best_auc,
+        it.best_true: best_true,
+        it.best_scores: best_scores,
+        it.time: elapsed,
     }
-
     return output
 
 def _get_kernel_sizes(branch):

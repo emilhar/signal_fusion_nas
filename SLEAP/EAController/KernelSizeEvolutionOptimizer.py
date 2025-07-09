@@ -113,7 +113,7 @@ class KernelSizeEvolutionaryOptimizer:
     def create_trained_individual(self, individual, layer):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
-        time_limit = False
+        time_limit = ModelSettings.HAVE_MAX_TIME
 
         individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
             dataset_percentage = AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS[layer]["dataset_percentage"],
@@ -125,7 +125,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         new_model = TrainedModelMaker(
             branches = individual,
-            name=f"{individual}, {batch_size}batch, {ModelSettings.TRAINING_EPOCHS_PER_INDIVIDUAL}epochs",
+            name=f"{individual}, {batch_size}batch, {epochs}epochs",
             sleepstage = self.sleepstage,
             signal_type=self.signal_type,
             batch_size= batch_size,

@@ -32,7 +32,7 @@ class ModelSettings:
     NUMBER_OF_BRANCHES_RANGE = (1, 3)
     NUMBER_OF_KERNELS_RANGE = (2, 4)
     BATCH_SIZE = 32
-    TRAINING_EPOCHS_PER_INDIVIDUAL: int = 2
+    HAVE_MAX_TIME = False
     MAX_TIME_SPENT_TRAINING = 6
     LEARNING_RATE = 5e-4
 
@@ -43,8 +43,8 @@ class ModelSettings:
 class EvolutionSettings:
 
     # Overview settings
-    POPULATION_SIZE_PER_LAYER: int = 23
-    GENERATIONS: int = 40
+    POPULATION_SIZE_PER_LAYER: int = 5
+    GENERATIONS: int = 3
     SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
     ELITISM = 3
     HALL_OF_FAME_MEMBERS = 3
@@ -70,10 +70,12 @@ class AlpsSettings:
     class AgingScheme:
         FIBBONACCI = [1, 2, 3, 5, 8, 13, 9999]
         LINEAR = [1, 2, 3, 4, 5, 9999]
-        
+    
+        used_aging_scheme = LINEAR
+        uas_str = "Linear"
 
     MAX_AGE_IN_LAYERS = []
-    for x in AgingScheme.LINEAR:
+    for x in AgingScheme.used_aging_scheme:
         MAX_AGE_IN_LAYERS.append(x * AGE_GAP)
 
 
@@ -83,7 +85,7 @@ class AlpsSettings:
     REAL_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
     TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
 
-    percentages = REAL_PERCENTAGES
+    percentages = TEST_PERCENTAGES
     TRAINING_SETTINGS_FOR_LAYERS = {
         0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
         1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
@@ -119,12 +121,12 @@ class LoggingSettings:
 class FitnessFunctions:
     @staticmethod
     def f1(individual_performance):
-        fitness = individual_performance.get("F1", 0.0)
+        fitness = individual_performance.get(LoggingTemplate.best_f1, 0.0)
         return fitness
     
     @staticmethod
     def train_loss(individual_performance):
-        fitness = individual_performance.get("Train Loss", 0.0)
+        fitness = individual_performance.get(LoggingTemplate.train_loss, 0.0)
         return fitness
     
     @staticmethod
@@ -142,14 +144,6 @@ class FitnessFunctions:
 
 
         individual.fitness.values = (fitness,)
-    
-    @staticmethod
-    def train_loss_and_time(individual_performance):
-        TL = individual_performance.get("Train Loss", 0.0)
-        time = individual_performance.get("Time", 0.0) * 0.1
-
-        return TL + time
-        
     
     @staticmethod
     def no_normalization(individual, population):
@@ -205,3 +199,36 @@ class Clr:
         return f"{color_code}{self.string}{reset_code}"
 
 
+class LoggingTemplate:
+    def __init__(self):
+        pass
+
+    rounding_number = 3
+
+    experiment_id = "experiment_id"
+    generation = "generation"
+    indi_id = "individual_id"
+    age = "age"
+    layer = "layer"
+    fitness = "fitness"
+    reason = "reason"
+
+    epoch = "epoch"
+    lr = "learning_rate"
+    branches= "branches"
+    train_loss = "train_loss"
+    test_loss = "test_loss"
+    precision = "precision"
+    recall = "recall"
+    accuracy = "accuracy"
+    best_f1 = "best_f1"
+    best_auc = "best_auc"
+    time = "time"
+    best_true = "true_labels"
+    best_scores = "best_scores"
+
+    # Translation table
+    reason_map = {
+        "Best In Layer": 0,
+        "Checked For Best In Generation": 1
+    }
