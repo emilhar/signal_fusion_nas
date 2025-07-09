@@ -6,7 +6,7 @@ from random import sample
 from math import ceil
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from Globals import Sleepstage, ModelSettings, EvolutionSettings, DataSettings
+from Globals import Sleepstage, ModelManager, EvolutionManager, DataManager
 
 
 class SleepDataLoader:
@@ -14,12 +14,12 @@ class SleepDataLoader:
         self.sleepstage = sleepstage
         self.signal_type = signal_type
 
-        if DataSettings.DATASET == DataSettings.DatasetNames.TELEMETRY:
+        if DataManager.DATASET == DataManager.DatasetNames.TELEMETRY:
             self.signal_type = f"telemetry_{signal_type}"
 
-        self.batch_size = ModelSettings.BATCH_SIZE
+        self.batch_size = ModelManager.BATCH_SIZE
 
-        if EvolutionSettings.VERBOSE: print("Loading Training data")
+        if EvolutionManager.VERBOSE: print("Loading Training data")
         try:
             try_sleap=True
             train_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Training")            
@@ -30,7 +30,7 @@ class SleepDataLoader:
             train_file_path = self.get_filepath(SLEAP=False, data_type="Training") # try other filepath
             self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
             
-        if EvolutionSettings.VERBOSE: print("Loading Testing data")
+        if EvolutionManager.VERBOSE: print("Loading Testing data")
         test_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Testing")
         
         self.test_loader, _, _ = self._load_data(filepath=test_file_path, training=False)
@@ -47,7 +47,7 @@ class SleepDataLoader:
         elif data_type == "Testing":
             ending = "test"
 
-        filepath = f"{beginning}Data/{DataSettings.DATASET}/{data_type}Data/{self.signal_type}_{ending}.npz"
+        filepath = f"{beginning}Data/{DataManager.DATASET}/{data_type}Data/{self.signal_type}_{ending}.npz"
 
         return filepath
         
@@ -57,13 +57,13 @@ class SleepDataLoader:
             X = (data['X']).astype(np.float32)
             y = data['y']
 
-            if EvolutionSettings.VERBOSE: print("Data split. Preparing data")
+            if EvolutionManager.VERBOSE: print("Data split. Preparing data")
 
             loader, pos_weight, n_samples = self._prepare(X, y, training)
             
-        if DataSettings.EVEN_DATA_SPLIT:
+        if DataManager.EVEN_DATA_SPLIT:
 
-            if EvolutionSettings.VERBOSE: print("Preparing for even data split")
+            if EvolutionManager.VERBOSE: print("Preparing for even data split")
             if training:
                 self.training_indices_class_0 = []
                 self.training_indices_class_1 = []
@@ -131,22 +131,22 @@ class SleepDataLoader:
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset
 
-        if not EvolutionSettings.VALID_DATA_SPLIT:
-            raise ValueError(f"Invalid data split. {EvolutionSettings.DATA_SPLIT_TRAINING} + {EvolutionSettings.DATA_SPLIT_TESTING} != 1")
+        if not EvolutionManager.VALID_DATA_SPLIT:
+            raise ValueError(f"Invalid data split. {EvolutionManager.DATA_SPLIT_TRAINING} + {EvolutionManager.DATA_SPLIT_TESTING} != 1")
         
         train_data_amount = ceil( 
             max(len(train_dataset), len(test_dataset)) * 
             dataset_percentage *
-            EvolutionSettings.DATA_SPLIT_TRAINING
+            EvolutionManager.DATA_SPLIT_TRAINING
         )
 
         test_data_amount = ceil( 
             max(len(train_dataset), len(test_dataset)) * 
             dataset_percentage *
-            EvolutionSettings.DATA_SPLIT_TESTING
+            EvolutionManager.DATA_SPLIT_TESTING
         )
         
-        if DataSettings.EVEN_DATA_SPLIT:
+        if DataManager.EVEN_DATA_SPLIT:
             training_subset = self.get_balanced_subset(train_dataset, total_data_points=train_data_amount, training=True)
             testing_subset = self.get_balanced_subset(test_dataset, total_data_points=test_data_amount, training=False)
         else:

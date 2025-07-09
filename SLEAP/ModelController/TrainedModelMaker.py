@@ -5,13 +5,13 @@ Most important file, this connects to main.
 # Base Imports
 import torch
 from torch.utils.data import DataLoader
-from Globals import ModelSettings
+from Globals import ModelManager
 
 # Model and Training imports
 from ModelController._Trainer import train_model
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from ModelController.BranchSettings import get_branch_configs
-from Globals import EvolutionSettings, LoggingSettings
+from ModelController.BranchManager import get_branch_configs
+from Globals import EvolutionManager, LoggingManager
 
 class TrainedModelMaker:
 
@@ -32,7 +32,7 @@ class TrainedModelMaker:
                  learning_rate:int,
 
                  have_time_limit:bool = False,
-                 verbose:bool = EvolutionSettings.VERBOSE
+                 verbose:bool = EvolutionManager.VERBOSE
         ):
         
         self.STAGE = sleepstage
@@ -48,12 +48,12 @@ class TrainedModelMaker:
         self.train_loader = train_loader
         self.test_loader = test_loader
 
-        model_args = get_branch_configs(branches, name, self.n_samples) # See ModelSettings
+        model_args = get_branch_configs(branches, name, self.n_samples) # See ModelManager
 
         model = CNN_BinaryClassifier(**model_args).to(self.device)
 
         if verbose:
-            print(f"\n\nTraining model: {branches=}, Generation: {LoggingSettings.current_generation_id}/{EvolutionSettings.GENERATIONS}, Generation Completeness: {LoggingSettings.current_individual_id}/{LoggingSettings.population_size}")
+            print(f"\n\nTraining model: {branches=}, Generation: {LoggingManager.current_generation_id}/{EvolutionManager.GENERATIONS}, Generation Completeness: {LoggingManager.current_individual_id}/{LoggingManager.population_size}")
 
         self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, self.lr, epochs=epochs, verbose=verbose, have_time_limit=have_time_limit)
 

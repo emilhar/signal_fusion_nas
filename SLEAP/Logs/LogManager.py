@@ -44,9 +44,9 @@ class LogManager:
     def _get_filepath(self, filetype):
 
         if filetype == "Experiment":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ExperimentStatsLog.csv"
+            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/ExperimentStatsLog.csv"
         elif filetype == "Generation":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/GenerationStatsLog.csv"
+            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/GenerationStatsLog.csv"
         elif filetype == "Individual":
             inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv"
         else:
@@ -199,7 +199,7 @@ class LogManager:
         if (best[it.fitness] <= fitness):
             self.best_individual_in_generation = individual_log_entry
 
-        if (LoggingSettings.LOG_ALL_INDIVIDUALS):
+        if (LoggingManager.LOG_ALL_INDIVIDUALS):
             self._write_with_config(filetype="Individual", config=individual_log_entry)
             return
 

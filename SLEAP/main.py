@@ -4,7 +4,7 @@ Gives IO for SLEAP
 
 from Globals import Sleepstage, Signal, SLEAP_Exception
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
-from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, FitnessFunctions
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingManager, FitnessFunctions
 
 class SLEAP:
     """
@@ -48,13 +48,13 @@ class SLEAP:
         else:
             self._get_user_configuration()
 
-            # Create optimizer with user settings
+            # Create optimizer with user Manager
             self._create_optimizer()
             
             # Run evolution
             self.optimizer.run_evolution()
             
-            if LoggingSettings.LOGGING:
+            if LoggingManager.LOGGING:
                 self.optimizer.log_results()
 
             # Show results
@@ -81,7 +81,7 @@ class SLEAP:
                 print("❌ Please enter a valid number")
         
         # Signal type selection
-        if EvolutionSettings.SMALLER_FILES:
+        if EvolutionManager.SMALLER_FILES:
             print("\nWARNING: YOU ARE USING SMALLER FILES, file 'sleepEDFX/smaller_EEG_Fpz_CZ' automatically chosen")
             self.signal_type = f"smaller_{Signal.EEG.Fpz_Cz}"
         
@@ -108,30 +108,30 @@ class SLEAP:
                     print("❌ Please enter a valid number")
 
         print("\n📝 Logging")
-        LoggingSettings.LOGGING = input("Do you want to be logging (y/n)?: ").lower().startswith('y')
+        LoggingManager.LOGGING = input("Do you want to be logging (y/n)?: ").lower().startswith('y')
 
-        if LoggingSettings.LOGGING:
+        if LoggingManager.LOGGING:
             while True:
-                print("\n",LoggingSettings.LOG_IDS)
+                print("\n",LoggingManager.LOG_IDS)
                 potential_log_id = input("Enter logging ID: ").upper().strip()
-                if potential_log_id in LoggingSettings.LOG_IDS:
-                    LoggingSettings.LOGGER_ID = potential_log_id
+                if potential_log_id in LoggingManager.LOG_IDS:
+                    LoggingManager.LOGGER_ID = potential_log_id
                     break
                 else:
                     print("❌ Please enter valid ID\n")
 
         else:
-            LoggingSettings.LOGGER_ID = "None"
+            LoggingManager.LOGGER_ID = "None"
         
-        if LoggingSettings.LOGGING:
-            LoggingSettings.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')
+        if LoggingManager.LOGGING:
+            LoggingManager.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')
         else:
-            LoggingSettings.LOG_ALL_INDIVIDUALS = False
+            LoggingManager.LOG_ALL_INDIVIDUALS = False
 
-        if LoggingSettings.LOGGING:
-            LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
+        if LoggingManager.LOGGING:
+            LoggingManager.experiment_name = input("Name for Experiment: ").strip()
         
-        self._print_experiment_settings()
+        self._print_experiment_Manager()
         
         input("OK? ")
     
@@ -162,14 +162,14 @@ class SLEAP:
             signal_type=self.signal_type,
         )
 
-    def _print_experiment_settings(self):
+    def _print_experiment_Manager(self):
         print("\n🧪 Experiment Configuration Summary")
         print("=" * 40)
 
         # Basic experiment info
         print(f"{'Sleep stage:':30} {self.sleepstage}")
         print(f"{'Signal type:':30} {self.signal_type}")
-        print(f"{'Verbose:':30} {EvolutionSettings.VERBOSE}")
+        print(f"{'Verbose:':30} {EvolutionManager.VERBOSE}")
 
         print("\n📦 Model Settings")
         print(f"{'Base batch size:':30} {ModelSettings.BATCH_SIZE}")
@@ -181,29 +181,29 @@ class SLEAP:
         print(f"{'Branch count range:':30} {ModelSettings.NUMBER_OF_BRANCHES_RANGE}")
         print(f"{'Kernel count range:':30} {ModelSettings.NUMBER_OF_KERNELS_RANGE}")
 
-        print("\n🧬 Evolution Settings")
-        print(f"{'Population size per layer:':30} {EvolutionSettings.POPULATION_SIZE_PER_LAYER}")
-        print(f"{'Generations:':30} {EvolutionSettings.GENERATIONS}")
-        print(f"{'Tournament size:':30} {EvolutionSettings.SELECTION_TOURNAMENT_SIZE}")
-        print(f"{'Hall of Fame members:':30} {EvolutionSettings.HALL_OF_FAME_MEMBERS}")
-        print(f"{'Max mutations:':30} {EvolutionSettings.MAX_NUMBER_OF_MUTATIONS}")
-        print(f"{'Crossover prob:':30} {EvolutionSettings.CX_PROB}")
-        print(f"{'Mutation prob:':30} {EvolutionSettings.MUTATION_PROB}")
+        print("\n🧬 Evolution Manager")
+        print(f"{'Population size per layer:':30} {EvolutionManager.POPULATION_SIZE_PER_LAYER}")
+        print(f"{'Generations:':30} {EvolutionManager.GENERATIONS}")
+        print(f"{'Tournament size:':30} {EvolutionManager.SELECTION_TOURNAMENT_SIZE}")
+        print(f"{'Hall of Fame members:':30} {EvolutionManager.HALL_OF_FAME_MEMBERS}")
+        print(f"{'Max mutations:':30} {EvolutionManager.MAX_NUMBER_OF_MUTATIONS}")
+        print(f"{'Crossover prob:':30} {EvolutionManager.CX_PROB}")
+        print(f"{'Mutation prob:':30} {EvolutionManager.MUTATION_PROB}")
 
-        print("\n📁 Data Settings")
-        print(f"{'Dataset:':30} {DataSettings.DATASET}")
-        print(f"{'Even data split:':30} {DataSettings.EVEN_DATA_SPLIT}")
-        print(f"{'Train split:':30} {EvolutionSettings.DATA_SPLIT_TRAINING}")
-        print(f"{'Test split:':30} {EvolutionSettings.DATA_SPLIT_TESTING}")
-        print(f"{'Split valid:':30} {EvolutionSettings.VALID_DATA_SPLIT}")
+        print("\n📁 Data Manager")
+        print(f"{'Dataset:':30} {DataManager.DATASET}")
+        print(f"{'Even data split:':30} {DataManager.EVEN_DATA_SPLIT}")
+        print(f"{'Train split:':30} {EvolutionManager.DATA_SPLIT_TRAINING}")
+        print(f"{'Test split:':30} {EvolutionManager.DATA_SPLIT_TESTING}")
+        print(f"{'Split valid:':30} {EvolutionManager.VALID_DATA_SPLIT}")
 
-        print("\n📝 Logging Settings")
-        print(f"{'Logging enabled:':30} {LoggingSettings.LOGGING}")
-        print(f"{'Logger ID:':30} {LoggingSettings.LOGGER_ID}")
-        print(f"{'Log all individuals:':30} {LoggingSettings.LOG_ALL_INDIVIDUALS}")
-        print(f"{'Experiment name:':30} {LoggingSettings.experiment_name}")
+        print("\n📝 Logging Manager")
+        print(f"{'Logging enabled:':30} {LoggingManager.LOGGING}")
+        print(f"{'Logger ID:':30} {LoggingManager.LOGGER_ID}")
+        print(f"{'Log all individuals:':30} {LoggingManager.LOG_ALL_INDIVIDUALS}")
+        print(f"{'Experiment name:':30} {LoggingManager.experiment_name}")
         
-        print("\n💖 Fitness Settings")
+        print("\n💖 Fitness Manager")
         print(f"{'Fitness function:':30} {FitnessFunctions.fitness_function.__name__}")
         print(f"{'Normalization function:':30} {FitnessFunctions.normalization_function.__name__}")
         print(f"{'Minimizing Fitness:':30} {FitnessFunctions.MINIMIZE_FITNESS}")

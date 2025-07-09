@@ -27,7 +27,7 @@ class Signal:
 
     SIGNAL_COUNT = 3000
 
-class ModelSettings:
+class ModelManager:
     # Base
     NUMBER_OF_BRANCHES_RANGE = (1, 3)
     NUMBER_OF_KERNELS_RANGE = (2, 4)
@@ -40,7 +40,7 @@ class ModelSettings:
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = 50
 
-class EvolutionSettings:
+class EvolutionManager:
 
     # Overview settings
     POPULATION_SIZE_PER_LAYER: int = 5
@@ -56,7 +56,7 @@ class EvolutionSettings:
     DATA_SPLIT_TESTING = 0.3
     VALID_DATA_SPLIT = (DATA_SPLIT_TRAINING + DATA_SPLIT_TESTING == 1)
 
-    # Evolution settings
+    # Evolution Manager
     CX_PROB: float = 0.5
     MUTATION_PROB: float = 0.5
 
@@ -64,7 +64,7 @@ class EvolutionSettings:
     SMALLER_FILES = False
     VERBOSE = True
     
-class AlpsSettings:
+class AlpsManager:
     AGE_GAP = 3
 
     class AgingScheme:
@@ -96,7 +96,7 @@ class AlpsSettings:
         6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE, "mu": 5, "lambda_": 1},
     }
     
-class DataSettings:
+class DataManager:
     class DatasetNames:
         TELEMETRY = "telemetry"
         SLEEPEDFX = "sleepEDFX"
@@ -106,7 +106,7 @@ class DataSettings:
 
     EVEN_DATA_SPLIT = False
 
-class LoggingSettings:
+class LoggingManager:
     LOG_IDS = ['O', 'T']
     LOGGER_ID = ""
     LOGGING = True
