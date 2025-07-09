@@ -96,7 +96,7 @@ class SLeaMuPlusLambda:
                 print(" ".join(want_to_print))
 
             # Log generation
-            if LoggingSettings.LOGGING:
+            if LoggingManager.LOGGING:
                 self.LogManager.log_generation_stats(self.population, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
 
         return self.population

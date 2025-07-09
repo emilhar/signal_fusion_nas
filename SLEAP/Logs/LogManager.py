@@ -1,7 +1,7 @@
 import csv
 import os
 from datetime import datetime
-from Globals import ModelSettings, EvolutionSettings, DataSettings, LoggingSettings, AlpsSettings, FitnessFunctions, LoggingTemplate
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingManager, AlpsManager, FitnessFunctions, LoggingTemplate
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
@@ -48,7 +48,7 @@ class LogManager:
         elif filetype == "Generation":
             inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/GenerationStatsLog.csv"
         elif filetype == "Individual":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv"
+            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/IndividualLog.csv"
         else:
             raise ValueError(f"Unknown filetype: {filetype}")
         
@@ -75,29 +75,29 @@ class LogManager:
 
         config = {
             it.experiment_id: self.Experiment_ID,
-            "name": LoggingSettings.experiment_name,
+            "name": LoggingManager.experiment_name,
             "start_time": self.start_time,
             "end_time": datetime.now(),
             "sleepstage": sleepstage,
             "signal_type": signal_type,
-            "base_batch_size": ModelSettings.BATCH_SIZE,
-            "population_size": EvolutionSettings.POPULATION_SIZE_PER_LAYER,
-            "generations": EvolutionSettings.GENERATIONS,
-            "crossover_prob": EvolutionSettings.CX_PROB,
-            "mutation_prob": EvolutionSettings.MUTATION_PROB,
-            "selection_tournament_size": EvolutionSettings.SELECTION_TOURNAMENT_SIZE,
-            "min_kernel_size": ModelSettings.MIN_KERNEL_SIZE,
+            "base_batch_size": ModelManager.BATCH_SIZE,
+            "population_size": EvolutionManager.POPULATION_SIZE_PER_LAYER,
+            "generations": EvolutionManager.GENERATIONS,
+            "crossover_prob": EvolutionManager.CX_PROB,
+            "mutation_prob": EvolutionManager.MUTATION_PROB,
+            "selection_tournament_size": EvolutionManager.SELECTION_TOURNAMENT_SIZE,
+            "min_kernel_size": ModelManager.MIN_KERNEL_SIZE,
             "max_kernel_size": max_kernel_size,
             "best": best,
             "second_best": second_best,
             "third_best": third_best,
-            "dataset_name": DataSettings.DATASET,
-            "max_time_on": ModelSettings.HAVE_MAX_TIME,
-            "max_time_spent_training": ModelSettings.MAX_TIME_SPENT_TRAINING,
+            "dataset_name": DataManager.DATASET,
+            "max_time_on": ModelManager.HAVE_MAX_TIME,
+            "max_time_spent_training": ModelManager.MAX_TIME_SPENT_TRAINING,
             "fitness_function": FitnessFunctions.fitness_function.__name__,
-            "age_gap": AlpsSettings.AGE_GAP,
-            "aging_scheme": AlpsSettings.AgingScheme.uas_str,
-            "alps_settings": AlpsSettings.TRAINING_SETTINGS_FOR_LAYERS.__repr__()
+            "age_gap": AlpsManager.AGE_GAP,
+            "aging_scheme": AlpsManager.AgingScheme.uas_str,
+            "alps_Manager": AlpsManager.TRAINING_Manager_FOR_LAYERS.__repr__()
         }
 
         self._write_with_config(filetype="Experiment", config=config)
@@ -106,7 +106,7 @@ class LogManager:
 
         # list of an amount of zeroes equal to the number of layers, 6 layers = [0,0,0,0,0,0]
         # used for indexing in the for loop
-        people_in_layers_count  =[0] * len(AlpsSettings.LAYER_CREATION_THRESHOLDS)
+        people_in_layers_count  =[0] * len(AlpsManager.LAYER_CREATION_THRESHOLDS)
         for person in population:
             people_in_layers_count[person.layer] += 1
         
@@ -114,7 +114,7 @@ class LogManager:
 
         generation_configs = {
         it.experiment_id: self.Experiment_ID,
-        it.generation: LoggingSettings.current_generation_id,
+        it.generation: LoggingManager.current_generation_id,
         "number_of_trained_individuals": number_of_trained_individual,
         "individual_count_per_layer": people_in_layers_count,
         "fitness_mean": round(mean, it.rounding_number),
@@ -122,18 +122,18 @@ class LogManager:
         "fitness_median": round(median, it.rounding_number),
         "fitness_min": round(min, it.rounding_number),
         "fitness_max": round(fit_max, it.rounding_number),
-        "best_individual_info": f"(exp:{self.Experiment_ID},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation[it.indi_id]}), fitness:{round(self.best_individual_in_generation[it.fitness], 7)}, branches:{str(self.best_individual_in_generation[it.branches])}",
+        "best_individual_info": f"(exp:{self.Experiment_ID},gen:{LoggingManager.current_generation_id},id:{self.best_individual_in_generation[it.indi_id]}), fitness:{round(self.best_individual_in_generation[it.fitness], 7)}, branches:{str(self.best_individual_in_generation[it.branches])}",
         }
 
         self._write_with_config(filetype="Generation", config=generation_configs)
 
-        if not LoggingSettings.LOG_ALL_INDIVIDUALS:
+        if not LoggingManager.LOG_ALL_INDIVIDUALS:
             
             # Log the best individual in the generation
             self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
 
             # Log the best individual in each layer
-            population_grouped_by_layer = [[]] * len(AlpsSettings.LAYER_CREATION_THRESHOLDS)
+            population_grouped_by_layer = [[]] * len(AlpsManager.LAYER_CREATION_THRESHOLDS)
             for individual in population:
                 population_grouped_by_layer[individual.layer].append(individual)
 
@@ -145,7 +145,7 @@ class LogManager:
                 
                 individual = best_in_layer[0]
                 best_in_layer = self.fill_individual_template(
-                    generation= LoggingSettings.current_generation_id,
+                    generation= LoggingManager.current_generation_id,
                     ind_id= individual.individual_id,
                     individual=str(individual),
                     age= individual.age,
@@ -177,7 +177,7 @@ class LogManager:
         fitness= individual.fitness.values[0]
 
 
-        generation = LoggingSettings.current_generation_id
+        generation = LoggingManager.current_generation_id
 
         individual_log_entry = self.fill_individual_template(
             generation=generation,

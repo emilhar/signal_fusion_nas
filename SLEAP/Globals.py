@@ -42,7 +42,7 @@ class ModelManager:
 
 class EvolutionManager:
 
-    # Overview settings
+    # Overview Manager
     POPULATION_SIZE_PER_LAYER: int = 5
     GENERATIONS: int = 3
     SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
@@ -86,14 +86,14 @@ class AlpsManager:
     TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
 
     percentages = TEST_PERCENTAGES
-    TRAINING_SETTINGS_FOR_LAYERS = {
-        0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelSettings.BATCH_SIZE,    "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 3,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        3: {"dataset_percentage": percentages[3], "training_epochs": 4,  "batch_size": ModelSettings.BATCH_SIZE,     "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        4: {"dataset_percentage": percentages[4],  "training_epochs": 5,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        5: {"dataset_percentage": percentages[5],  "training_epochs": 6,  "batch_size": ModelSettings.BATCH_SIZE * 2, "learning_rate":ModelSettings.LEARNING_RATE, "mu": EvolutionSettings.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionSettings.POPULATION_SIZE_PER_LAYER//2},
-        6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelSettings.BATCH_SIZE * 4, "learning_rate":ModelSettings.LEARNING_RATE, "mu": 5, "lambda_": 1},
+    TRAINING_Manager_FOR_LAYERS = {
+        0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        3: {"dataset_percentage": percentages[3], "training_epochs": 4,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        4: {"dataset_percentage": percentages[4],  "training_epochs": 5,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        5: {"dataset_percentage": percentages[5],  "training_epochs": 6,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
     }
     
 class DataManager:
