@@ -27,8 +27,8 @@ class Signal:
 
 class ModelManager:
     # Base
-    NUMBER_OF_BRANCHES_RANGE = (1, 3)
-    NUMBER_OF_KERNELS_RANGE = (2, 4)
+    NUMBER_OF_BRANCHES_RANGE = (1, 2)
+    NUMBER_OF_KERNELS_RANGE = (2, 3)
     BATCH_SIZE = 32
     HAVE_MAX_TIME = False
     MAX_TIME_SPENT_TRAINING = 6

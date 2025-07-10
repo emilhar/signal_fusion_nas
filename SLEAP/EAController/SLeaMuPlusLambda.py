@@ -43,6 +43,9 @@ class SLeaMuPlusLambda:
 
         record = stats.compile(self.population) if stats is not None else {}
 
+        # Delete duplicates
+        #self.delete_duplicates()
+
         # Log the generation
         if LoggingManager.LOGGING:
             for individual in self.population:
@@ -284,9 +287,24 @@ class SLeaMuPlusLambda:
         print("="*80 + "\n")
 
     def delete_duplicates(self):
-        pop_str = []
+        seen = {}
+        new_population = []
+
         for individual in self.population:
-            if str(individual) not in pop_str:
-                pop_str.append(str(individual))
+            key = str(individual)
+            
+            if key not in seen:
+                new_population.append(individual)
+                seen[key] = True
+
             else:
-                self.toolbox.mutate(individual)
+                # Mutate to create a new unique individual
+                mutated, = self.toolbox.mutate(individual)
+                new_key = str(mutated)
+                
+                if new_key not in seen:
+                    mutated.fitness.values = self.toolbox.evaluate(mutated)
+                    new_population.append(mutated)
+                    seen[new_key] = True
+
+        self.population = new_population
