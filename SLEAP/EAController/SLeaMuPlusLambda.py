@@ -8,8 +8,6 @@ GECCO 2006 - Genetic and Evolutionary Computation Conference. 1.
 10.1145/1143997.1144142. 
 """
 
-""" Taka út max age í síðasta layer """
-
 import random
 from Globals import EvolutionManager, AlpsManager, LoggingManager, Clr
 

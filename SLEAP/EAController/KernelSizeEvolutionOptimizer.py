@@ -6,7 +6,7 @@ from EAController.SleepDataLoader import SleepDataLoader
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingManager, FitnessFunctions
 
-from EAController.algo2 import SLeaMuPlusLambda
+from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
