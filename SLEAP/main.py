@@ -6,7 +6,7 @@ from Globals import Sleepstage, Signal, SLEAP_Exception
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
 from Globals import ModelManager, EvolutionManager, DataManager, LoggingManager, FitnessFunctions
 
-class SLEAP:
+class SLEAPy:
     """
     Sleep
     Labeling using
@@ -214,7 +214,7 @@ class SLEAP:
 
 def main():
     """Main entry point"""
-    sleap = SLEAP()
+    sleap = SLEAPy()
     sleap.run_experiment(run_omega=False)
 
 

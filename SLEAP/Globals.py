@@ -36,14 +36,14 @@ class ModelManager:
 
     # Kernel size constraints
     MIN_KERNEL_SIZE = 1
-    MAX_KERNEL_SIZE = None
+    MAX_KERNEL_SIZE = 50
     SORT_KERNELS = False
 
 class EvolutionManager:
 
     # Overview Manager
     POPULATION_SIZE_PER_LAYER: int = 10
-    GENERATIONS: int = 6
+    GENERATIONS: int = 2
     SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
     ELITISM = 3
     HALL_OF_FAME_MEMBERS = 3
@@ -64,11 +64,11 @@ class EvolutionManager:
     VERBOSE = True
     
 class AlpsManager:
-    AGE_GAP = 3
+    AGE_GAP = 2
 
     class AgingScheme:
-        FIBBONACCI = [1, 2, 3, 5, 8, 13, 9999]
-        LINEAR = [1, 2, 3, 4, 5, 9999]
+        FIBBONACCI = [1, 2, 3, 5, 8, 13, 21, "N/A"]
+        LINEAR = [1, 2, 3, 4, 5, 6, "N/A"]
     
         used_aging_scheme = LINEAR
         uas_str = "Linear"
@@ -84,7 +84,7 @@ class AlpsManager:
     REAL_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
     TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
 
-    percentages = TEST_PERCENTAGES
+    percentages = REAL_PERCENTAGES
     TRAINING_Manager_FOR_LAYERS = {
         0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},

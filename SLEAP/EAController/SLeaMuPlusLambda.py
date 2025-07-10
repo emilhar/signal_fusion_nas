@@ -70,7 +70,8 @@ class SLeaMuPlusLambda:
             # Evolve each layer
             all_layers = set(individual.layer for individual in self.population)
             for layer in range(len(all_layers)):
-                self.isolated_evolution(layer_to_evolve= layer)
+                if any([person for person in self.population if person.layer == layer]):
+                    self.isolated_evolution(layer_to_evolve= layer)
 
             # Check if you need to create a new layer
             if gen in AlpsManager.LAYER_CREATION_THRESHOLDS:
@@ -82,6 +83,9 @@ class SLeaMuPlusLambda:
             # Replace layer 0
             if gen % AlpsManager.AGE_GAP == 0:
                 self.replace_layer_zero()
+
+            # Delete duplicates
+            self.delete_duplicates()
 
             # Show status
             record = stats.compile(self.population) if stats is not None else {}
@@ -222,6 +226,8 @@ class SLeaMuPlusLambda:
         """Controls layer switching for all layers after population has been settled"""
 
         for individual in self.population:
+            if individual.layer == 6:
+                continue
             if individual.age > AlpsManager.MAX_AGE_IN_LAYERS[individual.layer]:
                 individual.layer += 1
 
@@ -263,7 +269,7 @@ class SLeaMuPlusLambda:
             print("-"*80)
             
             # Print individuals in this layer
-            for i, ind in enumerate(individuals, 1):
+            for _, ind in enumerate(individuals, 1):
                 # Format individual string
                 ind_str = str(ind)
                 if len(ind_str) > 47:  # Truncate to fit column
@@ -276,3 +282,11 @@ class SLeaMuPlusLambda:
                 print(f"{ind_str:<50} | {f'{ind.age}/{AlpsManager.MAX_AGE_IN_LAYERS[ind.layer]}':<5} | {fitness_str:<20}")
         
         print("="*80 + "\n")
+
+    def delete_duplicates(self):
+        pop_str = []
+        for individual in self.population:
+            if str(individual) not in pop_str:
+                pop_str.append(str(individual))
+            else:
+                self.toolbox.mutate(individual)

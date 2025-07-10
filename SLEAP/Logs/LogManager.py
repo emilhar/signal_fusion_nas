@@ -19,7 +19,12 @@ class LogManager:
 
         with open(filepath, mode='r', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
-            Experiment_IDs = [int(row["Experiment_ID"]) for row in reader if "Experiment_ID" in row and row["Experiment_ID"].isdigit()]
+            Experiment_IDs = [
+                int(row[LoggingTemplate.experiment_id]) 
+                for row in reader 
+                if LoggingTemplate.experiment_id in row and 
+                row[LoggingTemplate.experiment_id].isdigit()
+            ]
             
             if not Experiment_IDs:
                 return 0

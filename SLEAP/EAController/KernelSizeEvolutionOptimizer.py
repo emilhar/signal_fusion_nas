@@ -154,7 +154,6 @@ class KernelSizeEvolutionaryOptimizer:
         map(lambda x: FitnessFunctions.normalization_function(x, population), population)
         min_or_max = min if FitnessFunctions.MINIMIZE_FITNESS else max
 
-        
         self.chosen_for_next_generation = []
         elitism = EvolutionManager.ELITISM
 
