@@ -2,7 +2,7 @@
 Gives IO for SLEAP
 """
 
-from Globals import Sleepstage, Signal, SLEAP_Exception
+from Globals import Sleepstage, Signal, SLEAPyException
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
 from Globals import ModelManager, EvolutionManager, DataManager, LoggingManager, FitnessFunctions
 
@@ -32,6 +32,21 @@ class SLEAPy:
         if run_omega:
             print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")
             configs = self._generate_all_configs()
+            self.sleepstage = "All sleep stages"
+            self.signal_type = "All signal types"
+
+            if LoggingManager.LOGGING:
+                while True:
+                    print("\n",LoggingManager.LOG_IDS)
+                    potential_log_id = input("Enter logging ID: ").upper().strip()
+                    if potential_log_id in LoggingManager.LOG_IDS:
+                        LoggingManager.LOGGER_ID = potential_log_id
+                        break
+                    else:
+                        print("❌ Please enter valid ID\n")
+
+            self._print_experiment_Manager()
+            input("OK? ")
 
             for config in configs:
                 self.sleepstage = config[0]
@@ -135,24 +150,12 @@ class SLEAPy:
         if LoggingManager.LOGGING:
             LoggingManager.experiment_name = input("Name for Experiment: ").strip()
         
-        self._print_experiment_Manager()
-        
-        input("OK? ")
     
     def _generate_all_configs(self):
         configs = []
-        
-        sleep_options = Sleepstage.ALL_STAGES
 
-        signal_options = [
-            Signal.EEG.Fpz_Cz,
-            Signal.EEG.Pz_Oz,
-            Signal.EOG.HORIZONTAL,
-            Signal.EMG.SUBMENTAL,
-        ]
-
-        for sleep_type in sleep_options:
-            for signal_type in signal_options:
+        for signal_type in Signal.ALL_SIGNALS:
+            for sleep_type in Sleepstage.ALL_STAGES:
                 configs.append( (sleep_type, signal_type) )
 
         return configs
@@ -175,6 +178,15 @@ class SLEAPy:
         print(f"{'Signal type:':30} {self.signal_type}")
         print(f"{'Verbose:':30} {EvolutionManager.VERBOSE}")
 
+        print("\n🧬 Evolution Manager")
+        print(f"{'Population size per layer:':30} {EvolutionManager.POPULATION_SIZE_PER_LAYER}")
+        print(f"{'Generations:':30} {EvolutionManager.GENERATIONS}")
+        print(f"{'Tournament size:':30} {EvolutionManager.SELECTION_TOURNAMENT_SIZE}")
+        print(f"{'Hall of Fame members:':30} {EvolutionManager.HALL_OF_FAME_MEMBERS}")
+        print(f"{'Max mutations:':30} {EvolutionManager.MAX_NUMBER_OF_MUTATIONS}")
+        print(f"{'Crossover prob:':30} {EvolutionManager.CX_PROB}")
+        print(f"{'Mutation prob:':30} {EvolutionManager.MUTATION_PROB}")
+
         print("\n📦 Model Manager")
         print(f"{'Base batch size:':30} {ModelManager.BATCH_SIZE}")
         print(f"{'Max training time:':30} {ModelManager.MAX_TIME_SPENT_TRAINING}")
@@ -184,15 +196,6 @@ class SLEAPy:
         print(f"{'Smaller files:':30} {EvolutionManager.SMALLER_FILES}")
         print(f"{'Branch count range:':30} {ModelManager.NUMBER_OF_BRANCHES_RANGE}")
         print(f"{'Kernel count range:':30} {ModelManager.NUMBER_OF_KERNELS_RANGE}")
-
-        print("\n🧬 Evolution Manager")
-        print(f"{'Population size per layer:':30} {EvolutionManager.POPULATION_SIZE_PER_LAYER}")
-        print(f"{'Generations:':30} {EvolutionManager.GENERATIONS}")
-        print(f"{'Tournament size:':30} {EvolutionManager.SELECTION_TOURNAMENT_SIZE}")
-        print(f"{'Hall of Fame members:':30} {EvolutionManager.HALL_OF_FAME_MEMBERS}")
-        print(f"{'Max mutations:':30} {EvolutionManager.MAX_NUMBER_OF_MUTATIONS}")
-        print(f"{'Crossover prob:':30} {EvolutionManager.CX_PROB}")
-        print(f"{'Mutation prob:':30} {EvolutionManager.MUTATION_PROB}")
 
         print("\n📁 Data Manager")
         print(f"{'Dataset:':30} {DataManager.DATASET}")
@@ -215,13 +218,13 @@ class SLEAPy:
 def main():
     """Main entry point"""
     sleap = SLEAPy()
-    sleap.run_experiment(run_omega=False)
+    sleap.run_experiment(run_omega=True)
 
 
 if __name__ == "__main__":
     
     try:
         sleap_instance = main()
-    except SLEAP_Exception as e:
+    except SLEAPyException as e:
         print("Exception occured during run.")
         print(e)

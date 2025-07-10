@@ -24,6 +24,8 @@ class SLeaMuPlusLambda:
         """See: DEAP/Algorithms
             mu: The number of individuals to select for the next generation.
             lambda: The number of children to produce at each generation."""
+        
+        if EvolutionManager.VERBOSE: print("=== FIRST GENERATION ===")
 
         # Get all individuals without fitness values
         invalid_ind = [ind for ind in self.population if not ind.fitness.valid]
@@ -41,29 +43,12 @@ class SLeaMuPlusLambda:
         if self.halloffame is not None:
             self.halloffame.update(self.population)
 
-        record = stats.compile(self.population) if stats is not None else {}
-
-        # Delete duplicates
-        #self.delete_duplicates()
-
-        # Log the generation
-        if LoggingManager.LOGGING:
-            for individual in self.population:
-                self.LogManager.check_for_best_in_gen(individual)
-                
-            self.LogManager.log_generation_stats(self.population, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
-
-        # Show status
-        if EvolutionManager.VERBOSE: 
-            print(f"\n\n===== GENERATION COMPLETE (0 / {EvolutionManager.GENERATIONS})===")
-            self.print_layered_population()
-            print("avg, std, med, min, max")
-            want_to_print = [record['avg'], record['std'], record['med'], record['min'], record['max']]
-            want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
-            print(" ".join(want_to_print))
+        self.end_generation(stats, invalid_ind)
 
         # Begin the generational process
         for gen in range(1, EvolutionManager.GENERATIONS + 1):
+
+            if EvolutionManager.VERBOSE: print("\n=== NEW GENERATION ===")
 
             # Save info to LoggingManager to help verbosity 
             LoggingManager.population_size = len(self.population)
@@ -87,24 +72,32 @@ class SLeaMuPlusLambda:
             if gen % AlpsManager.AGE_GAP == 0:
                 self.replace_layer_zero()
 
-            # Delete duplicates
-            self.delete_duplicates()
-
-            # Show status
-            record = stats.compile(self.population) if stats is not None else {}
-            if EvolutionManager.VERBOSE: 
-                print(f"\n\n===== GENERATION COMPLETE ({gen} / {EvolutionManager.GENERATIONS})===")
-                self.print_layered_population()
-                print("avg, std, med, min, max")
-                want_to_print = [record['avg'], record['std'], record['med'], record['min'], record['max']]
-                want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
-                print(" ".join(want_to_print))
-
-            # Log generation
-            if LoggingManager.LOGGING:
-                self.LogManager.log_generation_stats(self.population, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
+            self.end_generation(stats, invalid_ind)
 
         return self.population
+
+    def end_generation(self, stats, invalid_ind):
+
+        record = stats.compile(self.population) if stats is not None else {}
+
+        # Delete duplicates
+        self.delete_duplicates()
+
+        # Show status
+        if EvolutionManager.VERBOSE: 
+            print(f"\n\n=== GENERATION COMPLETE (0 / {EvolutionManager.GENERATIONS}) ===")
+            self.print_layered_population()
+            print("avg, std, med, min, max")
+            want_to_print = [record['avg'], record['std'], record['med'], record['min'], record['max']]
+            want_to_print = list(map(str, list(map(lambda x: round(x, 2), want_to_print))))
+            print(" ".join(want_to_print))
+
+        # Log the generation
+        if LoggingManager.LOGGING:
+            for individual in self.population:
+                self.LogManager.check_for_best_in_gen(individual)
+                
+            self.LogManager.log_generation_stats(self.population, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
 
     def isolated_evolution(self, layer_to_evolve):
         """Runs a single evolution for a single layer"""

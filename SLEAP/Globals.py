@@ -13,6 +13,7 @@ class Sleepstage:
     ALL_STAGES = [WAKE, N1, N2, N3, REM]
 
 class Signal:
+
     class EEG:
         Fpz_Cz = "EEG_Fpz-Cz"
         Pz_Oz = "EEG_Pz-Oz"
@@ -24,11 +25,12 @@ class Signal:
         SUBMENTAL = "EMG_submental"
 
     SIGNAL_COUNT = 3000
+    ALL_SIGNALS = [EEG.Pz_Oz, EEG.Fpz_Cz, EOG.HORIZONTAL, EMG.SUBMENTAL]
 
 class ModelManager:
     # Base
-    NUMBER_OF_BRANCHES_RANGE = (1, 2)
-    NUMBER_OF_KERNELS_RANGE = (2, 3)
+    NUMBER_OF_BRANCHES_RANGE = (1, 3)
+    NUMBER_OF_KERNELS_RANGE = (2, 4)
     BATCH_SIZE = 32
     HAVE_MAX_TIME = False
     MAX_TIME_SPENT_TRAINING = 6
@@ -42,7 +44,7 @@ class ModelManager:
 class EvolutionManager:
 
     # Overview Manager
-    POPULATION_SIZE_PER_LAYER: int = 10
+    POPULATION_SIZE_PER_LAYER: int = 5
     GENERATIONS: int = 2
     SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
     ELITISM = 3
@@ -97,21 +99,19 @@ class AlpsManager:
     
 class DataManager:
     class DatasetNames:
-        TELEMETRY = "telemetry"
-        SLEEPEDFX = "sleepEDFX"
-        SLEEP_EDF_20 = "sleep_edf_20_Fpz-Cz"
+        EDF_20 = "sleep-EDF-20"
 
-    _datasets = [DatasetNames.SLEEPEDFX, DatasetNames.TELEMETRY, DatasetNames.SLEEP_EDF_20]
-    DATASET = _datasets[2]
+    _datasets = [DatasetNames.EDF_20]
 
-    SLEEP_EDF_20_PATH = "Data/sleep_edf_20_Fpz-Cz"
+    DATASET = _datasets[0]
+    
     EVEN_DATA_SPLIT = False
 
 class LoggingManager:
     LOG_IDS = ['O', 'T']
     LOGGER_ID = ""
     LOGGING = True
-    LOG_ALL_INDIVIDUALS = True
+    LOG_ALL_INDIVIDUALS = False
 
     current_generation_id = 0
     current_individual_id = 0
@@ -154,7 +154,7 @@ class FitnessFunctions:
     fitness_function = train_loss
     normalization_function = no_normalization
 
-class SLEAP_Exception(Exception):
+class SLEAPyException(Exception):
     def __init__(self, **kwargs):
         super().__init__()
         print("All classes and their contents in Globals.py:")
