@@ -36,14 +36,14 @@ class ModelManager:
 
     # Kernel size constraints
     MIN_KERNEL_SIZE = 1
-    MAX_KERNEL_SIZE = 50
+    MAX_KERNEL_SIZE = None
     SORT_KERNELS = False
 
 class EvolutionManager:
 
     # Overview Manager
-    POPULATION_SIZE_PER_LAYER: int = 5
-    GENERATIONS: int = 3
+    POPULATION_SIZE_PER_LAYER: int = 10
+    GENERATIONS: int = 6
     SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
     ELITISM = 3
     HALL_OF_FAME_MEMBERS = 3

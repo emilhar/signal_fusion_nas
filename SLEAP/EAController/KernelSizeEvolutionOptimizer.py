@@ -168,7 +168,6 @@ class KernelSizeEvolutionaryOptimizer:
             # Adjust number of individuals to select through tournament
             remaining_to_select = number_of_people_to_select - elitism
 
-            print("Elites", elites)
         else:
             remaining_to_select = number_of_people_to_select
         
@@ -307,7 +306,7 @@ class KernelSizeEvolutionaryOptimizer:
             elif mutation_type == "randomize_kernel_order_in_branch":
                 branch_idx = random.randrange(len(mutant))
                 random.shuffle(mutant[branch_idx])
-                
+
         return (mutant,)
 
     def _mutation_choice(self):
