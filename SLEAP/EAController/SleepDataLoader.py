@@ -8,36 +8,37 @@ from math import ceil
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from EAController.SleepEDF20LazyDataset import SleepEDF20LazyDataset
-from Globals import Sleepstage, ModelManager, EvolutionManager, DataManager
+from Globals import Sleepstage, ModelManager, EvolutionManager, DataManager, SLEAPyException
 
 
 class SleepDataLoader:
     def __init__(self, signal_type, sleepstage):
         self.sleepstage = sleepstage
         self.signal_type = signal_type
+        self.stage_map = self._get_stage_map()
 
         self.batch_size = ModelManager.BATCH_SIZE
 
-        if DataManager.DATASET == DataManager.DatasetNames.TELEMETRY:
-            self.signal_type = f"telemetry_{signal_type}"
-        
-        if DataManager.DATASET == DataManager.DatasetNames.SLEEP_EDF_20:
-            if EvolutionManager.VERBOSE: print("Loading EDF 20 Data")
-            self.train_loader, self.test_loader, self.n_samples, self.pos_weight = self.prepare_edf20_data()
+        if EvolutionManager.VERBOSE: print("Loading EDF 20 Data")
+        self.train_loader, self.test_loader, self.n_samples, self.pos_weight = self.prepare_data()
 
-        else:
-            if EvolutionManager.VERBOSE: print("Loading Training data")
-            train_file_path = self.get_filepath(data_type="Training")
-            self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
+    def _get_stage_map(self):
+        STAGE_MAP = {
+            CNN_BinaryClassifier.WAKE: 1 if self.sleepstage == Sleepstage.WAKE else 0,
+            CNN_BinaryClassifier.N1: 1 if self.sleepstage == Sleepstage.N1 else 0,
+            CNN_BinaryClassifier.N2: 1 if self.sleepstage == Sleepstage.N2 else 0,
+            CNN_BinaryClassifier.N3: 1 if self.sleepstage == Sleepstage.N3 else 0,
+            CNN_BinaryClassifier.REM: 1 if self.sleepstage == Sleepstage.REM else 0
+        }
 
-            if EvolutionManager.VERBOSE: print("Loading Testing data")
-            test_file_path = self.get_filepath(data_type="Testing")
-            self.test_loader, _, _ = self._load_data(filepath=test_file_path, training=False)
+        return STAGE_MAP
+    
+    def prepare_data(self):
 
-    def prepare_edf20_data(self):
-
-        data_dir = DataManager.SLEEP_EDF_20_PATH
+        data_dir = f"Data/{DataManager.DATASET}/{self.signal_type}"
         all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
+        if not all_files:
+            raise SLEAPyException(fart=f"No data inside Data/{DataManager.DATASET}/{self.signal_type}")
         subject_ids = sorted(set(f[:6] for f in all_files))
         shuffle(subject_ids)
 
@@ -48,10 +49,8 @@ class SleepDataLoader:
         train_files = [f for f in all_files if f[:6] in train_subjects]
         test_files = [f for f in all_files if f[:6] in test_subjects]
 
-        stage_map = self._get_stage_map()
-
-        train_dataset = SleepEDF20LazyDataset(train_files, data_dir, stage_map)
-        test_dataset = SleepEDF20LazyDataset(test_files, data_dir, stage_map)
+        train_dataset = SleepEDF20LazyDataset(train_files, data_dir, self.stage_map)
+        test_dataset = SleepEDF20LazyDataset(test_files, data_dir, self.stage_map)
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)
@@ -66,95 +65,6 @@ class SleepDataLoader:
 
         return train_loader, test_loader, train_dataset[0][0].shape[1], pos_weight
 
-    def get_filepath(self, data_type):
-    
-        if data_type == "Training":
-            ending = "train"
-        elif data_type == "Testing":
-            ending = "test"
-
-        filepath = f"Data/{DataManager.DATASET}/{data_type}Data/{self.signal_type}_{ending}.npz"
-
-        return filepath
-        
-    def _load_data(self, filepath, training):
-        
-        with np.load(filepath) as data:
-            X = (data['X']).astype(np.float32)
-            y = data['y']
-
-            if EvolutionManager.VERBOSE: print("Data split. Preparing data")
-
-            loader, pos_weight, n_samples = self._prepare(X, y, training)
-            
-        if DataManager.EVEN_DATA_SPLIT:
-
-            if EvolutionManager.VERBOSE: print("Preparing for even data split")
-            if training:
-                self.training_indices_class_0 = []
-                self.training_indices_class_1 = []
-
-                for i, (_, label) in enumerate(loader.dataset):
-                    if label == 0:
-                        self.training_indices_class_0.append(i)
-                    elif label == 1:
-                        self.training_indices_class_1.append(i)
-
-            else:
-                self.testing_indices_class_0 = []
-                self.testing_indices_class_1 = []
-
-                for i, (_, label) in enumerate(loader.dataset):
-                    if label == 0:
-                        self.testing_indices_class_0.append(i)
-                    elif label == 1:
-                        self.testing_indices_class_1.append(i)
-
-
-        del data
-        gc.collect()
-        
-        return loader, pos_weight, n_samples
-
-    def _prepare(self, X, y, training):
-
-        X = np.expand_dims(X, 1)
-
-        _, _, n_samples = X.shape
-        print(X.shape)
-
-        X_tensor = torch.tensor(X)
-        y = np.vectorize(self._get_stage_map().get)(y)
-        y_tensor = torch.tensor(y)
-
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-        pos_weight = torch.tensor([(1 - y.mean()) / y.mean()]).to(device)
-
-        dataset = TensorDataset(X_tensor, y_tensor)
-        loader = DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=training,
-            pin_memory=True
-        )
-
-        del X, y, X_tensor, y_tensor, dataset
-        gc.collect()
-
-        return loader, pos_weight, n_samples
-    
-    def _get_stage_map(self):
-        STAGE_MAP = {
-            CNN_BinaryClassifier.WAKE: 1 if self.sleepstage == Sleepstage.WAKE else 0,
-            CNN_BinaryClassifier.N1: 1 if self.sleepstage == Sleepstage.N1 else 0,
-            CNN_BinaryClassifier.N2: 1 if self.sleepstage == Sleepstage.N2 else 0,
-            CNN_BinaryClassifier.N3: 1 if self.sleepstage == Sleepstage.N3 else 0,
-            CNN_BinaryClassifier.REM: 1 if self.sleepstage == Sleepstage.REM else 0
-        }
-
-        return STAGE_MAP
-    
     def get_random_subset(self, dataset_percentage, batch_size):
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset

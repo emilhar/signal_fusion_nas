@@ -261,6 +261,8 @@ class KernelSizeEvolutionaryOptimizer:
         
         # Clone the individual to avoid in-place issues
         mutant = creator.Individual([branch[:] for branch in individual])
+        mutant.age = individual.age
+        mutant.layer = individual.layer
 
         mutation_number_options = [i + 1 for i in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS)
               for _ in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS - i)]
