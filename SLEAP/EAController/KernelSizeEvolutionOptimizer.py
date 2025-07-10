@@ -253,8 +253,8 @@ class KernelSizeEvolutionaryOptimizer:
         child_branch1 = branch1[:cx_point] + branch2[cx_point:]
         child_branch2 = branch2[:cx_point] + branch1[cx_point:]
 
-        ind1[0] = sorted(child_branch1, reverse=True)
-        ind2[0] = sorted(child_branch2, reverse=True)
+        ind1[0] = child_branch1
+        ind2[0] = child_branch2
 
         return ind1, ind2
 
@@ -304,6 +304,10 @@ class KernelSizeEvolutionaryOptimizer:
                 new_value = min(max(current_value + change, ModelManager.MIN_KERNEL_SIZE), ModelManager.MAX_KERNEL_SIZE)
                 mutant[branch_idx][kernel_idx] = new_value
 
+            elif mutation_type == "randomize_kernel_order_in_branch":
+                branch_idx = random.randrange(len(mutant))
+                random.shuffle(mutant[branch_idx])
+                
         return (mutant,)
 
     def _mutation_choice(self):
@@ -311,18 +315,34 @@ class KernelSizeEvolutionaryOptimizer:
         Randomly selects a mutation type based on predefined probability ranges.
         """
         num = random.randint(0, 99)
-        mutation_options = ["remove_branch", "add_branch", "add_kernel", "remove_kernel", "change_kernel"]
 
-        if 0 <= num < 10:
-            return mutation_options[0]  # remove_branch (10%)
-        elif 10 <= num < 25:
-            return mutation_options[1]  # add_branch (15%)
-        elif 25 <= num < 50:
-            return mutation_options[2]  # add_kernel (25%)
-        elif 50 <= num < 75:
-            return mutation_options[3]  # remove_kernel (25%)
+        if ModelManager.SORT_KERNELS:
+            # Sorted kernels
+            if 0 <= num <= 14:       # 15%: Remove branch
+                return "remove_branch"
+            elif 15 <= num <= 29:    # 15%: Add branch
+                return "add_branch"
+            elif 30 <= num <= 54:    # 25%: Add kernel
+                return "add_kernel"
+            elif 55 <= num <= 69:    # 15%: Remove kernel
+                return "remove_kernel"
+            else:                    # 30%: Change kernel
+                return "change_kernel"
+
         else:
-            return mutation_options[4]  # change_kernel (25%)
+            # Unsorted kernels (unsort added)
+            if 0 <= num <= 14:       # 15%: Remove branch
+                return "remove_branch"
+            elif 15 <= num <= 29:    # 15%: Add branch
+                return "add_branch"
+            elif 30 <= num <= 49:    # 20%: Add kernel
+                return "add_kernel"
+            elif 50 <= num <= 59:    # 10%: Remove kernel
+                return "remove_kernel"
+            elif 60 <= num <= 84:    # 25%: Change kernel
+                return "change_kernel"
+            else:                    # 15%: Unsort
+                return "randomize_kernel_order_in_branch"
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
