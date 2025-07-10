@@ -1,6 +1,7 @@
 """
 Gives IO for SLEAP
 """
+import argparse
 
 from Globals import Sleepstage, Signal, SLEAP_Exception
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
@@ -17,10 +18,11 @@ class SLEAPy:
     Main interface for running evolutionary optimization to find optimal kernel sizes
     """
 
-    def __init__(self):
+    def __init__(self, args=None):
         self.optimizer = None
         self.sleepstage = None
         self.signal_type = None
+        self.args = args
         
     def run_experiment(self, run_omega = False):
         """Run the setup and evolution process"""
@@ -62,23 +64,31 @@ class SLEAPy:
     
     def _get_user_configuration(self):
         """Get configuration from user input"""
+        skip_sleep_stage = self.args.sleep_stage is not None
+        skip_signal = self.args.signal is not None
+        no_logging = self.args.no_logging
         
         # Sleep stage selection
-        print("\n📊 Available Sleep Stages:")
         sleep_options = [(stage, str(stage)) for stage in Sleepstage.ALL_STAGES]
         
-        for i, (stage, name) in enumerate(sleep_options, 1):
-            print(f"  {i-1}. {name}")
-        
-        while True:
-            try:
-                choice = int(input("\nSelect sleep stage (0-4): "))
-                if 0 <= choice <= 4:
-                    self.sleepstage = sleep_options[choice][0]
-                    break
-                print("❌ Please enter a number between 0-4")
-            except ValueError:
-                print("❌ Please enter a valid number")
+        if skip_sleep_stage:
+            self.sleepstage = self.args.sleep_stage
+
+        else:
+            print("\n📊 Available Sleep Stages:")
+            for i, (stage, name) in enumerate(sleep_options, 1):
+                print(f"  {i-1}. {name}")
+            
+
+            while True:
+                try:
+                    choice = int(input("\nSelect sleep stage (0-4): "))
+                    if 0 <= choice <= 4:
+                        self.sleepstage = sleep_options[choice][0]
+                        break
+                    print("❌ Please enter a number between 0-4")
+                except ValueError:
+                    print("❌ Please enter a valid number")
         
         # Signal type selection
         if EvolutionManager.SMALLER_FILES:
@@ -90,53 +100,63 @@ class SLEAPy:
             self.signal_type = Signal.EEG.Fpz_Cz
         
         else:
-            print("\n🔌 Available Signal Types:")
-            signal_options = [
-                (Signal.EEG.Fpz_Cz, "EEG Fpz-Cz"),
-                (Signal.EEG.Pz_Oz, "EEG Pz-Oz"),
-                (Signal.EOG.HORIZONTAL, "EOG Horizontal"),
-                (Signal.EMG.SUBMENTAL, "EMG Submental")
-            ]
-            
-            for i, (signal, name) in enumerate(signal_options, 1):
-                print(f"  {i}. {name}")
-            
-            while True:
-                try:
-                    choice = int(input("\nSelect signal type (1-4): "))
-                    if 1 <= choice <= 4:
-                        self.signal_type = signal_options[choice-1][0]
+            if skip_signal:
+                self.signal_type = self.args.signal
+
+            else:
+                print("\n🔌 Available Signal Types:")
+                signal_options = [
+                    (Signal.EEG.Fpz_Cz, "EEG Fpz-Cz"),
+                    (Signal.EEG.Pz_Oz, "EEG Pz-Oz"),
+                    (Signal.EOG.HORIZONTAL, "EOG Horizontal"),
+                    (Signal.EMG.SUBMENTAL, "EMG Submental")
+                ]
+                
+                for i, (signal, name) in enumerate(signal_options, 1):
+                    print(f"  {i}. {name}")
+                
+                while True:
+                    try:
+                        choice = int(input("\nSelect signal type (1-4): "))
+                        if 1 <= choice <= 4:
+                            self.signal_type = signal_options[choice-1][0]
+                            break
+                        print("❌ Please enter a number between 1-4")
+                    except ValueError:
+                        print("❌ Please enter a valid number")
+
+        if no_logging:
+            LoggingManager.LOGGING = False
+
+        else:
+            print("\n📝 Logging")
+            LoggingManager.LOGGING = input("Do you want to be logging (y/*)?: ").lower().startswith('y')
+
+            if LoggingManager.LOGGING:
+                while True:
+                    print("\n",LoggingManager.LOG_IDS)
+                    potential_log_id = input("Enter logging ID: ").upper().strip()
+                    if potential_log_id in LoggingManager.LOG_IDS:
+                        LoggingManager.LOGGER_ID = potential_log_id
                         break
-                    print("❌ Please enter a number between 1-4")
-                except ValueError:
-                    print("❌ Please enter a valid number")
+                    else:
+                        print("❌ Please enter valid ID\n")
 
-        print("\n📝 Logging")
-        LoggingManager.LOGGING = input("Do you want to be logging (y/*)?: ").lower().startswith('y')
+            else:
+                LoggingManager.LOGGER_ID = "None"
+            
+            if LoggingManager.LOGGING:
+                LoggingManager.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/*)?: ").lower().startswith('y')
+            else:
+                LoggingManager.LOG_ALL_INDIVIDUALS = False
 
-        if LoggingManager.LOGGING:
-            while True:
-                print("\n",LoggingManager.LOG_IDS)
-                potential_log_id = input("Enter logging ID: ").upper().strip()
-                if potential_log_id in LoggingManager.LOG_IDS:
-                    LoggingManager.LOGGER_ID = potential_log_id
-                    break
-                else:
-                    print("❌ Please enter valid ID\n")
-
-        else:
-            LoggingManager.LOGGER_ID = "None"
+            if LoggingManager.LOGGING:
+                LoggingManager.experiment_name = input("Name for Experiment: ").strip()
         
-        if LoggingManager.LOGGING:
-            LoggingManager.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/*)?: ").lower().startswith('y')
-        else:
-            LoggingManager.LOG_ALL_INDIVIDUALS = False
-
-        if LoggingManager.LOGGING:
-            LoggingManager.experiment_name = input("Name for Experiment: ").strip()
+        if hasattr(self.args, "no_confirm"):
+            return
         
         self._print_experiment_Manager()
-        
         input("OK? ")
     
     def _generate_all_configs(self):
@@ -212,16 +232,118 @@ class SLEAPy:
         print(f"{'Normalization function:':30} {FitnessFunctions.normalization_function.__name__}")
         print(f"{'Minimizing Fitness:':30} {FitnessFunctions.MINIMIZE_FITNESS}")
 
+
+
+def parse_arguments():
+    """Parse command line arguments to override global settings"""
+    parser = argparse.ArgumentParser(description='SLEAP - Sleep Labeling using Evolutionary Algorithms and PyTorch')
+    
+    # General options
+    parser.add_argument('--omega', action='store_true', help='Run all possible configurations (ultimate test mode)')
+    
+    # ModelManager options
+    parser.add_argument('--batch-size', type=int, help=f'Batch size (default: {ModelManager.BATCH_SIZE})')
+    parser.add_argument('--max-ttime', type=int, help=f'Max training time in minutes (default: {ModelManager.MAX_TIME_SPENT_TRAINING})')
+    parser.add_argument('--lr', type=float, help=f'Learning rate (default: {ModelManager.LEARNING_RATE})')
+    parser.add_argument('--min-ks', type=int, help=f'Minimum kernel size (default: {ModelManager.MIN_KERNEL_SIZE})')
+    parser.add_argument('--max-ks', type=int, help=f'Maximum kernel size (default: {ModelManager.MAX_KERNEL_SIZE})')
+    
+    # EvolutionManager options
+    parser.add_argument('--pop-size', type=int, help=f'Population size per layer (default: {EvolutionManager.POPULATION_SIZE_PER_LAYER})')
+    parser.add_argument('--generations', type=int, help=f'Number of generations (default: {EvolutionManager.GENERATIONS})')
+    parser.add_argument('--st-size', type=int, help=f'Selection tournament size (default: {EvolutionManager.SELECTION_TOURNAMENT_SIZE})')
+    parser.add_argument('--hof-size', type=int, help=f'Hall of fame size (default: {EvolutionManager.HALL_OF_FAME_MEMBERS})')
+    parser.add_argument('--cx-prob', type=float, help=f'Crossover probability (default: {EvolutionManager.CX_PROB})')
+    parser.add_argument('--mut-prob', type=float, help=f'Mutation probability (default: {EvolutionManager.MUTATION_PROB})')
+    parser.add_argument('--smaller-files', action='store_true', help=f'Use smaller files (default: {EvolutionManager.SMALLER_FILES})')
+    
+    # DataManager options
+    parser.add_argument('--dataset', choices=['telemetry', 'sleepEDFX', 'sleep_edf_20'], 
+                       help=f'Dataset to use (default: {DataManager.DATASET})')
+    parser.add_argument('--even-split', action='store_true', help=f'Use even data split (default: {DataManager.EVEN_DATA_SPLIT})')
+    
+    # LoggingManager options
+    parser.add_argument('--no-logging', action='store_true', help='Disable logging')
+    parser.add_argument('--enable-logging', action='store_true', help='Disable logging')
+    parser.add_argument('--log-id', choices=LoggingManager.LOG_IDS, help=f'Logger ID (default: {LoggingManager.LOGGER_ID})')
+    parser.add_argument('--log-all', action='store_true', help=f'Log all individuals (default: {LoggingManager.LOG_ALL_INDIVIDUALS})')
+    parser.add_argument('--exp-name', type=str, help=f'Experiment name (default: {LoggingManager.experiment_name})')
+    
+    parser.add_argument('--sleep-stage', type=str, choices=[s for s in Sleepstage.ALL_STAGES],
+                       help='Sleep stage to analyze (wake, N1, N2, N3, REM)')
+    parser.add_argument('--signal', type=str, 
+                       choices=['EEG_Fpz-Cz', 'EEG_Pz-Oz', 'EOG_horizontal', 'EMG_submental'],
+                       help='Signal type to use')
+    parser.add_argument('--no-confirm', action='store_true', help='Ask for input before run')
+
+    return parser.parse_args()
+
+def apply_arguments(args):
+    """Apply parsed arguments to global settings"""
+    # ModelManager settings
+    if args.batch_size:
+        ModelManager.BATCH_SIZE = args.batch_size
+    if args.max_ttime:
+        ModelManager.MAX_TIME_SPENT_TRAINING = args.max_training_time
+    if args.lr:
+        ModelManager.LEARNING_RATE = args.learning_rate
+    if args.min_ks:
+        ModelManager.MIN_KERNEL_SIZE = args.min_kernel
+    if args.max_ks:
+        ModelManager.MAX_KERNEL_SIZE = args.max_kernel
+    
+    # EvolutionManager settings
+    if args.pop_size:
+        EvolutionManager.POPULATION_SIZE_PER_LAYER = args.pop_size
+        # Update tournament size if it's based on population size
+        EvolutionManager.SELECTION_TOURNAMENT_SIZE = max(3, int(EvolutionManager.POPULATION_SIZE_PER_LAYER * 0.2))
+    if args.generations:
+        EvolutionManager.GENERATIONS = args.generations
+    if args.st_size:
+        EvolutionManager.SELECTION_TOURNAMENT_SIZE = args.tournament_size
+    if args.hof_size:
+        EvolutionManager.HALL_OF_FAME_MEMBERS = args.hof_size
+    if args.cx_prob:
+        EvolutionManager.CX_PROB = args.cx_prob
+    if args.mut_prob:
+        EvolutionManager.MUTATION_PROB = args.mut_prob
+    if args.smaller_files:
+        EvolutionManager.SMALLER_FILES = True
+    
+    # DataManager settings
+    if args.dataset:
+        if args.dataset == 'telemetry':
+            DataManager.DATASET = DataManager.DatasetNames.TELEMETRY
+        elif args.dataset == 'sleepEDFX':
+            DataManager.DATASET = DataManager.DatasetNames.SLEEPEDFX
+        elif args.dataset == 'sleep_edf_20':
+            DataManager.DATASET = DataManager.DatasetNames.SLEEP_EDF_20
+    if args.even_split:
+        DataManager.EVEN_DATA_SPLIT = True
+    
+    # LoggingManager settings
+    if args.no_logging:
+        LoggingManager.LOGGING = False
+    if args.enable_logging:
+        LoggingManager.LOGGING = True
+    if args.log_id:
+        LoggingManager.LOGGER_ID = args.log_id
+    if args.log_all:
+        LoggingManager.LOG_ALL_INDIVIDUALS = True
+    if args.exp_name:
+        LoggingManager.experiment_name = args.exp_name
+
 def main():
     """Main entry point"""
-    sleap = SLEAPy()
-    sleap.run_experiment(run_omega=False)
-
+    args = parse_arguments()
+    apply_arguments(args)
+    
+    sleap = SLEAPy(args)
+    sleap.run_experiment(run_omega=args.omega)
 
 if __name__ == "__main__":
-    
     try:
         sleap_instance = main()
     except SLEAP_Exception as e:
-        print("Exception occured during run.")
+        print("Exception occurred during run.")
         print(e)
