@@ -157,10 +157,10 @@ class FitnessFunctions:
 class SLEAPyException(Exception):
     def __init__(self, **kwargs):
         super().__init__()
-        print("All classes and their contents in Globals.py:")
+        print(f"{Clr("All classes and their contents in Globals.py", "blue")}:")
 
         for k, v in kwargs.items():
-            print(f"{k}: {v}")
+            print(f"{Clr(k, "red")}: {Clr(v, "red")}")
 
         # Collect all top-level classes in the module
         module_classes = {
