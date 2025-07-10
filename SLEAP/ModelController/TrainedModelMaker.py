@@ -5,12 +5,11 @@ Most important file, this connects to main.
 # Base Imports
 import torch
 from torch.utils.data import DataLoader
-from Globals import ModelManager
 
 # Model and Training imports
 from ModelController._Trainer import train_model
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from ModelController.BranchManager import get_branch_configs
+from ModelController.BranchSettings import get_branch_configs
 from Globals import EvolutionManager, LoggingManager
 
 class TrainedModelMaker:
@@ -39,9 +38,6 @@ class TrainedModelMaker:
         self.EXG_SIGNAL = signal_type
         self.lr = learning_rate
 
-        # Get Stage Map
-        self.BATCH_SIZE = batch_size
-
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.n_samples = N_SAMPLES
         self.pos_weight = pos_weight
@@ -49,6 +45,7 @@ class TrainedModelMaker:
         self.test_loader = test_loader
 
         model_args = get_branch_configs(branches, name, self.n_samples) # See ModelManager
+        model_args["batch_size"] = batch_size
 
         model = CNN_BinaryClassifier(**model_args).to(self.device)
 

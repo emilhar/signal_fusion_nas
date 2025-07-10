@@ -4,6 +4,7 @@ This file defines the CNN binary classifier model
 
 import torch
 import torch.nn as nn
+from Globals import ModelManager
 
 class _Branch(nn.Module):
     def __init__(self, num_kernels, kernel_sizes, paddings, strides, pool_sizes, pool_strides, dropout_rates):
@@ -76,18 +77,19 @@ class CNN_BinaryClassifier(nn.Module):
     N3 = 3
     REM = 4
 
-    def __init__(self, name, n_samples, branch_configs):
+    def __init__(self, name, n_samples, branch_configs, batch_size):
         super().__init__()
         self.name = name
+        self.n_samples = n_samples
+        self.batch_size = batch_size
         self.branches = nn.ModuleDict()
         self.branch_output_sizes = {}
 
         for name, config in branch_configs.items():
             self.branches[name] = _Branch(**config)
 
-        # output sizes using dummy input
         with torch.inference_mode():
-            dummy = torch.zeros(1, 1, n_samples)
+            dummy = torch.zeros((self.batch_size, 1, n_samples)) # L
             for name, branch in self.branches.items():
                 branch.eval()
                 out = branch(dummy)
@@ -104,11 +106,15 @@ class CNN_BinaryClassifier(nn.Module):
             nn.ReLU()
         )
 
-
         self.classifier = nn.Linear(32, 1)
 
+
     def forward(self, x):
-        outputs = [branch(x).flatten(1) for branch in self.branches.values()]
+        try:
+            outputs = [branch(x).flatten(1) for branch in self.branches.values()]
+        except RuntimeError as e:
+            print(x.shape)
+            quit()
         combined = torch.cat(outputs, dim=1)
         x = self.fc(combined)
         return self.classifier(x)

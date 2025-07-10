@@ -85,6 +85,10 @@ class SLEAP:
             print("\nWARNING: YOU ARE USING SMALLER FILES, file 'sleepEDFX/smaller_EEG_Fpz_CZ' automatically chosen")
             self.signal_type = f"smaller_{Signal.EEG.Fpz_Cz}"
         
+        elif DataManager.DATASET == DataManager.DatasetNames.SLEEP_EDF_20:
+            print("\nWARNING: You are using SLEEP_EDF_20, only EEG Fpz-Cz available")
+            self.signal_type = Signal.EEG.Fpz_Cz
+        
         else:
             print("\n🔌 Available Signal Types:")
             signal_options = [

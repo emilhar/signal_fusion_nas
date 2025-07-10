@@ -2,10 +2,12 @@ import numpy as np
 from torch.utils.data import TensorDataset, DataLoader, Subset
 import torch
 import gc
-from random import sample
+import os
+from random import sample, shuffle
 from math import ceil
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
+from EAController.SleepEDF20LazyDataset import SleepEDF20LazyDataset
 from Globals import Sleepstage, ModelManager, EvolutionManager, DataManager
 
 
@@ -14,40 +16,64 @@ class SleepDataLoader:
         self.sleepstage = sleepstage
         self.signal_type = signal_type
 
-        if DataManager.DATASET == DataManager.DatasetNames.TELEMETRY:
-            self.signal_type = f"telemetry_{signal_type}"
-
         self.batch_size = ModelManager.BATCH_SIZE
 
-        if EvolutionManager.VERBOSE: print("Loading Training data")
-        try:
-            try_sleap=True
-            train_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Training")            
-            self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
-
-        except FileNotFoundError:
-            try_sleap=False
-            train_file_path = self.get_filepath(SLEAP=False, data_type="Training") # try other filepath
-            self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
-            
-        if EvolutionManager.VERBOSE: print("Loading Testing data")
-        test_file_path = self.get_filepath(SLEAP=try_sleap, data_type="Testing")
+        if DataManager.DATASET == DataManager.DatasetNames.TELEMETRY:
+            self.signal_type = f"telemetry_{signal_type}"
         
-        self.test_loader, _, _ = self._load_data(filepath=test_file_path, training=False)
+        if DataManager.DATASET == DataManager.DatasetNames.SLEEP_EDF_20:
+            if EvolutionManager.VERBOSE: print("Loading EDF 20 Data")
+            self.train_loader, self.test_loader, self.n_samples, self.pos_weight = self.prepare_edf20_data()
 
-    def get_filepath(self, SLEAP, data_type):
-        
-        if SLEAP:
-            beginning = "SLEAP/"
         else:
-            beginning = ""
+            if EvolutionManager.VERBOSE: print("Loading Training data")
+            train_file_path = self.get_filepath(data_type="Training")
+            self.train_loader, self.pos_weight, self.n_samples = self._load_data(filepath=train_file_path, training=True)
 
+            if EvolutionManager.VERBOSE: print("Loading Testing data")
+            test_file_path = self.get_filepath(data_type="Testing")
+            self.test_loader, _, _ = self._load_data(filepath=test_file_path, training=False)
+
+    def prepare_edf20_data(self):
+
+        data_dir = DataManager.SLEEP_EDF_20_PATH
+        all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
+        subject_ids = sorted(set(f[:6] for f in all_files))
+        shuffle(subject_ids)
+
+        split_idx = int(len(subject_ids) * EvolutionManager.DATA_SPLIT_TRAINING)
+        train_subjects = subject_ids[:split_idx]
+        test_subjects = subject_ids[split_idx:]
+
+        train_files = [f for f in all_files if f[:6] in train_subjects]
+        test_files = [f for f in all_files if f[:6] in test_subjects]
+
+        stage_map = self._get_stage_map()
+
+        train_dataset = SleepEDF20LazyDataset(train_files, data_dir, stage_map)
+        test_dataset = SleepEDF20LazyDataset(test_files, data_dir, stage_map)
+
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
+        test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)
+
+        # Estimate pos_weight
+        label_counts = {0: 0, 1: 0}
+        for i in range(len(train_dataset)):  # sample estimate
+            _, label = train_dataset[i]
+            label_counts[int(label)] += 1
+
+        pos_weight = torch.tensor([(label_counts[0] / label_counts[1])])
+
+        return train_loader, test_loader, train_dataset[0][0].shape[1], pos_weight
+
+    def get_filepath(self, data_type):
+    
         if data_type == "Training":
             ending = "train"
         elif data_type == "Testing":
             ending = "test"
 
-        filepath = f"{beginning}Data/{DataManager.DATASET}/{data_type}Data/{self.signal_type}_{ending}.npz"
+        filepath = f"Data/{DataManager.DATASET}/{data_type}Data/{self.signal_type}_{ending}.npz"
 
         return filepath
         
@@ -91,30 +117,32 @@ class SleepDataLoader:
         return loader, pos_weight, n_samples
 
     def _prepare(self, X, y, training):
-            
-            X = np.expand_dims(X, 1)
-            _, _, n_samples = X.shape
 
-            X_tensor = torch.tensor(X)
-            y = np.vectorize(self._get_stage_map().get)(y)
-            y_tensor = torch.tensor(y)
+        X = np.expand_dims(X, 1)
 
-            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        _, _, n_samples = X.shape
+        print(X.shape)
 
-            pos_weight = torch.tensor([(1 - y.mean()) / y.mean()]).to(device)
+        X_tensor = torch.tensor(X)
+        y = np.vectorize(self._get_stage_map().get)(y)
+        y_tensor = torch.tensor(y)
 
-            dataset = TensorDataset(X_tensor, y_tensor)
-            loader = DataLoader(
-                dataset,
-                batch_size=self.batch_size,
-                shuffle=training,
-                pin_memory=True
-            )
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-            del X, y, X_tensor, y_tensor, dataset
-            gc.collect()
+        pos_weight = torch.tensor([(1 - y.mean()) / y.mean()]).to(device)
 
-            return loader, pos_weight, n_samples
+        dataset = TensorDataset(X_tensor, y_tensor)
+        loader = DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=training,
+            pin_memory=True
+        )
+
+        del X, y, X_tensor, y_tensor, dataset
+        gc.collect()
+
+        return loader, pos_weight, n_samples
     
     def _get_stage_map(self):
         STAGE_MAP = {

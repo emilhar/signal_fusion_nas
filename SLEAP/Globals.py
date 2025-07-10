@@ -1,9 +1,7 @@
 """
 These names are used by many classes, good idea to keep them global
 """
-
-import math
-import copy
+import inspect
 
 class Sleepstage:
     WAKE = "wake"
@@ -100,10 +98,12 @@ class DataManager:
     class DatasetNames:
         TELEMETRY = "telemetry"
         SLEEPEDFX = "sleepEDFX"
+        SLEEP_EDF_20 = "sleep_edf_20_Fpz-Cz"
 
-    _datasets = [DatasetNames.SLEEPEDFX, DatasetNames.TELEMETRY]
-    DATASET = _datasets[1]
+    _datasets = [DatasetNames.SLEEPEDFX, DatasetNames.TELEMETRY, DatasetNames.SLEEP_EDF_20]
+    DATASET = _datasets[2]
 
+    SLEEP_EDF_20_PATH = "Data/sleep_edf_20_Fpz-Cz"
     EVEN_DATA_SPLIT = False
 
 class LoggingManager:
@@ -153,8 +153,6 @@ class FitnessFunctions:
     fitness_function = train_loss
     normalization_function = no_normalization
 
-import inspect
-
 class SLEAP_Exception(Exception):
     def __init__(self, **kwargs):
         super().__init__()
@@ -182,7 +180,6 @@ class SLEAP_Exception(Exception):
                 elif inspect.isclass(attr_value):
                     print(f"  Nested Class: {attr_name}")
 
-
 class Clr:
     def __init__(self, string, color):
         self.string = str(string)
@@ -197,7 +194,6 @@ class Clr:
         reset_code = "\x1b[0m"
         color_code = color_codes.get(self.color, "")  # default to no color if not found
         return f"{color_code}{self.string}{reset_code}"
-
 
 class LoggingTemplate:
     def __init__(self):
