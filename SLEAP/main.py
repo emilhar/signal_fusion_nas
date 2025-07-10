@@ -112,7 +112,7 @@ class SLEAP:
                     print("❌ Please enter a valid number")
 
         print("\n📝 Logging")
-        LoggingManager.LOGGING = input("Do you want to be logging (y/n)?: ").lower().startswith('y')
+        LoggingManager.LOGGING = input("Do you want to be logging (y/*)?: ").lower().startswith('y')
 
         if LoggingManager.LOGGING:
             while True:
@@ -128,7 +128,7 @@ class SLEAP:
             LoggingManager.LOGGER_ID = "None"
         
         if LoggingManager.LOGGING:
-            LoggingManager.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/n)?: ").lower().startswith('y')
+            LoggingManager.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/*)?: ").lower().startswith('y')
         else:
             LoggingManager.LOG_ALL_INDIVIDUALS = False
 
