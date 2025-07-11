@@ -33,41 +33,65 @@ class SleepDataLoader:
         return STAGE_MAP
     
     def prepare_data(self):
-        data_dir = f"Data/{DataManager.DATASET}/{self.signal_type}"
-        x_files = sorted([f for f in os.listdir(data_dir) if f.endswith('_x.npy')])
-        y_files = sorted([f for f in os.listdir(data_dir) if f.endswith('_y.npy')])
 
-        if not (x_files and y_files):
-            raise SLEAPyException(msg=f"No data inside Data/{DataManager.DATASET}/{self.signal_type}")
-        
-        subject_ids = sorted(set(f[:6] for f in x_files))
+        data_dir = f"Data/{DataManager.DATASET}/{self.signal_type}"
+        all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
+        subject_ids = sorted(set(f[:6] for f in all_files))
         shuffle(subject_ids)
 
         split_idx = int(len(subject_ids) * EvolutionManager.DATA_SPLIT_TRAINING)
         train_subjects = subject_ids[:split_idx]
         test_subjects = subject_ids[split_idx:]
 
-        x_train_files = [f for f in x_files if f[:6] in train_subjects]
-        y_train_files = [f for f in y_files if f[:6] in train_subjects]
-        x_test_files = [f for f in x_files if f[:6] in test_subjects]
-        y_test_files = [f for f in y_files if f[:6] in test_subjects]
+        train_files = [f for f in all_files if f[:6] in train_subjects]
+        test_files = [f for f in all_files if f[:6] in test_subjects]
 
-        train_dataset = SleepEDF20LazyDataset(x_train_files, y_train_files, data_dir, self.stage_map)
-        test_dataset = SleepEDF20LazyDataset(x_test_files, y_test_files, data_dir, self.stage_map)
+        stage_map = self._get_stage_map()
 
-        # During dataset initialization
-        self.train_indices = list(range(len(train_dataset)))
-        self.test_indices = list(range(len(test_dataset)))
+        train_dataset = SleepEDF20LazyDataset(train_files, data_dir, stage_map)
+        test_dataset = SleepEDF20LazyDataset(test_files, data_dir, stage_map)
+
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
+        test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)
+
+
+        # data_dir = f"Data/{DataManager.DATASET}/{self.signal_type}"
+        # x_files = sorted([f for f in os.listdir(data_dir) if f.endswith('_x.npy')])
+        # y_files = sorted([f for f in os.listdir(data_dir) if f.endswith('_y.npy')])
+
+        # if not (x_files and y_files):
+        #     raise SLEAPyException(msg=f"No data inside Data/{DataManager.DATASET}/{self.signal_type}")
         
-        # Only get first sample for shape info
+        # subject_ids = sorted(set(f[:6] for f in x_files))
+        # shuffle(subject_ids)
+
+        # split_idx = int(len(subject_ids) * EvolutionManager.DATA_SPLIT_TRAINING)
+        # train_subjects = subject_ids[:split_idx]
+        # test_subjects = subject_ids[split_idx:]
+
+        # x_train_files = [f for f in x_files if f[:6] in train_subjects]
+        # y_train_files = [f for f in y_files if f[:6] in train_subjects]
+        # x_test_files = [f for f in x_files if f[:6] in test_subjects]
+        # y_test_files = [f for f in y_files if f[:6] in test_subjects]
+
+        # train_dataset = SleepEDF20LazyDataset(x_train_files, y_train_files, data_dir, self.stage_map)
+        # test_dataset = SleepEDF20LazyDataset(x_test_files, y_test_files, data_dir, self.stage_map)
+
+        # # During dataset initialization
+        # self.train_indices = list(range(len(train_dataset)))
+        # self.test_indices = list(range(len(test_dataset)))
+        
+        # # Only get first sample for shape info
         n_samples = train_dataset[0][0].shape[1]
         
-        # Estimate pos_weight using random sampling instead of full iteration
+        # # Estimate pos_weight using random sampling instead of full iteration
         pos_weight = self.estimate_pos_weight(train_dataset)
         
         return (
-            DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True),
-            DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True),
+            #DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True),
+            #DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True),
+            train_loader,
+            test_loader,
             n_samples,
             pos_weight
         )
