@@ -9,7 +9,7 @@ GECCO 2006 - Genetic and Evolutionary Computation Conference. 1.
 """
 
 import random
-from Globals import EvolutionManager, AlpsManager, LoggingManager, Clr
+from Globals import EvolutionManager, AlpsManager, LoggingSettings, Clr
 
 class SLeaMuPlusLambda:
     def __init__(self, population, toolbox, mu, lambda_, halloffame, LogManager):
@@ -30,9 +30,9 @@ class SLeaMuPlusLambda:
         # Get all individuals without fitness values
         invalid_ind = [ind for ind in self.population if not ind.fitness.valid]
 
-        # Save info to LoggingManager to help verbosity
-        LoggingManager.population_size = len(invalid_ind)
-        LoggingManager.current_generation_id = 0
+        # Save info to LoggingSettings to help verbosity
+        LoggingSettings.population_size = len(invalid_ind)
+        LoggingSettings.current_generation_id = 0
 
         # Evaluate the individuals with an invalid fitness
         fitnesses = self.toolbox.map(self.toolbox.evaluate, invalid_ind)
@@ -50,10 +50,10 @@ class SLeaMuPlusLambda:
 
             if EvolutionManager.VERBOSE: print("\n=== NEW GENERATION ===")
 
-            # Save info to LoggingManager to help verbosity 
-            LoggingManager.population_size = len(self.population)
-            LoggingManager.current_generation_id = gen
-            LoggingManager.current_individual_id = 0
+            # Save info to LoggingSettings to help verbosity 
+            LoggingSettings.population_size = len(self.population)
+            LoggingSettings.current_generation_id = gen
+            LoggingSettings.current_individual_id = 0
 
             # Evolve each layer
             all_layers = set(individual.layer for individual in self.population)
@@ -93,7 +93,7 @@ class SLeaMuPlusLambda:
             print(" ".join(want_to_print))
 
         # Log the generation
-        if LoggingManager.LOGGING:
+        if LoggingSettings.LOGGING:
             for individual in self.population:
                 self.LogManager.check_for_best_in_gen(individual)
                 

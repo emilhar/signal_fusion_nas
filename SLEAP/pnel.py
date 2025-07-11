@@ -13,7 +13,7 @@ import matplotlib.image as mpimg
 from sklearn.cluster import KMeans
 from scipy.spatial import distance
 
-from Globals import LoggingManager
+from Globals import LoggingSettings
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from ModelController._Trainer import train_model
 from ModelController.BranchManager import get_branch_configs
@@ -80,7 +80,7 @@ def penelope(branches: list[list[list[int]]], epochs: int, signal: str, sleep_st
 
     temp = []
     if not branches:
-        for log_id in LoggingManager.LOG_IDS:
+        for log_id in LoggingSettings.LOG_IDS:
             with open(f"Logs/{log_id}_fully_trained_models.csv") as f:
                 df = pd.read_csv(f)
                 filtered_df = df[(df["signal"] == signal) & (df["sleep_stage"] == sleep_stage)]
@@ -104,17 +104,17 @@ def fully_train(branch: list[list[int]], signal: str, sleep_stage: str, lr: floa
     print(f"\n{"="*len(title)}")
     print(title)
     print(f"{"="*len(title)}\n")
-    for log_id in LoggingManager.LOG_IDS:
+    for log_id in LoggingSettings.LOG_IDS:
         with open(f"./Logs/{log_id}_fully_trained_models.csv") as f:
             df = pd.read_csv(f)
             mask = (df["name"] == str(branch)) & (df["signal"] == signal) & (df["sleep_stage"] == sleep_stage)
             if mask.any():
-                print(f"\nModel {branch} already in {LoggingManager.LOGGER_ID}_fully_train_models.csv, skipping...")
+                print(f"\nModel {branch} already in {LoggingSettings.LOGGER_ID}_fully_train_models.csv, skipping...")
                 f1 = df.loc[mask, "F1"].values[0]
                 train_loss = df.loc[mask, "loss"].values[0]
                 return f1, train_loss, 0.0
     
-    with open(f"./Logs/{LoggingManager.LOGGER_ID}_fully_trained_models.csv") as f:
+    with open(f"./Logs/{LoggingSettings.LOGGER_ID}_fully_trained_models.csv") as f:
 
         model_args = get_branch_configs(branch, "", 3000)
         model = CNN_BinaryClassifier(**model_args).to(device)
@@ -149,7 +149,7 @@ def fully_train(branch: list[list[int]], signal: str, sleep_stage: str, lr: floa
             "train_time": diff
         }])
         df = pd.concat([df, new_row], ignore_index=True)
-        new_row.to_csv(f"./Logs/{LoggingManager.LOGGER_ID}_fully_trained_models.csv", mode="a", header=False, index=False)
+        new_row.to_csv(f"./Logs/{LoggingSettings.LOGGER_ID}_fully_trained_models.csv", mode="a", header=False, index=False)
     
     return res["Best F1"], res["Train Loss"], res["Test Loss"]
 
@@ -419,10 +419,10 @@ def PnEL_FtMetric(PnEL, FtMetric, metric_name, plot_title, labels, epochs, name=
 
 if __name__ == "__main__":
     while True:
-        print("\n",LoggingManager.LOG_IDS)
+        print("\n",LoggingSettings.LOG_IDS)
         potential_log_id = input("Enter logging ID: ").upper().strip()
-        if potential_log_id in LoggingManager.LOG_IDS:
-            LoggingManager.LOGGER_ID = potential_log_id
+        if potential_log_id in LoggingSettings.LOG_IDS:
+            LoggingSettings.LOGGER_ID = potential_log_id
             break
         else:
             print("❌ Please enter valid ID\n")

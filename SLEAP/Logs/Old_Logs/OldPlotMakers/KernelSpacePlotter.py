@@ -2,24 +2,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import ast
 
-from Globals import LoggingManager
+from Globals import LoggingSettings
 
 def main():
     # Choose logging ID
     while True:
-        print("\n", LoggingManager.LOG_IDS)
+        print("\n", LoggingSettings.LOG_IDS)
         potential_log_id = input("Enter logging ID: ").upper().strip()
-        if potential_log_id in LoggingManager.LOG_IDS:
-            LoggingManager.LOGGER_ID = potential_log_id
+        if potential_log_id in LoggingSettings.LOG_IDS:
+            LoggingSettings.LOGGER_ID = potential_log_id
             break
         else:
             print("❌ Please enter valid ID\n")
 
     # Load dataset
     try:
-        df = pd.read_csv(f"Logs/{LoggingManager.LOGGER_ID}Logs/IndividualLog.csv")
+        df = pd.read_csv(f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv")
     except FileNotFoundError:
-        df = pd.read_csv(f"SLEAP/Logs/{LoggingManager.LOGGER_ID}Logs/IndividualLog.csv")
+        df = pd.read_csv(f"SLEAP/Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv")
 
     experiment_id = input("Enter experiment ID to analyze: ")
     if experiment_id == "":

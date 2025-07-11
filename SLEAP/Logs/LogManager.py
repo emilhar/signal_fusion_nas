@@ -1,7 +1,7 @@
 import csv
 import os
 from datetime import datetime
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingManager, AlpsManager, FitnessFunctions, LoggingTemplate
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, AlpsManager, FitnessFunctions, LoggingTemplate
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
@@ -9,7 +9,6 @@ class LogManager:
     def __init__(self):
         self.start_time = datetime.now()
         self.Experiment_ID = self._get_Experiment_ID()
-
         self.best_individual_in_generation = self.fill_individual_template(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     
     def _get_Experiment_ID(self):
@@ -49,11 +48,11 @@ class LogManager:
     def _get_filepath(self, filetype):
 
         if filetype == "Experiment":
-            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/ExperimentStatsLog.csv"
+            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ExperimentStatsLog.csv"
         elif filetype == "Generation":
-            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/GenerationStatsLog.csv"
+            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/GenerationStatsLog.csv"
         elif filetype == "Individual":
-            inner_path = f"Logs/{LoggingManager.LOGGER_ID}Logs/IndividualLog.csv"
+            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv"
         else:
             raise ValueError(f"Unknown filetype: {filetype}")
         
@@ -80,7 +79,7 @@ class LogManager:
 
         config = {
             it.experiment_id: self.Experiment_ID,
-            "name": LoggingManager.experiment_name,
+            "name": LoggingSettings.experiment_name,
             "start_time": self.start_time,
             "end_time": datetime.now(),
             "sleepstage": sleepstage,
@@ -119,7 +118,7 @@ class LogManager:
 
         generation_configs = {
         it.experiment_id: self.Experiment_ID,
-        it.generation: LoggingManager.current_generation_id,
+        it.generation: LoggingSettings.current_generation_id,
         "number_of_trained_individuals": number_of_trained_individual,
         "individual_count_per_layer": people_in_layers_count,
         "fitness_mean": round(mean, it.rounding_number),
@@ -127,12 +126,12 @@ class LogManager:
         "fitness_median": round(median, it.rounding_number),
         "fitness_min": round(min, it.rounding_number),
         "fitness_max": round(fit_max, it.rounding_number),
-        "best_individual_info": f"(exp:{self.Experiment_ID},gen:{LoggingManager.current_generation_id},id:{self.best_individual_in_generation[it.indi_id]}), fitness:{round(self.best_individual_in_generation[it.fitness], 7)}, branches:{str(self.best_individual_in_generation[it.branches])}",
+        "best_individual_info": f"(exp:{self.Experiment_ID},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation[it.indi_id]}), fitness:{round(self.best_individual_in_generation[it.fitness], 7)}, branches:{str(self.best_individual_in_generation[it.branches])}",
         }
 
         self._write_with_config(filetype="Generation", config=generation_configs)
 
-        if not LoggingManager.LOG_ALL_INDIVIDUALS:
+        if not LoggingSettings.LOG_ALL_INDIVIDUALS:
             
             # Log the best individual in the generation
             self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
@@ -150,7 +149,7 @@ class LogManager:
                 
                 individual = best_in_layer[0]
                 best_in_layer = self.fill_individual_template(
-                    generation= LoggingManager.current_generation_id,
+                    generation= LoggingSettings.current_generation_id,
                     ind_id= individual.individual_id,
                     individual=str(individual),
                     age= individual.age,
@@ -182,7 +181,7 @@ class LogManager:
         fitness= individual.fitness.values[0]
 
 
-        generation = LoggingManager.current_generation_id
+        generation = LoggingSettings.current_generation_id
 
         individual_log_entry = self.fill_individual_template(
             generation=generation,
@@ -204,7 +203,7 @@ class LogManager:
         if (best[it.fitness] <= fitness):
             self.best_individual_in_generation = individual_log_entry
 
-        if (LoggingManager.LOG_ALL_INDIVIDUALS):
+        if (LoggingSettings.LOG_ALL_INDIVIDUALS):
             self._write_with_config(filetype="Individual", config=individual_log_entry)
             return
 

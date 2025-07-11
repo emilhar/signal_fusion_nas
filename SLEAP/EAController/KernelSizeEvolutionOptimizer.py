@@ -1,10 +1,11 @@
 import random
+import torch
 import numpy as np
 from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingManager, FitnessFunctions
+from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -25,7 +26,7 @@ class KernelSizeEvolutionaryOptimizer:
             signal_type=self.signal_type, 
             sleepstage=self.sleepstage)
 
-        if LoggingManager.LOGGING:
+        if LoggingSettings.LOGGING:
             self.LogManager = LogManager()
         else:
             self.LogManager = None
@@ -105,8 +106,8 @@ class KernelSizeEvolutionaryOptimizer:
         fitness = self.calculate_fitness(model_performance)
 
         individual.model_performance = model_performance
-        individual.individual_id = LoggingManager.current_individual_id
-        LoggingManager.current_individual_id += 1
+        individual.individual_id = LoggingSettings.current_individual_id
+        LoggingSettings.current_individual_id += 1
 
         return (fitness,)
     
@@ -139,7 +140,10 @@ class KernelSizeEvolutionaryOptimizer:
             have_time_limit = time_limit
         )
 
-        return new_model.model, new_model.model_performance
+        print(individual_training_set.dataset.total_time)
+        quit()
+
+        return new_model.model_performance
 
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)
@@ -176,7 +180,7 @@ class KernelSizeEvolutionaryOptimizer:
             chosen = min_or_max(aspirants, key=lambda x: x.fitness.values[0])
             self.chosen_for_next_generation.append(chosen)
 
-        if LoggingManager.LOGGING:
+        if LoggingSettings.LOGGING:
             for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)
         
@@ -371,7 +375,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         return result_pop, self.hall_of_fame, self.stats
 
-    def log_results(self):
+    def log_results(self, model_folder_path=None):
         
         def get_hall_of_fame_format(i):
             individual = self.hall_of_fame[i]
@@ -385,7 +389,11 @@ class KernelSizeEvolutionaryOptimizer:
             second_best= get_hall_of_fame_format(1),
             third_best= get_hall_of_fame_format(2),
         )
-    
+
+        if model_folder_path:
+            best_individual = self.hall_of_fame[0]
+            torch.save(best_individual.model_performance[LoggingTemplate.state_dict], model_folder_path + "/" + f"{self.sleepstage}-{self.signal_type}")
+        
     def print_results(self):
         """Print evolution results"""
         print("\n" + "="*50)

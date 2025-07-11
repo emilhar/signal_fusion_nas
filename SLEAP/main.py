@@ -2,10 +2,13 @@
 Gives IO for SLEAPy
 """
 import argparse
+import os
+import torch
 
 from Globals import Sleepstage, Signal, SLEAPyException
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingManager, FitnessFunctions
+from Logs.LogManager import LogManager
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions
 
 class SLEAPy:
     """
@@ -37,18 +40,29 @@ class SLEAPy:
             self.sleepstage = "All sleep stages"
             self.signal_type = "All signal types"
 
-            if LoggingManager.LOGGING:
+            if LoggingSettings.LOGGING:
                 while True:
-                    print("\n",LoggingManager.LOG_IDS)
+                    print("\n",LoggingSettings.LOG_IDS)
                     potential_log_id = input("Enter logging ID: ").upper().strip()
-                    if potential_log_id in LoggingManager.LOG_IDS:
-                        LoggingManager.LOGGER_ID = potential_log_id
+                    if potential_log_id in LoggingSettings.LOG_IDS:
+                        LoggingSettings.LOGGER_ID = potential_log_id
                         break
                     else:
                         print("❌ Please enter valid ID\n")
+            
+                a = input("Enter Experiment Name: ")
+                a = a if a != "" else LoggingSettings.experiment_name
+                LoggingSettings.experiment_name = a
+
+                #create folder
+                id_helper = LogManager()
+                model_folder_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ModelStateDicts/{id_helper.Experiment_ID}"
+                os.makedirs(model_folder_path, exist_ok=True)
 
             self._print_experiment_Manager()
-            input("OK? ")
+
+            if not hasattr(self.args, "no_confirm"):
+                input("OK? ")
 
             for config in configs:
                 self.sleepstage = config[0]
@@ -60,8 +74,9 @@ class SLEAPy:
 
                 self._create_optimizer()
                 self.optimizer.run_evolution()
-                self.optimizer.log_results()
-
+                self.optimizer.log_results(model_folder_path)
+                
+                
         else:
             self._get_user_configuration()
 
@@ -71,7 +86,7 @@ class SLEAPy:
             # Run evolution
             self.optimizer.run_evolution()
             
-            if LoggingManager.LOGGING:
+            if LoggingSettings.LOGGING:
                 self.optimizer.log_results()
 
             # Show results
@@ -141,32 +156,32 @@ class SLEAPy:
                         print("❌ Please enter a valid number")
 
         if no_logging:
-            LoggingManager.LOGGING = False
+            LoggingSettings.LOGGING = False
 
         else:
             print("\n📝 Logging")
-            LoggingManager.LOGGING = input("Do you want to be logging (y/*)?: ").lower().startswith('y')
+            LoggingSettings.LOGGING = input("Do you want to be logging (y/*)?: ").lower().startswith('y')
 
-            if LoggingManager.LOGGING:
+            if LoggingSettings.LOGGING:
                 while True:
-                    print("\n",LoggingManager.LOG_IDS)
+                    print("\n",LoggingSettings.LOG_IDS)
                     potential_log_id = input("Enter logging ID: ").upper().strip()
-                    if potential_log_id in LoggingManager.LOG_IDS:
-                        LoggingManager.LOGGER_ID = potential_log_id
+                    if potential_log_id in LoggingSettings.LOG_IDS:
+                        LoggingSettings.LOGGER_ID = potential_log_id
                         break
                     else:
                         print("❌ Please enter valid ID\n")
 
             else:
-                LoggingManager.LOGGER_ID = "None"
+                LoggingSettings.LOGGER_ID = "None"
             
-            if LoggingManager.LOGGING:
-                LoggingManager.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/*)?: ").lower().startswith('y')
+            if LoggingSettings.LOGGING:
+                LoggingSettings.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/*)?: ").lower().startswith('y')
             else:
-                LoggingManager.LOG_ALL_INDIVIDUALS = False
+                LoggingSettings.LOG_ALL_INDIVIDUALS = False
 
-            if LoggingManager.LOGGING:
-                LoggingManager.experiment_name = input("Name for Experiment: ").strip()
+            if LoggingSettings.LOGGING:
+                LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
         
         if hasattr(self.args, "no_confirm"):
             return
@@ -228,10 +243,10 @@ class SLEAPy:
         print(f"{'Split valid:':30} {EvolutionManager.VALID_DATA_SPLIT}")
 
         print("\n📝 Logging Manager")
-        print(f"{'Logging enabled:':30} {LoggingManager.LOGGING}")
-        print(f"{'Logger ID:':30} {LoggingManager.LOGGER_ID}")
-        print(f"{'Log all individuals:':30} {LoggingManager.LOG_ALL_INDIVIDUALS}")
-        print(f"{'Experiment name:':30} {LoggingManager.experiment_name}")
+        print(f"{'Logging enabled:':30} {LoggingSettings.LOGGING}")
+        print(f"{'Logger ID:':30} {LoggingSettings.LOGGER_ID}")
+        print(f"{'Log all individuals:':30} {LoggingSettings.LOG_ALL_INDIVIDUALS}")
+        print(f"{'Experiment name:':30} {LoggingSettings.experiment_name}")
         
         print("\n💖 Fitness Manager")
         print(f"{'Fitness function:':30} {FitnessFunctions.fitness_function.__name__}")
@@ -268,12 +283,12 @@ def parse_arguments():
                        help=f'Dataset to use (default: {DataManager.DATASET})')
     parser.add_argument('--even-split', action='store_true', help=f'Use even data split (default: {DataManager.EVEN_DATA_SPLIT})')
     
-    # LoggingManager options
+    # LoggingSettings options
     parser.add_argument('--no-logging', action='store_true', help='Disable logging')
     parser.add_argument('--enable-logging', action='store_true', help='Disable logging')
-    parser.add_argument('--log-id', choices=LoggingManager.LOG_IDS, help=f'Logger ID (default: {LoggingManager.LOGGER_ID})')
-    parser.add_argument('--log-all', action='store_true', help=f'Log all individuals (default: {LoggingManager.LOG_ALL_INDIVIDUALS})')
-    parser.add_argument('--exp-name', type=str, help=f'Experiment name (default: {LoggingManager.experiment_name})')
+    parser.add_argument('--log-id', choices=LoggingSettings.LOG_IDS, help=f'Logger ID (default: {LoggingSettings.LOGGER_ID})')
+    parser.add_argument('--log-all', action='store_true', help=f'Log all individuals (default: {LoggingSettings.LOG_ALL_INDIVIDUALS})')
+    parser.add_argument('--exp-name', type=str, help=f'Experiment name (default: {LoggingSettings.experiment_name})')
     
     parser.add_argument('--sleep-stage', type=str, choices=[s for s in Sleepstage.ALL_STAGES],
                        help='Sleep stage to analyze (wake, N1, N2, N3, REM)')
@@ -327,17 +342,17 @@ def apply_arguments(args):
     if args.even_split:
         DataManager.EVEN_DATA_SPLIT = True
     
-    # LoggingManager settings
+    # LoggingSettings settings
     if args.no_logging:
-        LoggingManager.LOGGING = False
+        LoggingSettings.LOGGING = False
     if args.enable_logging:
-        LoggingManager.LOGGING = True
+        LoggingSettings.LOGGING = True
     if args.log_id:
-        LoggingManager.LOGGER_ID = args.log_id
+        LoggingSettings.LOGGER_ID = args.log_id
     if args.log_all:
-        LoggingManager.LOG_ALL_INDIVIDUALS = True
+        LoggingSettings.LOG_ALL_INDIVIDUALS = True
     if args.exp_name:
-        LoggingManager.experiment_name = args.exp_name
+        LoggingSettings.experiment_name = args.exp_name
 
 def main():
     """Main entry point"""
@@ -350,7 +365,7 @@ def main():
 if __name__ == "__main__":
     try:
         sleapy_instance = main()
-        
+
     except SLEAPyException as e:
         print("Exception occured during run.")
         print(e)
