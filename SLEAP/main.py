@@ -61,7 +61,7 @@ class SLEAPy:
 
             self._print_experiment_Manager()
 
-            if not hasattr(self.args, "no_confirm"):
+            if not hasattr(self.args, "NO_CONFIRM"):
                 input("OK? ")
 
             for config in configs:
@@ -125,10 +125,6 @@ class SLEAPy:
             print("\nWARNING: YOU ARE USING SMALLER FILES, file 'sleepEDFX/smaller_EEG_Fpz_CZ' automatically chosen")
             self.signal_type = f"smaller_{Signal.EEG.Fpz_Cz}"
         
-        elif DataManager.DATASET == DataManager.DatasetNames.EDF_20:
-            print("\nWARNING: You are using SLEEP_EDF_20, only EEG Fpz-Cz available")
-            self.signal_type = Signal.EEG.Fpz_Cz
-        
         else:
             if skip_signal:
                 self.signal_type = self.args.signal
@@ -183,7 +179,7 @@ class SLEAPy:
             if LoggingSettings.LOGGING:
                 LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
         
-        if hasattr(self.args, "no_confirm"):
+        if hasattr(self.args, "NO_CONFIRM"):
             return
         
         self._print_experiment_Manager()
@@ -279,13 +275,13 @@ def parse_arguments():
     parser.add_argument('--smaller-files', action='store_true', help=f'Use smaller files (default: {EvolutionManager.SMALLER_FILES})')
     
     # DataManager options
-    parser.add_argument('--dataset', choices=['telemetry', 'sleepEDFX', 'sleep_edf_20'], 
-                       help=f'Dataset to use (default: {DataManager.DATASET})')
+    parser.add_argument('--dataset', choices=['sleep-EDF-20', 'sleep-EDF-78', 'sleep-EDFx'], help=f'Dataset to use (default: {DataManager.DATASET})')
+    parser.add_argument('--max-mem', type=int, help=f'Maximum memory for lazyloader cache (default: {DataManager.MAX_MEMORY})')
     parser.add_argument('--even-split', action='store_true', help=f'Use even data split (default: {DataManager.EVEN_DATA_SPLIT})')
     
     # LoggingSettings options
     parser.add_argument('--no-logging', action='store_true', help='Disable logging')
-    parser.add_argument('--enable-logging', action='store_true', help='Disable logging')
+    parser.add_argument('--log', action='store_true', help='Enabme logging')
     parser.add_argument('--log-id', choices=LoggingSettings.LOG_IDS, help=f'Logger ID (default: {LoggingSettings.LOGGER_ID})')
     parser.add_argument('--log-all', action='store_true', help=f'Log all individuals (default: {LoggingSettings.LOG_ALL_INDIVIDUALS})')
     parser.add_argument('--exp-name', type=str, help=f'Experiment name (default: {LoggingSettings.experiment_name})')
@@ -295,7 +291,7 @@ def parse_arguments():
     parser.add_argument('--signal', type=str, 
                        choices=['EEG_Fpz-Cz', 'EEG_Pz-Oz', 'EOG_horizontal', 'EMG_submental'],
                        help='Signal type to use')
-    parser.add_argument('--no-confirm', action='store_true', help='Ask for input before run')
+    parser.add_argument('--NO-CONFIRM', action='store_true', help='Ask for input before run')
 
     return parser.parse_args()
 
@@ -333,19 +329,16 @@ def apply_arguments(args):
     
     # DataManager settings
     if args.dataset:
-        if args.dataset == 'telemetry':
-            DataManager.DATASET = DataManager.DatasetNames.TELEMETRY
-        elif args.dataset == 'sleepEDFX':
-            DataManager.DATASET = DataManager.DatasetNames.SLEEPEDFX
-        elif args.dataset == 'sleep_edf_20':
-            DataManager.DATASET = DataManager.DatasetNames.SLEEP_EDF_20
+        DataManager.DATASET = args.dataset
+    if args.max_mem:
+        DataManager.MAX_MEMORY = args.max_mem
     if args.even_split:
         DataManager.EVEN_DATA_SPLIT = True
     
     # LoggingSettings settings
     if args.no_logging:
         LoggingSettings.LOGGING = False
-    if args.enable_logging:
+    if args.log:
         LoggingSettings.LOGGING = True
     if args.log_id:
         LoggingSettings.LOGGER_ID = args.log_id

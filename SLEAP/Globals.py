@@ -101,11 +101,12 @@ class DataManager:
     class DatasetNames:
         EDF_20 = "sleep-EDF-20"
         EDF_78 = "sleep-EDF-78"
+        EDFx = "sleep_EDFx"
 
     _datasets = [DatasetNames.EDF_20, DatasetNames.EDF_78]
 
     DATASET = _datasets[0]
-    
+    MAX_MEMORY = 256
     EVEN_DATA_SPLIT = False
 
 class LoggingSettings:

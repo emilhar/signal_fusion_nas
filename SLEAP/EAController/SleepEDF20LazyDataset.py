@@ -101,12 +101,14 @@ import torch
 from torch.utils.data import Dataset
 from bisect import bisect_right
 
+from Globals import DataManager
+
 class SleepEDF20LazyDataset(Dataset):
-    def __init__(self, files, data_dir, stage_map, max_mb=2048):
+    def __init__(self, files, data_dir, stage_map):
         self.files = files
         self.data_dir = data_dir
         self.stage_map = stage_map
-        self.max_mb = max_mb
+        self.max_mb = DataManager.MAX_MEMORY
         self.total_len = 0
         
         # Cache management
