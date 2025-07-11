@@ -111,7 +111,7 @@ class DataManager:
 class LoggingSettings:
     LOG_IDS = ['O', 'T']
     LOGGER_ID = ""
-    LOGGING = False
+    LOGGING = True
     LOG_ALL_INDIVIDUALS = False
 
     current_generation_id = 0
