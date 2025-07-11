@@ -24,6 +24,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
     best_f1, best_auc = 0.0, 0.0
 
     train_losses_data, test_losses_data = [], []
+    best_state_dict = model.state_dict()
 
     best_true, best_scores = None, None
 
@@ -80,10 +81,13 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
                 
         if f1 > best_f1:
             best_f1 = f1
+            
         if auc_score > best_auc:
             best_auc = auc_score
             best_true = all_targets_np
             best_scores = all_probs_np
+            best_state_dict = model.state_dict()
+            
 
         elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
         if have_time_limit:
@@ -120,6 +124,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, lr=2.5e-5,
         it.best_true: best_true,
         it.best_scores: best_scores,
         it.time: elapsed,
+        it.state_dict: best_state_dict
     }
     return output
 

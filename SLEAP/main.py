@@ -1,5 +1,5 @@
 """
-Gives IO for SLEAP
+Gives IO for SLEAPy
 """
 import argparse
 
@@ -27,7 +27,7 @@ class SLEAPy:
     def run_experiment(self, run_omega = False):
         """Run the setup and evolution process"""
         print("\n" + "="*68)
-        print("🧠 SLEAP - Sleep Labeling using Evolutionary Algorithms and PyTorch")
+        print("🧠 SLEAPy - Sleep Labeling using Evolutionary Algorithms and PyTorch")
         print("="*68)
         
         # Get user configuration
@@ -110,7 +110,7 @@ class SLEAPy:
             print("\nWARNING: YOU ARE USING SMALLER FILES, file 'sleepEDFX/smaller_EEG_Fpz_CZ' automatically chosen")
             self.signal_type = f"smaller_{Signal.EEG.Fpz_Cz}"
         
-        elif DataManager.DATASET == DataManager.DatasetNames.SLEEP_EDF_20:
+        elif DataManager.DATASET == DataManager.DatasetNames.EDF_20:
             print("\nWARNING: You are using SLEEP_EDF_20, only EEG Fpz-Cz available")
             self.signal_type = Signal.EEG.Fpz_Cz
         
@@ -242,7 +242,7 @@ class SLEAPy:
 
 def parse_arguments():
     """Parse command line arguments to override global settings"""
-    parser = argparse.ArgumentParser(description='SLEAP - Sleep Labeling using Evolutionary Algorithms and PyTorch')
+    parser = argparse.ArgumentParser(description='SLEAPy - Sleep Labeling using Evolutionary Algorithms and PyTorch')
     
     # General options
     parser.add_argument('--omega', action='store_true', help='Run all possible configurations (ultimate test mode)')
@@ -344,12 +344,13 @@ def main():
     args = parse_arguments()
     apply_arguments(args)
     
-    sleap = SLEAPy(args)
-    sleap.run_experiment(run_omega=args.omega)
+    sleapy = SLEAPy(args)
+    sleapy.run_experiment(run_omega=args.omega)
 
 if __name__ == "__main__":
     try:
-        sleap_instance = main()
+        sleapy_instance = main()
+        
     except SLEAPyException as e:
         print("Exception occured during run.")
         print(e)

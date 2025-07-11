@@ -57,14 +57,14 @@ class LogManager:
         else:
             raise ValueError(f"Unknown filetype: {filetype}")
         
-        SLEAP_path = f"SLEAP/{inner_path}"
+        SLEAPy_path = f"SLEAP/{inner_path}"
 
         not_found = []
-        check_sleep_path = os.path.isfile(SLEAP_path)
+        check_sleep_path = os.path.isfile(SLEAPy_path)
         if check_sleep_path:
-            return SLEAP_path
+            return SLEAPy_path
         else:
-            not_found.append(SLEAP_path)
+            not_found.append(SLEAPy_path)
         
         check_inner_path = os.path.isfile(inner_path)
         if check_inner_path:

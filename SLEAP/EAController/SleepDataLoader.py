@@ -38,7 +38,7 @@ class SleepDataLoader:
         data_dir = f"Data/{DataManager.DATASET}/{self.signal_type}"
         all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
         if not all_files:
-            raise SLEAPyException(fart=f"No data inside Data/{DataManager.DATASET}/{self.signal_type}")
+            raise SLEAPyException(msg=f"No data inside Data/{DataManager.DATASET}/{self.signal_type}")
         subject_ids = sorted(set(f[:6] for f in all_files))
         shuffle(subject_ids)
 

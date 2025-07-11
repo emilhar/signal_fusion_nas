@@ -4,7 +4,6 @@ This file defines the CNN binary classifier model
 
 import torch
 import torch.nn as nn
-from Globals import ModelManager
 
 class _Branch(nn.Module):
     def __init__(self, num_kernels, kernel_sizes, paddings, strides, pool_sizes, pool_strides, dropout_rates):

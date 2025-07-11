@@ -47,10 +47,9 @@ class TrainedModelMaker:
         model_args = get_branch_configs(branches, name, self.n_samples) # See ModelManager
         model_args["batch_size"] = batch_size
 
-        model = CNN_BinaryClassifier(**model_args).to(self.device)
+        model = CNN_BinaryClassifier(**model_args).to(self.device) #TODO: Get save'að þetta statedict
 
         if verbose:
             print(f"\n\nTraining model: {branches=}, Generation: {LoggingManager.current_generation_id}/{EvolutionManager.GENERATIONS}, Generation Completeness: {LoggingManager.current_individual_id}/{LoggingManager.population_size}")
 
         self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, self.lr, epochs=epochs, verbose=verbose, have_time_limit=have_time_limit)
-

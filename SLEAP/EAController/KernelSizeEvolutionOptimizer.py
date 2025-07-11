@@ -139,7 +139,7 @@ class KernelSizeEvolutionaryOptimizer:
             have_time_limit = time_limit
         )
 
-        return new_model.model_performance
+        return new_model.model, new_model.model_performance
 
     def calculate_fitness(self, model_performance):
         return FitnessFunctions.fitness_function(model_performance)

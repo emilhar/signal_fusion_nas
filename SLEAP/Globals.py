@@ -223,6 +223,7 @@ class LoggingTemplate:
     time = "time"
     best_true = "true_labels"
     best_scores = "best_scores"
+    state_dict = "state_dict"
 
     # Translation table
     reason_map = {
