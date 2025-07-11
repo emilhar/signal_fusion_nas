@@ -140,9 +140,6 @@ class KernelSizeEvolutionaryOptimizer:
             have_time_limit = time_limit
         )
 
-        print(individual_training_set.dataset.total_time)
-        quit()
-
         return new_model.model_performance
 
     def calculate_fitness(self, model_performance):

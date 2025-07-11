@@ -1,7 +1,6 @@
 import numpy as np
-from torch.utils.data import TensorDataset, DataLoader, Subset
+from torch.utils.data import DataLoader, Subset
 import torch
-import gc
 import os
 from random import sample, shuffle
 from math import ceil
@@ -54,78 +53,93 @@ class SleepDataLoader:
         y_test_files = [f for f in y_files if f[:6] in test_subjects]
 
         train_dataset = SleepEDF20LazyDataset(x_train_files, y_train_files, data_dir, self.stage_map)
-        test_dataset = SleepEDF20LazyDataset(x_test_files, y_test_files, data_dir, self.stage_map)        
+        test_dataset = SleepEDF20LazyDataset(x_test_files, y_test_files, data_dir, self.stage_map)
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
-        test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)
+        # During dataset initialization
+        self.train_indices = list(range(len(train_dataset)))
+        self.test_indices = list(range(len(test_dataset)))
+        
+        # Only get first sample for shape info
+        n_samples = train_dataset[0][0].shape[1]
+        
+        # Estimate pos_weight using random sampling instead of full iteration
+        pos_weight = self.estimate_pos_weight(train_dataset)
+        
+        return (
+            DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True),
+            DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True),
+            n_samples,
+            pos_weight
+        )
 
-        # Estimate pos_weight
+    def estimate_pos_weight(self, dataset, sample_size=None):
+        """Estimate positive weight using random sampling"""
+        if not sample_size:
+            sample_size = len(dataset)
+
         label_counts = {0: 0, 1: 0}
-        for i in range(len(train_dataset)):  # sample estimate
-            _, label = train_dataset[i]
+        indices = sample(range(len(dataset)), min(sample_size, len(dataset)))
+        
+        for i in indices:
+            _, label = dataset[i]
             label_counts[int(label)] += 1
-
-        pos_weight = torch.tensor([(label_counts[0] / label_counts[1])])
-
-        return train_loader, test_loader, train_dataset[0][0].shape[1], pos_weight
+            
+        return torch.tensor([label_counts[0] / max(1, label_counts[1])])
 
     def get_random_subset(self, dataset_percentage, batch_size):
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset
 
-        if not EvolutionManager.VALID_DATA_SPLIT:
-            raise ValueError(f"Invalid data split. {EvolutionManager.DATA_SPLIT_TRAINING} + {EvolutionManager.DATA_SPLIT_TESTING} != 1")
+        # Calculate subset sizes
+        train_size = int(len(train_dataset) * dataset_percentage * EvolutionManager.DATA_SPLIT_TRAINING)
+        test_size = int(len(test_dataset) * dataset_percentage * EvolutionManager.DATA_SPLIT_TESTING)
         
-        train_data_amount = ceil( 
-            max(len(train_dataset), len(test_dataset)) * 
-            dataset_percentage *
-            EvolutionManager.DATA_SPLIT_TRAINING
-        )
-
-        test_data_amount = ceil( 
-            max(len(train_dataset), len(test_dataset)) * 
-            dataset_percentage *
-            EvolutionManager.DATA_SPLIT_TESTING
-        )
-        
+        # Create index-based subsets
         if DataManager.EVEN_DATA_SPLIT:
-            training_subset = self.get_balanced_subset(train_dataset, total_data_points=train_data_amount, training=True)
-            testing_subset = self.get_balanced_subset(test_dataset, total_data_points=test_data_amount, training=False)
+            train_subset = self.create_balanced_subset(train_dataset, train_size)
+            test_subset = self.create_balanced_subset(test_dataset, test_size)
         else:
-            training_subset = sample(list(train_dataset), train_data_amount)
-            testing_subset = sample(list(test_dataset), test_data_amount)
-            
-        # Create new DataLoaders with specified batch_size
-        train_loader_subset = DataLoader(training_subset, batch_size=batch_size, shuffle=True)
-        test_loader_subset = DataLoader(testing_subset, batch_size=batch_size, shuffle=False)
+            train_subset = Subset(train_dataset, sample(range(len(train_dataset)), train_size))
+            test_subset = Subset(test_dataset, sample(range(len(test_dataset)), test_size))
+        
+        print("Train misses: ", train_dataset.dataset.cache_miss)
+        print("Test misses: ", test_dataset.dataset.cache_miss)
+        
 
-        return train_loader_subset, test_loader_subset, self.n_samples, self.pos_weight
+        return (
+            DataLoader(train_subset, batch_size=batch_size, shuffle=True),
+            DataLoader(test_subset, batch_size=batch_size, shuffle=False),
+            self.n_samples,
+            self.pos_weight
+        )
 
-    def get_balanced_subset(self, dataset, total_data_points, training: bool):
-        if training:
-            indices_class_0 = self.training_indices_class_0
-            indices_class_1 = self.training_indices_class_1
-        else:
-            indices_class_0 = self.testing_indices_class_0
-            indices_class_1 = self.testing_indices_class_1
+    def create_balanced_subset(self, dataset, size):
+        """Create balanced subset without full dataset iteration"""
+        # Use precomputed indices if available
+        indices = self.train_indices if dataset == self.train_loader.dataset else self.test_indices
+        
+        # Get random batch of indices
+        batch_indices = sample(indices, min(10000, len(indices)))
 
-        samples_per_class = min(len(indices_class_0), len(indices_class_1), total_data_points // 2)
-
-        if samples_per_class == 0:
-            raise ValueError("Not enough samples in one or both classes to create a balanced subset.")
-
-        subset_idx_class_0 = sample(indices_class_0, samples_per_class)
-        subset_idx_class_1 = sample(indices_class_1, samples_per_class)
-
-        combined_subset_idx = subset_idx_class_0 + subset_idx_class_1
-
-        np.random.shuffle(combined_subset_idx)
-
-        balanced_subset = Subset(dataset, combined_subset_idx)
-
-        #self.see_dataset_breakdown(balanced_subset)
-
-        return balanced_subset
+        sample_size = min(10000, len(dataset))
+        sampled_indices = sample(range(len(dataset)), sample_size)
+        
+        for idx in sampled_indices:
+            _, label = dataset[idx]
+            batch_indices[int(label)].append(idx)
+        
+        # Determine samples per class
+        n_per_class = size // 2
+        selected = []
+        
+        # Sample from each class
+        for label in [0, 1]:
+            if len(batch_indices[label]) > n_per_class:
+                selected.extend(sample(batch_indices[label], n_per_class))
+            else:
+                selected.extend(batch_indices[label])
+        
+        return Subset(dataset, selected)
 
     def see_dataset_breakdown(self, dataset):
         labels = [dataset[i][1] for i in range(len(dataset))]
