@@ -25,7 +25,7 @@ class Signal:
         SUBMENTAL = "EMG_submental"
 
     SIGNAL_COUNT = 3000
-    ALL_SIGNALS = [EEG.Pz_Oz, EEG.Fpz_Cz, EOG.HORIZONTAL, EMG.SUBMENTAL]
+    ALL_SIGNALS = [EEG.Fpz_Cz, EEG.Pz_Oz, EOG.HORIZONTAL, EMG.SUBMENTAL]
 
 class ModelManager:
     # Base
@@ -86,7 +86,7 @@ class AlpsManager:
     REAL_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
     TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
 
-    percentages = REAL_PERCENTAGES
+    percentages = TEST_PERCENTAGES
     TRAINING_Manager_FOR_LAYERS = {
         0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
@@ -100,17 +100,18 @@ class AlpsManager:
 class DataManager:
     class DatasetNames:
         EDF_20 = "sleep-EDF-20"
+        EDF_78 = "sleep-EDF-78"
 
-    _datasets = [DatasetNames.EDF_20]
+    _datasets = [DatasetNames.EDF_20, DatasetNames.EDF_78]
 
-    DATASET = _datasets[0]
+    DATASET = _datasets[1]
     
     EVEN_DATA_SPLIT = False
 
-class LoggingManager:
+class LoggingSettings:
     LOG_IDS = ['O', 'T']
     LOGGER_ID = ""
-    LOGGING = True
+    LOGGING = False
     LOG_ALL_INDIVIDUALS = False
 
     current_generation_id = 0
