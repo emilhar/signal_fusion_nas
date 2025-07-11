@@ -102,7 +102,7 @@ from torch.utils.data import Dataset
 from bisect import bisect_right
 
 class SleepEDF20LazyDataset(Dataset):
-    def __init__(self, files, data_dir, stage_map, max_mb=500):
+    def __init__(self, files, data_dir, stage_map, max_mb=2048):
         self.files = files
         self.data_dir = data_dir
         self.stage_map = stage_map

@@ -86,7 +86,7 @@ class AlpsManager:
     REAL_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
     TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
 
-    percentages = TEST_PERCENTAGES
+    percentages = REAL_PERCENTAGES
     TRAINING_Manager_FOR_LAYERS = {
         0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
@@ -104,7 +104,7 @@ class DataManager:
 
     _datasets = [DatasetNames.EDF_20, DatasetNames.EDF_78]
 
-    DATASET = _datasets[1]
+    DATASET = _datasets[0]
     
     EVEN_DATA_SPLIT = False
 
