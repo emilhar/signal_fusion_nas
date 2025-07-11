@@ -102,9 +102,9 @@ class SleepDataLoader:
             train_subset = Subset(train_dataset, sample(range(len(train_dataset)), train_size))
             test_subset = Subset(test_dataset, sample(range(len(test_dataset)), test_size))
         
-        print("Train misses: ", train_dataset.dataset.cache_miss)
-        print("Test misses: ", test_dataset.dataset.cache_miss)
-        
+        print("Train misses: ", train_dataset.cache_miss)
+        print("Test misses: ", test_dataset.cache_miss)
+
 
         return (
             DataLoader(train_subset, batch_size=batch_size, shuffle=True),

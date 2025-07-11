@@ -32,8 +32,7 @@ class SleepEDF20LazyDataset(Dataset):
             
             # Read array header to get length without loading full data
             with open(x_path, 'rb') as f:
-                version = np.lib.format.read_magic(f)
-                shape, _, _ = np.lib.format._read_array_header(f, version)
+                shape, _, _ = np.lib.format.read_array_header_1_0(f)
                 n_samples = shape[0]
             
             self.index_map.append((x_file, y_file))
