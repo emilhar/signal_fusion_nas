@@ -27,7 +27,7 @@ class SLEAPy:
         self.signal_type = None
         self.args = args
         
-    def run_experiment(self, run_omega = False):
+    def run_experiment(self, run_omega=False, minimax=False):
         """Run the setup and evolution process"""
         print("\n" + "="*68)
         print("🧠 SLEAPy - Sleep Labeling using Evolutionary Algorithms and PyTorch")
@@ -75,8 +75,42 @@ class SLEAPy:
                 self._create_optimizer()
                 self.optimizer.run_evolution()
                 self.optimizer.log_results(model_folder_path)
-                
-                
+          
+        elif minimax:
+            if LoggingSettings.LOGGING:
+                while True:
+                    print("\n",LoggingSettings.LOG_IDS)
+                    potential_log_id = input("Enter logging ID: ").upper().strip()
+                    if potential_log_id in LoggingSettings.LOG_IDS:
+                        LoggingSettings.LOGGER_ID = potential_log_id
+                        break
+                    else:
+                        print("❌ Please enter valid ID\n")
+            
+                a = input("Enter Experiment Name: ")
+                a = a if a != "" else LoggingSettings.experiment_name
+                LoggingSettings.experiment_name = a
+
+            self._print_experiment_Manager()
+            self.sleepstage = Sleepstage.N3
+            self.signal_type = Signal.EEG.Fpz_Cz
+
+            input("OK? ")
+
+            FitnessFunctions.MINIMIZE_FITNESS = True
+            self._create_optimizer()
+            self.optimizer.run_evolution()
+            if LoggingSettings.LOGGING:
+                self.optimizer.log_results()
+            self.optimizer.print_results()
+
+            FitnessFunctions.MINIMIZE_FITNESS = False
+            self._create_optimizer()
+            self.optimizer.run_evolution()
+            if LoggingSettings.LOGGING:
+                self.optimizer.log_results()
+            self.optimizer.print_results()
+
         else:
             self._get_user_configuration()
 
@@ -250,7 +284,6 @@ class SLEAPy:
         print(f"{'Minimizing Fitness:':30} {FitnessFunctions.MINIMIZE_FITNESS}")
 
 
-
 def parse_arguments():
     """Parse command line arguments to override global settings"""
     parser = argparse.ArgumentParser(description='SLEAPy - Sleep Labeling using Evolutionary Algorithms and PyTorch')
@@ -353,7 +386,12 @@ def main():
     apply_arguments(args)
     
     sleapy = SLEAPy(args)
-    sleapy.run_experiment(run_omega=args.omega)
+
+    if True:
+        sleapy.run_experiment(minimax=True)
+
+
+    # sleapy.run_experiment(run_omega=args.omega)
 
 if __name__ == "__main__":
     try:
