@@ -8,7 +8,7 @@ import torch
 from Globals import Sleepstage, Signal, SLEAPyException
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
 from Logs.LogManager import LogManager
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions, AlpsManager
 
 class SLEAPy:
     """
@@ -306,11 +306,12 @@ def parse_arguments():
     parser.add_argument('--cx-prob', type=float, help=f'Crossover probability (default: {EvolutionManager.CX_PROB})')
     parser.add_argument('--mut-prob', type=float, help=f'Mutation probability (default: {EvolutionManager.MUTATION_PROB})')
     parser.add_argument('--smaller-files', action='store_true', help=f'Use smaller files (default: {EvolutionManager.SMALLER_FILES})')
-    
+    parser.add_argument('--verbose', action='store_true', help=f'Verbose output (default: {EvolutionManager.VERBOSE})')
+
     # DataManager options
     parser.add_argument('--dataset', choices=['sleep-EDF-20', 'sleep-EDF-78', 'sleep-EDFx'], help=f'Dataset to use (default: {DataManager.DATASET})')
     parser.add_argument('--max-mem', type=int, help=f'Maximum memory for lazyloader cache (default: {DataManager.MAX_MEMORY})')
-    parser.add_argument('--even-split', action='store_true', help=f'Use even data split (default: {DataManager.EVEN_DATA_SPLIT})')
+    parser.add_argument('--even-split', action='store_true', help=f'Use even data  (default: {DataManager.EVEN_DATA_SPLIT})')
     
     # LoggingSettings options
     parser.add_argument('--no-logging', action='store_true', help='Disable logging')
@@ -338,13 +339,14 @@ def apply_arguments(args):
     if args.lr:
         ModelManager.LEARNING_RATE = args.learning_rate
     if args.min_ks:
-        ModelManager.MIN_KERNEL_SIZE = args.min_kernel
+        ModelManager.MIN_KERNEL_SIZE = args.min_ks
     if args.max_ks:
-        ModelManager.MAX_KERNEL_SIZE = args.max_kernel
+        ModelManager.MAX_KERNEL_SIZE = args.max_ks
     
     # EvolutionManager settings
     if args.pop_size:
         EvolutionManager.POPULATION_SIZE_PER_LAYER = args.pop_size
+        AlpsManager.TRAINING_Manager_FOR_LAYERS = AlpsManager._get_manager(AlpsManager.percentages)
         # Update tournament size if it's based on population size
         EvolutionManager.SELECTION_TOURNAMENT_SIZE = max(3, int(EvolutionManager.POPULATION_SIZE_PER_LAYER * 0.2))
     if args.generations:
@@ -359,6 +361,8 @@ def apply_arguments(args):
         EvolutionManager.MUTATION_PROB = args.mut_prob
     if args.smaller_files:
         EvolutionManager.SMALLER_FILES = True
+    if args.verbose:
+        EvolutionManager.VERBOSE = True
     
     # DataManager settings
     if args.dataset:
@@ -400,3 +404,5 @@ if __name__ == "__main__":
     except SLEAPyException as e:
         print("Exception occured during run.")
         print(e)
+    except Exception as e:
+        raise SLEAPyException()

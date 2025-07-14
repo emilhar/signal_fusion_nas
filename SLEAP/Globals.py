@@ -63,38 +63,53 @@ class EvolutionManager:
 
     # Misc
     SMALLER_FILES = False
-    VERBOSE = True
+    VERBOSE = False
     
 class AlpsManager:
     AGE_GAP = 2
 
     class AgingScheme:
-        FIBBONACCI = [1, 2, 3, 5, 8, 13, 21, "N/A"]
-        LINEAR = [1, 2, 3, 4, 5, 6, "N/A"]
+        FIBBONACCI = [1, 2, 3, 5, 8, 13, 21, "NA"]
+        LINEAR = [1, 2, 3, 4, 5, 6, "NA"]
+
+        teitur = [1, 3, "NA"]
     
-        used_aging_scheme = LINEAR
+        used_aging_scheme = teitur
         uas_str = "Linear"
 
     MAX_AGE_IN_LAYERS = []
     for x in AgingScheme.used_aging_scheme:
-        MAX_AGE_IN_LAYERS.append(x * AGE_GAP)
+        MAX_AGE_IN_LAYERS.append(x * AGE_GAP if isinstance(x, int) else x)
 
 
     # Create layers just before individuals try to move into them
-    LAYER_CREATION_THRESHOLDS = [max_age for max_age in MAX_AGE_IN_LAYERS]
+    LAYER_CREATION_THRESHOLDS = [max_age for max_age in MAX_AGE_IN_LAYERS if not isinstance(max_age, str)]
 
     REAL_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
     TEST_PERCENTAGES = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+    teitur_percentages = [0.10, 0.20, 1.00]
 
-    percentages = REAL_PERCENTAGES
-    TRAINING_Manager_FOR_LAYERS = {
-        0: {"dataset_percentage": percentages[0],  "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        1: {"dataset_percentage": percentages[1],  "training_epochs": 2,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        3: {"dataset_percentage": percentages[3], "training_epochs": 4,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        4: {"dataset_percentage": percentages[4],  "training_epochs": 5,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        5: {"dataset_percentage": percentages[5],  "training_epochs": 6,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        6: {"dataset_percentage": percentages[6],  "training_epochs": 10, "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
+    percentages = teitur_percentages
+    TRAINING_Manager_FOR_LAYERS = None
+    # TRAINING_Manager_FOR_LAYERS = {
+    #     0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+    #     1: {"dataset_percentage": percentages[1], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+    #     2: {"dataset_percentage": percentages[2], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+    #     3: {"dataset_percentage": percentages[3], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+    #     4: {"dataset_percentage": percentages[4], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+    #     5: {"dataset_percentage": percentages[5], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+    #     6: {"dataset_percentage": percentages[6], "training_epochs": 1, "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
+    # }
+
+    def _get_manager(percentages):
+        return {
+        0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        1: {"dataset_percentage": percentages[1], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
+        # 3: {"dataset_percentage": percentages[3], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE * 4,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
+        # 4: {"dataset_percentage": percentages[4], "training_epochs": epochs[4],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        # 5: {"dataset_percentage": percentages[5], "training_epochs": epochs[5],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        # 6: {"dataset_percentage": percentages[6], "training_epochs": epochs[6], "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
     }
     
 class DataManager:
@@ -184,18 +199,75 @@ class SLEAPyException(Exception):
                     print(f"  Nested Class: {attr_name}")
 
 class Clr:
-    def __init__(self, string, color):
+    def __init__(self, string, color=None, bg_color=None):
+        """
+        Colorize text with foreground, background colors and text modes.
+        
+        Args:
+            string: Text to colorize
+            color: Foreground color name (red, blue, green, etc.)
+            bg_color: Background color name
+            mode: Text mode (bold, underline, italic, etc. or list of modes)
+        """
         self.string = str(string)
-        self.color = color.lower()
+        self.color = color.lower() if color else None
+        self.bg_color = bg_color.lower() if bg_color else None
     
     def __str__(self):
-        color_codes = {
-            "red": "\033[0;31m",
-            "blue": "\033[0;34m",
-            "green": "\033[0;32m",
+        # Foreground colors
+        fg_colors = {
+            "black": "\033[30m",
+            "red": "\033[31m",
+            "green": "\033[32m",
+            "yellow": "\033[33m",
+            "blue": "\033[34m",
+            "magenta": "\033[35m",
+            "cyan": "\033[36m",
+            "white": "\033[37m",
+            "bright_black": "\033[90m",
+            "bright_red": "\033[91m",
+            "bright_green": "\033[92m",
+            "bright_yellow": "\033[93m",
+            "bright_blue": "\033[94m",
+            "bright_magenta": "\033[95m",
+            "bright_cyan": "\033[96m",
+            "bright_white": "\033[97m",
         }
-        reset_code = "\x1b[0m"
-        color_code = color_codes.get(self.color, "")  # default to no color if not found
+        
+        # Background colors
+        bg_colors = {
+            "black": "\033[40m",
+            "red": "\033[41m",
+            "green": "\033[42m",
+            "yellow": "\033[43m",
+            "blue": "\033[44m",
+            "magenta": "\033[45m",
+            "cyan": "\033[46m",
+            "white": "\033[47m",
+            "bright_black": "\033[100m",
+            "bright_red": "\033[101m",
+            "bright_green": "\033[102m",
+            "bright_yellow": "\033[103m",
+            "bright_blue": "\033[104m",
+            "bright_magenta": "\033[105m",
+            "bright_cyan": "\033[106m",
+            "bright_white": "\033[107m",
+        }
+        
+        codes = []
+        
+        # Add foreground color if specified
+        if self.color and self.color in fg_colors:
+            codes.append(fg_colors[self.color])
+        
+        # Add background color if specified
+        if self.bg_color and self.bg_color in bg_colors:
+            codes.append(bg_colors[self.bg_color])
+        
+        
+        reset_code = "\033[0m"
+        color_code = "".join(codes)
+        
         return f"{color_code}{self.string}{reset_code}"
 
 class LoggingTemplate:

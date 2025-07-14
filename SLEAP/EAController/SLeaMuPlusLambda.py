@@ -8,6 +8,7 @@ GECCO 2006 - Genetic and Evolutionary Computation Conference. 1.
 10.1145/1143997.1144142. 
 """
 
+import time
 import random
 from Globals import EvolutionManager, AlpsManager, LoggingSettings, Clr
 
@@ -20,6 +21,7 @@ class SLeaMuPlusLambda:
         self.halloffame = halloffame
         self.LogManager = LogManager
         
+
     def main(self, stats):
         """See: DEAP/Algorithms
             mu: The number of individuals to select for the next generation.
@@ -45,8 +47,17 @@ class SLeaMuPlusLambda:
 
         self.end_generation(stats, invalid_ind)
 
+        # Time tracking variables
+        max_time_per_gen = 0
+        elapsed_time = 0
+
         # Begin the generational process
+        print()
         for gen in range(1, EvolutionManager.GENERATIONS + 1):
+            gen_start_time = time.time()
+            
+            if not EvolutionManager.VERBOSE:
+                self._loading_bar(gen, max_time_per_gen, elapsed_time)
 
             if EvolutionManager.VERBOSE: print("\n=== NEW GENERATION ===")
 
@@ -73,6 +84,12 @@ class SLeaMuPlusLambda:
                 self.replace_layer_zero()
 
             self.end_generation(stats, invalid_ind)
+            
+            # Update max time per generation
+            gen_time = time.time() - gen_start_time
+            elapsed_time += gen_time
+            if gen_time > max_time_per_gen:
+                max_time_per_gen = gen_time
 
         return self.population
 
@@ -146,33 +163,37 @@ class SLeaMuPlusLambda:
 
         for _ in range(lambda_):
             op_choice = random.random()
-            if op_choice < EvolutionManager.CX_PROB:            # Apply crossover
-                parents = random.sample(layer_population + previous_layer_population, 2)
-                ind1, ind2 = [self.toolbox.clone(i) for i in parents]
-                ind1, ind2 = self.toolbox.mate(ind1, ind2)
-                del ind1.fitness.values
-                ind1.age = max(ind1.age, ind2.age) + 1
-                ind1.layer = max(ind1.layer, ind2.layer)
+            try:
+                if op_choice < EvolutionManager.CX_PROB:            # Apply crossover
+                    parents = random.sample(layer_population + previous_layer_population, 2)
+                    ind1, ind2 = [self.toolbox.clone(i) for i in parents]
+                    ind1, ind2 = self.toolbox.mate(ind1, ind2)
+                    del ind1.fitness.values
+                    ind1.age = max(ind1.age, ind2.age) + 1
+                    ind1.layer = max(ind1.layer, ind2.layer)
 
-                genetic_material_used[id(ind1)] = parents
-                offspring.append(ind1)
+                    genetic_material_used[id(ind1)] = parents
+                    offspring.append(ind1)
 
-            elif op_choice < EvolutionManager.CX_PROB + EvolutionManager.MUTATION_PROB:  # Apply mutation
-                pre_mutation = random.choice(layer_population)
-                ind = self.toolbox.clone(pre_mutation)
-                ind, = self.toolbox.mutate(ind)
-                del ind.fitness.values
-                ind.age = pre_mutation.age + 1
-                ind.layer = pre_mutation.layer
+                elif op_choice < EvolutionManager.CX_PROB + EvolutionManager.MUTATION_PROB:  # Apply mutation
+                    pre_mutation = random.choice(layer_population)
+                    ind = self.toolbox.clone(pre_mutation)
+                    ind, = self.toolbox.mutate(ind)
+                    del ind.fitness.values
+                    ind.age = pre_mutation.age + 1
+                    ind.layer = pre_mutation.layer
 
-                genetic_material_used[id(ind)] = [pre_mutation]
-                offspring.append(ind)
+                    genetic_material_used[id(ind)] = [pre_mutation]
+                    offspring.append(ind)
 
-            else:                           # Apply reproduction
-                offspring.append(ind := self.toolbox.clone( original := random.choice(layer_population)))
-                del ind.fitness.values
-                ind.age = original.age
-                ind.layer = original.layer
+                else:                           # Apply reproduction
+                    offspring.append(ind := self.toolbox.clone( original := random.choice(layer_population)))
+                    del ind.fitness.values
+                    ind.age = original.age
+                    ind.layer = original.layer
+
+            except ValueError:
+                continue # TODO, even with popsize 20 this still managed to happen once, simply ignore for now.
 
         return offspring, genetic_material_used
     
@@ -222,7 +243,9 @@ class SLeaMuPlusLambda:
         """Controls layer switching for all layers after population has been settled"""
 
         for individual in self.population:
-            if individual.layer == 6:
+            if individual.layer >= len(AlpsManager.MAX_AGE_IN_LAYERS):
+                individual.layer = len(AlpsManager.MAX_AGE_IN_LAYERS) - 1 # TODO WHY IS THIS HAPPENING???????? ö_ö
+            if not isinstance(AlpsManager.MAX_AGE_IN_LAYERS[individual.layer], int):
                 continue
             if individual.age > AlpsManager.MAX_AGE_IN_LAYERS[individual.layer]:
                 individual.layer += 1
@@ -301,3 +324,56 @@ class SLeaMuPlusLambda:
                     seen[new_key] = True
 
         self.population = new_population
+
+    def _loading_bar(self, gen, max_time_per_gen, elapsed_time):
+        bar_size = 60  # Total width of the progress bar
+        progress = int((gen / EvolutionManager.GENERATIONS) * bar_size)
+        remaining = bar_size - progress
+        percentage = round((gen / EvolutionManager.GENERATIONS)*100, 2)
+        
+        # Calculate estimated time remaining
+        if max_time_per_gen > 0:
+            remaining_gens = EvolutionManager.GENERATIONS - gen
+            remaining_time = remaining_gens * max_time_per_gen
+            eta_hours, rem = divmod(remaining_time, 3600)
+            eta_mins, eta_secs = divmod(rem, 60)
+            time_str = f"ETA: {int(eta_hours)}h {int(eta_mins)}m {int(eta_secs)}s"
+        else:
+            time_str = "ETA: --h --m --s"
+
+        time_str = Clr(time_str, "red" if percentage <= 50 else "yellow" if percentage <= 75 else "green")
+
+        # Calculate elapsed time
+        elapsed_hours, rem = divmod(elapsed_time, 3600)
+        elapsed_mins, elapsed_secs = divmod(rem, 60)
+        elapsed_str = f"{int(elapsed_hours)}h {int(elapsed_mins)}m {int(elapsed_secs)}s"
+
+        # Format generation time
+        gen_hours, rem = divmod(max_time_per_gen, 3600)
+        gen_mins, gen_secs = divmod(rem, 60)
+        gen_time_str = f"{int(gen_hours)}h {int(gen_mins)}m {int(gen_secs)}s" if gen_hours > 0 else \
+                    f"{int(gen_mins)}m {int(gen_secs)}s" if gen_mins > 0 else \
+                    f"{int(gen_secs)}s"
+
+        # Create the centered percentage bar
+        percentage_text = f" {percentage}% "
+        bar_center = bar_size // 2
+        text_start = bar_center - len(percentage_text) // 2
+        
+        # Build the bar segments
+        before_text = min(progress, text_start)
+        after_text = progress - before_text
+        bar_segments = [
+            Clr(' '*before_text, bg_color="bright_green"),
+            Clr(percentage_text, "black", bg_color="bright_green"),
+            Clr(' '*after_text, bg_color="bright_green"),
+            Clr(' '*remaining, bg_color="bright_white")
+        ]
+        
+        # Combine all components
+        print(" "*120, end="\r")  # Clear previous line
+        print(f"│{''.join(str(seg) for seg in bar_segments)}│ "
+            f"{Clr(time_str, 'red')} │ "
+            f"Elapsed: {elapsed_str} │ "
+            f"Last generation duration: {gen_time_str}",
+            end="\r")
