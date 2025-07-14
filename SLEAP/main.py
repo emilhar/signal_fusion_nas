@@ -307,6 +307,7 @@ def parse_arguments():
     parser.add_argument('--mut-prob', type=float, help=f'Mutation probability (default: {EvolutionManager.MUTATION_PROB})')
     parser.add_argument('--smaller-files', action='store_true', help=f'Use smaller files (default: {EvolutionManager.SMALLER_FILES})')
     parser.add_argument('--verbose', action='store_true', help=f'Verbose output (default: {EvolutionManager.VERBOSE})')
+    parser.add_argument('--v-verbose', action='store_true', help=f'Prints individual training sessions, (default {EvolutionManager.VERY_VERBOSE})' )
 
     # DataManager options
     parser.add_argument('--dataset', choices=['sleep-EDF-20', 'sleep-EDF-78', 'sleep-EDFx'], help=f'Dataset to use (default: {DataManager.DATASET})')
@@ -346,7 +347,7 @@ def apply_arguments(args):
     # EvolutionManager settings
     if args.pop_size:
         EvolutionManager.POPULATION_SIZE_PER_LAYER = args.pop_size
-        AlpsManager.TRAINING_Manager_FOR_LAYERS = AlpsManager._get_manager(AlpsManager.percentages)
+        AlpsManager.TRAINING_SETTINGS_FOR_LAYERS = AlpsManager._get_manager(AlpsManager.percentages)
         # Update tournament size if it's based on population size
         EvolutionManager.SELECTION_TOURNAMENT_SIZE = max(3, int(EvolutionManager.POPULATION_SIZE_PER_LAYER * 0.2))
     if args.generations:
@@ -363,6 +364,8 @@ def apply_arguments(args):
         EvolutionManager.SMALLER_FILES = True
     if args.verbose:
         EvolutionManager.VERBOSE = True
+    if args.v_verbose:
+        EvolutionManager.VERY_VERBOSE = True
     
     # DataManager settings
     if args.dataset:

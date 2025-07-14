@@ -101,7 +101,7 @@ class LogManager:
             "fitness_function": FitnessFunctions.fitness_function.__name__,
             "age_gap": AlpsManager.AGE_GAP,
             "aging_scheme": AlpsManager.AgingScheme.uas_str,
-            "alps_Manager": AlpsManager.TRAINING_Manager_FOR_LAYERS.__repr__()
+            "alps_Manager": AlpsManager.TRAINING_SETTINGS_FOR_LAYERS.__repr__()
         }
 
         self._write_with_config(filetype="Experiment", config=config)
