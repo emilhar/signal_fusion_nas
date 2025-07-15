@@ -61,8 +61,7 @@ class SLEAPy:
 
             self._print_experiment_Manager()
 
-            if not hasattr(self.args, "NO_CONFIRM"):
-                input("OK? ")
+            input("OK? ")
 
             for config in configs:
                 self.sleepstage = config[0]
@@ -96,7 +95,7 @@ class SLEAPy:
             self.signal_type = Signal.EEG.Fpz_Cz
 
             input("OK? ")
-
+            
             FitnessFunctions.MINIMIZE_FITNESS = True
             self._create_optimizer()
             self.optimizer.run_evolution()
@@ -213,8 +212,6 @@ class SLEAPy:
             if LoggingSettings.LOGGING:
                 LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
         
-        if hasattr(self.args, "NO_CONFIRM"):
-            return
         
         self._print_experiment_Manager()
         input("OK? ")
@@ -326,7 +323,6 @@ def parse_arguments():
     parser.add_argument('--signal', type=str, 
                        choices=['EEG_Fpz-Cz', 'EEG_Pz-Oz', 'EOG_horizontal', 'EMG_submental'],
                        help='Signal type to use')
-    parser.add_argument('--NO-CONFIRM', action='store_true', help='Ask for input before run')
 
     return parser.parse_args()
 
@@ -351,7 +347,7 @@ def apply_arguments(args):
         # Update tournament size if it's based on population size
         EvolutionManager.SELECTION_TOURNAMENT_SIZE = max(3, int(EvolutionManager.POPULATION_SIZE_PER_LAYER * 0.2))
     if args.generations:
-        EvolutionManager.GENERATIONS = args.generations
+        EvolutionManager.GENERATIONS = args.generations - 1
     if args.st_size:
         EvolutionManager.SELECTION_TOURNAMENT_SIZE = args.tournament_size
     if args.hof_size:

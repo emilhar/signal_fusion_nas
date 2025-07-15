@@ -101,7 +101,7 @@ class LogManager:
             "fitness_function": FitnessFunctions.fitness_function.__name__,
             "age_gap": AlpsManager.AGE_GAP,
             "aging_scheme": AlpsManager.AgingScheme.uas_str,
-            "alps_Manager": AlpsManager.TRAINING_SETTINGS_FOR_LAYERS.__repr__()
+            "alps_Manager": AlpsManager.TRAINING_Manager_FOR_LAYERS.__repr__()
         }
 
         self._write_with_config(filetype="Experiment", config=config)
@@ -110,7 +110,7 @@ class LogManager:
 
         # list of an amount of zeroes equal to the number of layers, 6 layers = [0,0,0,0,0,0]
         # used for indexing in the for loop
-        people_in_layers_count  =[0] * len(AlpsManager.LAYER_CREATION_THRESHOLDS)
+        people_in_layers_count  = [0] * len(AlpsManager.MAX_AGE_IN_LAYERS)
         for person in population:
             people_in_layers_count[person.layer] += 1
         
@@ -137,7 +137,7 @@ class LogManager:
             self._write_with_config(filetype="Individual", config=self.best_individual_in_generation)
 
             # Log the best individual in each layer
-            population_grouped_by_layer = [[]] * len(AlpsManager.LAYER_CREATION_THRESHOLDS)
+            population_grouped_by_layer = [[]] * len(AlpsManager.MAX_AGE_IN_LAYERS)
             for individual in population:
                 population_grouped_by_layer[individual.layer].append(individual)
 

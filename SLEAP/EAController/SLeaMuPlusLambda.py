@@ -28,6 +28,10 @@ class SLeaMuPlusLambda:
             lambda: The number of children to produce at each generation."""
         
         if EvolutionManager.VERBOSE: print("=== FIRST GENERATION ===")
+        if not EvolutionManager.VERBOSE:
+            self._loading_bar(-1, 0, 0)
+
+        gen0_start_time = time.time()
 
         # Get all individuals without fitness values
         invalid_ind = [ind for ind in self.population if not ind.fitness.valid]
@@ -46,13 +50,13 @@ class SLeaMuPlusLambda:
             self.halloffame.update(self.population)
 
         self.end_generation(stats, invalid_ind)
+        gen0_time = time.time() - gen0_start_time
+        max_time_per_gen = gen0_time
+        elapsed_time = gen0_time
 
-        # Time tracking variables
-        max_time_per_gen = 0
-        elapsed_time = 0
+        if not EvolutionManager.VERBOSE:
+            self._loading_bar(0, max_time_per_gen, elapsed_time)
 
-        # Begin the generational process
-        print()
         for gen in range(1, EvolutionManager.GENERATIONS + 1):
             gen_start_time = time.time()
             
@@ -93,6 +97,12 @@ class SLeaMuPlusLambda:
             elapsed_time += gen_time
             if gen_time > max_time_per_gen:
                 max_time_per_gen = gen_time
+
+            if not EvolutionManager.VERBOSE:
+                self._loading_bar(gen, max_time_per_gen, elapsed_time)
+
+        if not EvolutionManager.VERBOSE:
+            self._loading_bar(EvolutionManager.GENERATIONS + 1, max_time_per_gen, elapsed_time)
 
         return self.population
 
@@ -347,20 +357,27 @@ class SLeaMuPlusLambda:
 
     def _loading_bar(self, gen, max_time_per_gen, elapsed_time):
         bar_size = 60  # Total width of the progress bar
-        progress = int((gen / EvolutionManager.GENERATIONS) * bar_size)
-        remaining = bar_size - progress
-        percentage = round((gen / EvolutionManager.GENERATIONS)*100, 2)
         
-        # Calculate estimated time remaining
-        if max_time_per_gen > 0:
-            remaining_gens = EvolutionManager.GENERATIONS - gen
-            remaining_time = remaining_gens * max_time_per_gen
-            eta_hours, rem = divmod(remaining_time, 3600)
-            eta_mins, eta_secs = divmod(rem, 60)
-            time_str = f"ETA: {int(eta_hours)}h {int(eta_mins)}m {int(eta_secs)}s"
-        else:
+        # Handle empty bar case (gen = -1)
+        if gen == -1:
+            progress = 0
+            percentage = 0.0
             time_str = "ETA: --h --m --s"
+        else:
+            progress = int((gen / (EvolutionManager.GENERATIONS+1)) * bar_size)
+            percentage = round((gen / (EvolutionManager.GENERATIONS+1))*100, 2)
+            
+            # Calculate estimated time remaining
+            if max_time_per_gen > 0:
+                remaining_gens = EvolutionManager.GENERATIONS - gen
+                remaining_time = remaining_gens * max_time_per_gen
+                eta_hours, rem = divmod(remaining_time, 3600)
+                eta_mins, eta_secs = divmod(rem, 60)
+                time_str = f"ETA: {int(eta_hours)}h {int(eta_mins)}m {int(eta_secs)}s"
+            else:
+                time_str = "ETA: --h --m --s"
 
+        remaining = bar_size - progress
         time_str = Clr(time_str, "red" if percentage <= 50 else "yellow" if percentage <= 75 else "green")
 
         # Calculate elapsed time
@@ -386,14 +403,13 @@ class SLeaMuPlusLambda:
         bar_segments = [
             Clr(' '*before_text, bg_color="bright_green"),
             Clr(percentage_text, "black", bg_color="bright_green"),
-            Clr(' '*after_text, bg_color="bright_green"),
+            Clr(' '*after_text, bg_color="bright_green") if gen != -1 else Clr(' '*after_text),
             Clr(' '*remaining, bg_color="bright_white")
         ]
-        
         # Combine all components
-        print(" "*120, end="\r")  # Clear previous line
+        print(" "*160, end="\r")  # Clear previous line
         print(f"│{''.join(str(seg) for seg in bar_segments)}│ "
-            f"{Clr(time_str, 'red')} │ "
+            f"{time_str} │ "
             f"Elapsed: {elapsed_str} │ "
             f"Last generation duration: {gen_time_str}",
             end="\r")
