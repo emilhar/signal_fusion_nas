@@ -77,7 +77,7 @@ class SLeaMuPlusLambda:
                 self.create_new_layer()
 
             # Move individuals who have aged out of their layer
-            self.manage_layer_tranitions()
+            self.remove_older_individuals()
 
             # Replace layer 0
             if gen % AlpsManager.AGE_GAP == 0:
@@ -150,6 +150,7 @@ class SLeaMuPlusLambda:
         # Update the population with the new layer_population
         self.population = [individual for individual in self.population if individual.layer != layer_to_evolve]
         self.population.extend( going_into_population )
+        self.remove_older_individuals()
 
     def varOr(self, lambda_, layer_population, previous_layer_population):
         """Does a crossover / mutation / reproduction lambda times for the chosen layer_population"""
@@ -239,16 +240,14 @@ class SLeaMuPlusLambda:
         # Add the new layer population to the population
         self.population.extend(offspring)
 
-    def manage_layer_tranitions(self):
+    def remove_older_individuals(self):
         """Controls layer switching for all layers after population has been settled"""
 
-        for individual in self.population:
-            if individual.layer >= len(AlpsManager.MAX_AGE_IN_LAYERS):
-                individual.layer = len(AlpsManager.MAX_AGE_IN_LAYERS) - 1 # TODO WHY IS THIS HAPPENING???????? ö_ö
+        for individual in self.population[:]:
             if not isinstance(AlpsManager.MAX_AGE_IN_LAYERS[individual.layer], int):
                 continue
-            if individual.age > AlpsManager.MAX_AGE_IN_LAYERS[individual.layer]:
-                individual.layer += 1
+            if individual.age >= AlpsManager.MAX_AGE_IN_LAYERS[individual.layer]:
+                self.population.remove(individual)
 
     def replace_layer_zero(self):
         if EvolutionManager.VERBOSE: print("\n\n## Replacing Layer 0 ##\n")
