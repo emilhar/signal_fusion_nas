@@ -5,7 +5,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions
+from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions, TimeMaster
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -152,7 +152,6 @@ class KernelSizeEvolutionaryOptimizer:
         
         # Normalize fitness values
         map(lambda x: FitnessFunctions.normalization_function(x, population), population)
-        min_or_max = min if FitnessFunctions.MINIMIZE_FITNESS else max
 
         self.chosen_for_next_generation = []
         elitism = EvolutionManager.ELITISM
@@ -173,14 +172,35 @@ class KernelSizeEvolutionaryOptimizer:
         # Perform tournament selection for remaining individuals
         for _ in range(remaining_to_select):
             aspirants = [random.choice(population) for _ in range(tournsize)]
-            chosen = min_or_max(aspirants, key=lambda x: x.fitness.values[0])
-            self.chosen_for_next_generation.append(chosen)
+            rankings = self.get_ranks(aspirants)
+            best = rankings[0]
+            self.chosen_for_next_generation.append(best)
 
         if LoggingSettings.LOGGING:
             for individual in population:
                 self.LogManager.check_for_best_in_gen(individual)
         
         return self.chosen_for_next_generation
+
+    def get_ranks(aspirants):
+
+        def findRank(indi, f_rankings:list, t_rankings:list):
+            f_stand = f_rankings.index(indi) + 1
+            t_stand = t_rankings.index(indi) + 1
+            final = f_stand * TimeMaster.alpha + t_stand * TimeMaster.beta
+            return final
+
+        lt = LoggingTemplate()
+        # Fitness rankings
+        rank_by_fitness = sorted(aspirants, key=lambda x: x.fitness.values[0])
+        
+        # Time rankings
+        rank_by_time = sorted(aspirants, key=lambda x: x.model_performance[lt.time])
+
+        # Blend
+        final_rank = sorted(aspirants, key=lambda x: findRank(x, rank_by_fitness, rank_by_time))
+
+        return final_rank
 
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""

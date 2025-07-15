@@ -10,7 +10,7 @@ GECCO 2006 - Genetic and Evolutionary Computation Conference. 1.
 
 import time
 import random
-from Globals import EvolutionManager, AlpsManager, LoggingSettings, Clr
+from Globals import EvolutionManager, AlpsManager, TimeMaster, LoggingSettings, Clr, LoggingTemplate
 
 class SLeaMuPlusLambda:
     def __init__(self, population, toolbox, mu, lambda_, halloffame, LogManager):
@@ -44,6 +44,9 @@ class SLeaMuPlusLambda:
         fitnesses = self.toolbox.map(self.toolbox.evaluate, invalid_ind)
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
+
+            if not hasattr(ind, 'evaluation_time'):
+                ind.evaluation_time = ind.model_performance.get(LoggingTemplate.time, 0)
         
         # Update Hall Of Fame
         if self.halloffame is not None:
@@ -60,6 +63,17 @@ class SLeaMuPlusLambda:
         for gen in range(1, EvolutionManager.GENERATIONS + 1):
             gen_start_time = time.time()
             
+            flip_on_generation = int(EvolutionManager.GENERATIONS * TimeMaster.FLIP_ON)
+            if gen >= flip_on_generation:
+                # Linear interpolation from generation FLIP_ON to final generation
+                progress = (gen - flip_on_generation) / (EvolutionManager.GENERATIONS - flip_on_generation)
+                TimeMaster.alpha = 1.0 * (1 - progress)
+                TimeMaster.beta = 1.0 * progress
+            else:
+                TimeMaster.alpha = 1.0
+                TimeMaster.beta = 0.0
+
+
             if not EvolutionManager.VERBOSE:
                 self._loading_bar(gen, max_time_per_gen, elapsed_time)
 

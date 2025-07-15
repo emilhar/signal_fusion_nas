@@ -66,6 +66,14 @@ class EvolutionManager:
     VERBOSE = False # Shows Layers
     VERY_VERBOSE = False # Shows Individual Training sessions
     
+class TimeMaster:
+    FLIP_ON = 0.5
+
+    # Selection with the time master is based on each individuals
+    #   alpha * fitnesss_ranking + beta * time_ranking
+    alpha = 1.0
+    beta = 1.0
+
 class AlpsManager:
     AGE_GAP = 2
 
