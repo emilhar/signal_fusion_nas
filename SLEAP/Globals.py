@@ -63,8 +63,8 @@ class EvolutionManager:
 
     # Misc
     SMALLER_FILES = False
-    VERBOSE = False
-    VERY_VERBOSE = False
+    VERBOSE = False # Shows Layers
+    VERY_VERBOSE = False # Shows Individual Training sessions
     
 class AlpsManager:
     AGE_GAP = 2
