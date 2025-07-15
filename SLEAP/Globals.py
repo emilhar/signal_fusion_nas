@@ -64,6 +64,7 @@ class EvolutionManager:
     # Misc
     SMALLER_FILES = False
     VERBOSE = False
+    VERY_VERBOSE = False
     
 class AlpsManager:
     AGE_GAP = 2
