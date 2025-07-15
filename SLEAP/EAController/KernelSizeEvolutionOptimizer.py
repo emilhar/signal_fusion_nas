@@ -117,11 +117,11 @@ class KernelSizeEvolutionaryOptimizer:
         time_limit = ModelManager.HAVE_MAX_TIME
 
         individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
-            dataset_percentage = AlpsManager.TRAINING_Manager_FOR_LAYERS[layer]["dataset_percentage"],
-            batch_size=AlpsManager.TRAINING_Manager_FOR_LAYERS[layer]["batch_size"]) 
+            dataset_percentage = AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["dataset_percentage"],
+            batch_size=AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]) 
         
-        batch_size = AlpsManager.TRAINING_Manager_FOR_LAYERS[layer]["batch_size"]
-        epochs =AlpsManager.TRAINING_Manager_FOR_LAYERS[layer]["training_epochs"]
+        batch_size = AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]
+        epochs =AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["training_epochs"]
         learning_rate = ModelManager.LEARNING_RATE
 
         new_model = TrainedModelMaker(
@@ -134,7 +134,6 @@ class KernelSizeEvolutionaryOptimizer:
             test_loader = individual_test_set,
             epochs= epochs,
             learning_rate=learning_rate,
-            verbose= EvolutionManager.VERBOSE,
             N_SAMPLES= n_samples,
             pos_weight= pos_weight,
             have_time_limit = time_limit

@@ -79,6 +79,9 @@ class SLeaMuPlusLambda:
             # Move individuals who have aged out of their layer
             self.remove_older_individuals()
 
+            # Make sure that there aren't too many people getting fully trained
+            self.control_last_layer_population()
+
             # Replace layer 0
             if gen % AlpsManager.AGE_GAP == 0:
                 self.replace_layer_zero()
@@ -121,7 +124,7 @@ class SLeaMuPlusLambda:
         
         # Get every individual that is a part of that layer
         layer_population = [indi for indi in self.population if indi.layer == layer_to_evolve]
-        
+
         if layer_to_evolve != 0:
             previous_layer_population = [indi for indi in self.population if indi.layer == layer_to_evolve - 1]
         else:
@@ -151,6 +154,23 @@ class SLeaMuPlusLambda:
         self.population = [individual for individual in self.population if individual.layer != layer_to_evolve]
         self.population.extend( going_into_population )
         self.remove_older_individuals()
+
+    def control_last_layer_population(self):
+
+        last_layer = len(AlpsManager.MAX_AGE_IN_LAYERS)-1
+
+        if last_layer not in set(individual.layer for individual in self.population):
+            return
+
+        max_population_size = AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[last_layer]["mu"]
+        last_layer_population = [indi for indi in self.population if indi.layer == last_layer]
+
+        if len(last_layer_population) <= max_population_size:
+            return 
+        
+        controlled_layer_population = last_layer_population[:max_population_size]
+        self.population = [indi for indi in self.population if indi.layer != last_layer]
+        self.population.extend(controlled_layer_population)
 
     def varOr(self, lambda_, layer_population, previous_layer_population):
         """Does a crossover / mutation / reproduction lambda times for the chosen layer_population"""
@@ -224,7 +244,8 @@ class SLeaMuPlusLambda:
         ]
 
         # Create offspring to fill new layer with
-        offspring, _ = self.varOr(self.mu, highest_layer_population, [])
+        layer_mu = AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[new_layer]["mu"]
+        offspring, _ = self.varOr(layer_mu, highest_layer_population, [])
 
         # Evaluate new offspring
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -251,9 +272,9 @@ class SLeaMuPlusLambda:
 
     def replace_layer_zero(self):
         if EvolutionManager.VERBOSE: print("\n\n## Replacing Layer 0 ##\n")
-        if EvolutionManager.VERBOSE: print(f"New additions:", AlpsManager.TRAINING_Manager_FOR_LAYERS[0]["mu"])
+        if EvolutionManager.VERBOSE: print(f"New additions:", AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[0]["mu"])
 
-        new_individuals = [self.toolbox.individual() for _ in range( AlpsManager.TRAINING_Manager_FOR_LAYERS[0]["mu"] )]
+        new_individuals = [self.toolbox.individual() for _ in range( AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[0]["mu"] )]
         fitnesses = self.toolbox.map(self.toolbox.evaluate, new_individuals)
         for ind, fit in zip(new_individuals, fitnesses):
             ind.fitness.values = fit
