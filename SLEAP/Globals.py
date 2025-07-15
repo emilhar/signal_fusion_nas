@@ -38,7 +38,7 @@ class ModelManager:
 
     # Kernel size constraints
     MIN_KERNEL_SIZE = 1
-    MAX_KERNEL_SIZE = 50
+    MAX_KERNEL_SIZE = None
     SORT_KERNELS = False
 
 class EvolutionManager:

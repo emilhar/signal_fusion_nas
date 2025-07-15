@@ -182,7 +182,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         return self.chosen_for_next_generation
 
-    def get_ranks(aspirants):
+    def get_ranks(self, aspirants):
 
         def findRank(indi, f_rankings:list, t_rankings:list):
             f_stand = f_rankings.index(indi) + 1
