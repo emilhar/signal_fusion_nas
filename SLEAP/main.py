@@ -8,7 +8,7 @@ import torch
 from Globals import Sleepstage, Signal, SLEAPyException
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
 from Logs.LogManager import LogManager
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions, AlpsManager
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions, AlpsManager, TimeWall, LoggingTemplate
 
 class SLEAPy:
     """
@@ -59,7 +59,7 @@ class SLEAPy:
                 model_folder_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ModelStateDicts/{id_helper.Experiment_ID}"
                 os.makedirs(model_folder_path, exist_ok=True)
 
-            self._print_experiment_Manager()
+            self._print_experiment_settings()
 
             input("OK? ")
 
@@ -90,7 +90,7 @@ class SLEAPy:
                 a = a if a != "" else LoggingSettings.experiment_name
                 LoggingSettings.experiment_name = a
 
-            self._print_experiment_Manager()
+            self._print_experiment_settings()
             self.sleepstage = Sleepstage.N3
             self.signal_type = Signal.EEG.Fpz_Cz
 
@@ -213,7 +213,7 @@ class SLEAPy:
                 LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
         
         
-        self._print_experiment_Manager()
+        self._print_experiment_settings()
         input("OK? ")
     
     def _generate_all_configs(self):
@@ -233,8 +233,7 @@ class SLEAPy:
             sleepstage=self.sleepstage,
             signal_type=self.signal_type,
         )
-
-    def _print_experiment_Manager(self):
+    def _print_experiment_settings(self):
         print("\n🧪 Experiment Configuration Summary")
         print("=" * 40)
 
@@ -242,15 +241,31 @@ class SLEAPy:
         print(f"{'Sleep stage:':30} {self.sleepstage}")
         print(f"{'Signal type:':30} {self.signal_type}")
         print(f"{'Verbose:':30} {EvolutionManager.VERBOSE}")
+        print(f"{'Very Verbose:':30} {EvolutionManager.VERY_VERBOSE}")
 
         print("\n🧬 Evolution Manager")
         print(f"{'Population size per layer:':30} {EvolutionManager.POPULATION_SIZE_PER_LAYER}")
         print(f"{'Generations:':30} {EvolutionManager.GENERATIONS}")
-        print(f"{'Tournament size:':30} {EvolutionManager.SELECTION_TOURNAMENT_SIZE}")
+        print(f"{'Selection tournament size:':30} {EvolutionManager.SELECTION_TOURNAMENT_SIZE}")
+        print(f"{'Elitism (per layer):':30} {EvolutionManager.ELITISM}")
         print(f"{'Hall of Fame members:':30} {EvolutionManager.HALL_OF_FAME_MEMBERS}")
         print(f"{'Max mutations:':30} {EvolutionManager.MAX_NUMBER_OF_MUTATIONS}")
         print(f"{'Crossover prob:':30} {EvolutionManager.CX_PROB}")
         print(f"{'Mutation prob:':30} {EvolutionManager.MUTATION_PROB}")
+        print(f"{'Smaller files:':30} {EvolutionManager.SMALLER_FILES}")
+
+        print("\n⏱️ Time Wall Settings")
+        print(f"{'Activation generation %:':30} {TimeWall.FLIP_ON*100}%")
+        print(f"{'Starting percentage:':30} {TimeWall.STARTING_PERCENTAGE*100}%")
+        print(f"{'Max percentage:':30} {TimeWall.MAX_PERCENTAGE*100}%")
+        print(f"{'Percentage increase:':30} {TimeWall.INCREASE*100}%")
+
+        print("\n🏔️ Alps Manager")
+        print(f"{'Aging scheme:':30} {AlpsManager.AgingScheme.uas_str}")
+        print(f"{'Age gap:':30} {AlpsManager.AGE_GAP}")
+        print(f"{'Max ages per layer:':30} {AlpsManager.MAX_AGE_IN_LAYERS}")
+        print(f"{'Layer creation thresholds:':30} {AlpsManager.LAYER_CREATION_THRESHOLDS}")
+        print(f"{'Dataset percentages:':30} {AlpsManager.percentages}")
 
         print("\n📦 Model Manager")
         print(f"{'Base batch size:':30} {ModelManager.BATCH_SIZE}")
@@ -258,12 +273,14 @@ class SLEAPy:
         print(f"{'Learning rate:':30} {ModelManager.LEARNING_RATE}")
         print(f"{'Min kernel size:':30} {ModelManager.MIN_KERNEL_SIZE}")
         print(f"{'Max kernel size:':30} {ModelManager.MAX_KERNEL_SIZE}")
-        print(f"{'Smaller files:':30} {EvolutionManager.SMALLER_FILES}")
+        print(f"{'Sort kernels:':30} {ModelManager.SORT_KERNELS}")
         print(f"{'Branch count range:':30} {ModelManager.NUMBER_OF_BRANCHES_RANGE}")
         print(f"{'Kernel count range:':30} {ModelManager.NUMBER_OF_KERNELS_RANGE}")
 
         print("\n📁 Data Manager")
         print(f"{'Dataset:':30} {DataManager.DATASET}")
+        print(f"{'Available datasets:':30} {DataManager._datasets}")
+        print(f"{'Max memory (MB):':30} {DataManager.MAX_MEMORY}")
         print(f"{'Even data split:':30} {DataManager.EVEN_DATA_SPLIT}")
         print(f"{'Train split:':30} {EvolutionManager.DATA_SPLIT_TRAINING}")
         print(f"{'Test split:':30} {EvolutionManager.DATA_SPLIT_TESTING}")
@@ -272,14 +289,15 @@ class SLEAPy:
         print("\n📝 Logging Manager")
         print(f"{'Logging enabled:':30} {LoggingSettings.LOGGING}")
         print(f"{'Logger ID:':30} {LoggingSettings.LOGGER_ID}")
+        print(f"{'Log IDs:':30} {LoggingSettings.LOG_IDS}")
         print(f"{'Log all individuals:':30} {LoggingSettings.LOG_ALL_INDIVIDUALS}")
         print(f"{'Experiment name:':30} {LoggingSettings.experiment_name}")
+        print(f"{'Rounding number:':30} {LoggingTemplate.rounding_number}")
         
         print("\n💖 Fitness Manager")
         print(f"{'Fitness function:':30} {FitnessFunctions.fitness_function.__name__}")
         print(f"{'Normalization function:':30} {FitnessFunctions.normalization_function.__name__}")
         print(f"{'Minimizing Fitness:':30} {FitnessFunctions.MINIMIZE_FITNESS}")
-
 
 def parse_arguments():
     """Parse command line arguments to override global settings"""

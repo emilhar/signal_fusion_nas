@@ -32,7 +32,6 @@ class ModelManager:
     NUMBER_OF_BRANCHES_RANGE = (1, 3)
     NUMBER_OF_KERNELS_RANGE = (2, 4)
     BATCH_SIZE = 32
-    HAVE_MAX_TIME = False
     MAX_TIME_SPENT_TRAINING = 6
     LEARNING_RATE = 5e-4
 
@@ -66,13 +65,19 @@ class EvolutionManager:
     VERBOSE = False # Shows Layers
     VERY_VERBOSE = False # Shows Individual Training sessions
     
-class TimeMaster:
-    FLIP_ON = 0.5
+class TimeWall:
+    """After FLIP_ON% of generations, 
+    Time Wall cuts out the worst TIME_WALL_PERCENTAGE% of performers when it comes to training time."""
 
-    # Selection with the time master is based on each individuals
-    #   alpha * fitnesss_ranking + beta * time_ranking
-    alpha = 1.0
-    beta = 1.0
+    # After what % of generations do you turn on the time wall?
+    FLIP_ON = 0.5
+    ON = False
+
+    STARTING_PERCENTAGE = 0.25
+    MAX_PERCENTAGE = 0.75
+    INCREASE = 0.05
+    
+    time_wall_percentage = 0.0
 
 class AlpsManager:
     AGE_GAP = 2
