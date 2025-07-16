@@ -10,7 +10,7 @@ GECCO 2006 - Genetic and Evolutionary Computation Conference. 1.
 
 import time
 import random
-from Globals import EvolutionManager, AlpsManager, TimeMaster, LoggingSettings, Clr, LoggingTemplate
+from Globals import EvolutionManager, AlpsManager, TimeWall, LoggingSettings, Clr, LoggingTemplate
 
 class SLeaMuPlusLambda:
     def __init__(self, population, toolbox, mu, lambda_, halloffame, LogManager):
@@ -63,16 +63,16 @@ class SLeaMuPlusLambda:
         for gen in range(1, EvolutionManager.GENERATIONS + 1):
             gen_start_time = time.time()
             
-            flip_on_generation = int(EvolutionManager.GENERATIONS * TimeMaster.FLIP_ON)
-            if gen >= flip_on_generation:
-                # Linear interpolation from generation FLIP_ON to final generation
-                progress = (gen - flip_on_generation) / (EvolutionManager.GENERATIONS - flip_on_generation)
-                TimeMaster.alpha = 1.0 * (1 - progress)
-                TimeMaster.beta = 1.0 * progress
-            else:
-                TimeMaster.alpha = 1.0
-                TimeMaster.beta = 0.0
 
+            flip_on_generation = int(EvolutionManager.GENERATIONS * TimeWall.FLIP_ON)
+
+            if gen == flip_on_generation:
+                TimeWall.ON = True
+                TimeWall.time_wall_percentage = TimeWall.STARTING_PERCENTAGE
+
+            elif gen > flip_on_generation and (gen - flip_on_generation) % (EvolutionManager.GENERATIONS // 20) == 0:
+                if TimeWall.time_wall_percentage <= TimeWall.MAX_PERCENTAGE - TimeWall.INCREASE:
+                    TimeWall.time_wall_percentage += TimeWall.INCREASE
 
             if not EvolutionManager.VERBOSE:
                 self._loading_bar(gen, max_time_per_gen, elapsed_time)

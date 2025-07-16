@@ -51,4 +51,4 @@ class TrainedModelMaker:
         if EvolutionManager.VERY_VERBOSE:
             print(f"\n\nTraining model: {branches=}, Generation: {LoggingSettings.current_generation_id}/{EvolutionManager.GENERATIONS}, Generation Completeness: {LoggingSettings.current_individual_id}/{LoggingSettings.population_size}")
 
-        self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, verbose=EvolutionManager.VERY_VERBOSE, lr=self.lr, epochs=epochs, have_time_limit=have_time_limit)
+        self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, verbose=EvolutionManager.VERY_VERBOSE, lr=self.lr, epochs=epochs)

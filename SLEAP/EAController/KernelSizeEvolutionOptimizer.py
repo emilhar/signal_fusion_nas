@@ -5,7 +5,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions, TimeMaster
+from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions, TimeWall
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -114,8 +114,6 @@ class KernelSizeEvolutionaryOptimizer:
     def create_trained_individual(self, individual, layer):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
-        time_limit = ModelManager.HAVE_MAX_TIME
-
         individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
             dataset_percentage = AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["dataset_percentage"],
             batch_size=AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]) 
@@ -169,11 +167,16 @@ class KernelSizeEvolutionaryOptimizer:
         else:
             remaining_to_select = number_of_people_to_select
         
+        # Time wall
+        if TimeWall.ON:
+            population = sorted(population, reverse=True, key=lambda x: x.model_performance[LoggingTemplate.time])
+            n = int(len(population) * TimeWall.time_wall_percentage)
+            population = population[n:]
+
         # Perform tournament selection for remaining individuals
         for _ in range(remaining_to_select):
             aspirants = [random.choice(population) for _ in range(tournsize)]
-            rankings = self.get_ranks(aspirants)
-            best = rankings[0]
+            best = max(aspirants, key= lambda x: x.fitness.values[0])
             self.chosen_for_next_generation.append(best)
 
         if LoggingSettings.LOGGING:
@@ -181,26 +184,6 @@ class KernelSizeEvolutionaryOptimizer:
                 self.LogManager.check_for_best_in_gen(individual)
         
         return self.chosen_for_next_generation
-
-    def get_ranks(self, aspirants):
-
-        def findRank(indi, f_rankings:list, t_rankings:list):
-            f_stand = f_rankings.index(indi) + 1
-            t_stand = t_rankings.index(indi) + 1
-            final = f_stand * TimeMaster.alpha + t_stand * TimeMaster.beta
-            return final
-
-        lt = LoggingTemplate()
-        # Fitness rankings
-        rank_by_fitness = sorted(aspirants, key=lambda x: x.fitness.values[0])
-        
-        # Time rankings
-        rank_by_time = sorted(aspirants, key=lambda x: x.model_performance[lt.time])
-
-        # Blend
-        final_rank = sorted(aspirants, key=lambda x: findRank(x, rank_by_fitness, rank_by_time))
-
-        return final_rank
 
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""

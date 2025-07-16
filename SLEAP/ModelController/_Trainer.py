@@ -11,7 +11,7 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score, roc
 import datetime # For max training time
 from Globals import ModelManager, LoggingTemplate
 
-def train_model(model, device, train_loader, test_loader, pos_weight, verbose=False, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1, have_time_limit = True):
+def train_model(model, device, train_loader, test_loader, pos_weight, verbose=False, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1):
 
     training_time_start = datetime.datetime.now()
 
