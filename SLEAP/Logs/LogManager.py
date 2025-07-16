@@ -96,8 +96,6 @@ class LogManager:
             "second_best": second_best,
             "third_best": third_best,
             "dataset_name": DataManager.DATASET,
-            "max_time_on": ModelManager.HAVE_MAX_TIME,
-            "max_time_spent_training": ModelManager.MAX_TIME_SPENT_TRAINING,
             "fitness_function": FitnessFunctions.fitness_function.__name__,
             "age_gap": AlpsManager.AGE_GAP,
             "aging_scheme": AlpsManager.AgingScheme.uas_str,

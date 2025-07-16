@@ -269,7 +269,6 @@ class SLEAPy:
 
         print("\n📦 Model Manager")
         print(f"{'Base batch size:':30} {ModelManager.BATCH_SIZE}")
-        print(f"{'Max training time:':30} {ModelManager.MAX_TIME_SPENT_TRAINING}")
         print(f"{'Learning rate:':30} {ModelManager.LEARNING_RATE}")
         print(f"{'Min kernel size:':30} {ModelManager.MIN_KERNEL_SIZE}")
         print(f"{'Max kernel size:':30} {ModelManager.MAX_KERNEL_SIZE}")

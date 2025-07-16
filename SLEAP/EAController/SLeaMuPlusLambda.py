@@ -60,6 +60,8 @@ class SLeaMuPlusLambda:
         if not EvolutionManager.VERBOSE:
             self._loading_bar(0, max_time_per_gen, elapsed_time)
 
+
+
         for gen in range(1, EvolutionManager.GENERATIONS + 1):
             gen_start_time = time.time()
             
@@ -70,7 +72,7 @@ class SLeaMuPlusLambda:
                 TimeWall.ON = True
                 TimeWall.time_wall_percentage = TimeWall.STARTING_PERCENTAGE
 
-            elif gen > flip_on_generation and (gen - flip_on_generation) % (EvolutionManager.GENERATIONS // 20) == 0:
+            elif gen > flip_on_generation and (gen - flip_on_generation) % (int(EvolutionManager.GENERATIONS * 0.05)) == 0:
                 if TimeWall.time_wall_percentage <= TimeWall.MAX_PERCENTAGE - TimeWall.INCREASE:
                     TimeWall.time_wall_percentage += TimeWall.INCREASE
 

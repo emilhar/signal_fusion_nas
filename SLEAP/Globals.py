@@ -32,7 +32,6 @@ class ModelManager:
     NUMBER_OF_BRANCHES_RANGE = (1, 3)
     NUMBER_OF_KERNELS_RANGE = (2, 4)
     BATCH_SIZE = 32
-    MAX_TIME_SPENT_TRAINING = 6
     LEARNING_RATE = 5e-4
 
     # Kernel size constraints
