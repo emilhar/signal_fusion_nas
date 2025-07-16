@@ -5,7 +5,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions, TimeWall
+from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions, TimeWall, PolyarithmosManager
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -134,7 +134,6 @@ class KernelSizeEvolutionaryOptimizer:
             learning_rate=learning_rate,
             N_SAMPLES= n_samples,
             pos_weight= pos_weight,
-            have_time_limit = time_limit
         )
 
         return new_model.model_performance
@@ -371,10 +370,15 @@ class KernelSizeEvolutionaryOptimizer:
         result_pop = evolver.main(
             stats= self.stats,
         )
+
+        if LoggingSettings.LOGGING:
+            self.log_results()
+
+        self.print_results()
         
         return result_pop, self.hall_of_fame, self.stats
 
-    def log_results(self, model_folder_path=None):
+    def log_results(self):
         
         def get_hall_of_fame_format(i):
             individual = self.hall_of_fame[i]
@@ -389,9 +393,9 @@ class KernelSizeEvolutionaryOptimizer:
             third_best= get_hall_of_fame_format(2),
         )
 
-        if model_folder_path:
+        if PolyarithmosManager.folder_path:
             best_individual = self.hall_of_fame[0]
-            torch.save(best_individual.model_performance[LoggingTemplate.state_dict], model_folder_path + "/" + f"{self.sleepstage}-{self.signal_type}")
+            torch.save(best_individual.model_performance[LoggingTemplate.state_dict], PolyarithmosManager.folder_path + "/" + f"{self.sleepstage}-{self.signal_type}")
         
     def print_results(self):
         """Print evolution results"""

@@ -125,6 +125,11 @@ class AlpsManager:
         # 6: {"dataset_percentage": percentages[6], "training_epochs": epochs[6], "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
     }
     
+class PolyarithmosManager:
+    folder_path = None
+    experiment_ids_within_polyartihmos = []
+    
+
 class DataManager:
     class DatasetNames:
         EDF_20 = "sleep-EDF-20"
@@ -148,6 +153,45 @@ class LoggingSettings:
     population_size = 0
 
     experiment_name = "Unnamed"
+
+class LoggingTemplate:
+    def __init__(self):
+        pass
+
+    rounding_number = 3
+
+    PID = "PID"
+    experiment_ids_within_polyarithmos = "experiment_ids_within_polyartihmos"
+    p_type = "p_type"
+
+    experiment_id = "experiment_id"
+    generation = "generation"
+    indi_id = "individual_id"
+    age = "age"
+    layer = "layer"
+    fitness = "fitness"
+    reason = "reason"
+
+    epoch = "epoch"
+    lr = "learning_rate"
+    branches= "branches"
+    train_loss = "train_loss"
+    test_loss = "test_loss"
+    precision = "precision"
+    recall = "recall"
+    accuracy = "accuracy"
+    best_f1 = "best_f1"
+    best_auc = "best_auc"
+    time = "time"
+    best_true = "true_labels"
+    best_scores = "best_scores"
+    state_dict = "state_dict"
+
+    # Translation table
+    reason_map = {
+        "Best In Layer": 0,
+        "Checked For Best In Generation": 1
+    }
 
 class FitnessFunctions:
     @staticmethod
@@ -282,38 +326,3 @@ class Clr:
         color_code = "".join(codes)
         
         return f"{color_code}{self.string}{reset_code}"
-
-class LoggingTemplate:
-    def __init__(self):
-        pass
-
-    rounding_number = 3
-
-    experiment_id = "experiment_id"
-    generation = "generation"
-    indi_id = "individual_id"
-    age = "age"
-    layer = "layer"
-    fitness = "fitness"
-    reason = "reason"
-
-    epoch = "epoch"
-    lr = "learning_rate"
-    branches= "branches"
-    train_loss = "train_loss"
-    test_loss = "test_loss"
-    precision = "precision"
-    recall = "recall"
-    accuracy = "accuracy"
-    best_f1 = "best_f1"
-    best_auc = "best_auc"
-    time = "time"
-    best_true = "true_labels"
-    best_scores = "best_scores"
-    state_dict = "state_dict"
-
-    # Translation table
-    reason_map = {
-        "Best In Layer": 0,
-        "Checked For Best In Generation": 1
-    }
