@@ -1,6 +1,7 @@
 """
 These names are used by many classes, good idea to keep them global
 """
+import random
 import inspect
 
 class Sleepstage:
@@ -215,9 +216,14 @@ class FitnessFunctions:
         else:
             fitness = (highest_loss_val - loss) / (highest_loss_val - lowest_loss_val)
 
-
         individual.fitness.values = (fitness,)
     
+
+
+    @staticmethod
+    def random_fitness(individual, population):
+        return random.random()
+
     @staticmethod
     def no_normalization(individual, population):
         pass
@@ -255,15 +261,6 @@ class SLEAPyException(Exception):
 
 class Clr:
     def __init__(self, string, color=None, bg_color=None):
-        """
-        Colorize text with foreground, background colors and text modes.
-        
-        Args:
-            string: Text to colorize
-            color: Foreground color name (red, blue, green, etc.)
-            bg_color: Background color name
-            mode: Text mode (bold, underline, italic, etc. or list of modes)
-        """
         self.string = str(string)
         self.color = color.lower() if color else None
         self.bg_color = bg_color.lower() if bg_color else None

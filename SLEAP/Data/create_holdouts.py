@@ -2,6 +2,9 @@ import glob
 import os
 import shutil
 
+import logging
+
+
 edf_20_holdout = [6, 12]
 edf_78_holdout = [6, 12, 14, 19, 25, 38, 49, 81]
 edfx_holdout = [6, 12, 14, 19, 25, 38, 49, 64, 81, 87]
