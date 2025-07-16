@@ -1,34 +1,31 @@
 import csv
 import os
 from datetime import datetime
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, AlpsManager, FitnessFunctions, LoggingTemplate
+import pandas as pd
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, AlpsManager, FitnessFunctions, LoggingTemplate, PolyarithmosManager
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
     
     def __init__(self):
         self.start_time = datetime.now()
-        self.Experiment_ID = self._get_Experiment_ID()
+        self.Experiment_ID = self._get_id_by("Experiment")
         self.best_individual_in_generation = self.fill_individual_template(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+        self.lt = LoggingTemplate()
     
-    def _get_Experiment_ID(self):
+    def _get_id_by(self, filetype="Experiment"):
         """Get the next experiment ID based on the CSV log"""
 
-        filepath = self._get_filepath(filetype="Experiment")
-
-        with open(filepath, mode='r', newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            Experiment_IDs = [
-                int(row[LoggingTemplate.experiment_id]) 
-                for row in reader 
-                if LoggingTemplate.experiment_id in row and 
-                row[LoggingTemplate.experiment_id].isdigit()
-            ]
-            
-            if not Experiment_IDs:
-                return 0
-            
-            return max(Experiment_IDs) + 1
+        filepath = self._get_filepath(filetype=filetype)
+        df = pd.read_csv(filepath)
+        if df.empty:
+            return 0
+        
+        if filetype == "Experiment":
+            return df[self.lt.experiment_id].max() + 1
+        elif filetype == "Polyarithmos":
+            return df[self.lt.PID].max() + 1
 
     def _write_with_config(self, filetype, config):
         filepath = self._get_filepath(filetype=filetype)
@@ -47,7 +44,9 @@ class LogManager:
 
     def _get_filepath(self, filetype):
 
-        if filetype == "Experiment":
+        if filetype == "Polyarithmos":
+            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/PolyarithmosLog.csv"
+        elif filetype == "Experiment":
             inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ExperimentStatsLog.csv"
         elif filetype == "Generation":
             inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/GenerationStatsLog.csv"
@@ -73,12 +72,19 @@ class LogManager:
         
         raise FileNotFoundError(f"Could not find file: {not_found}")
 
+    def log_polyarithmos(self):
+        PID = self._get_id_by("Polyarithmos")
+        config = {
+            self.lt.PID: PID,
+            self.lt.experiment_ids_within_polyarithmos: PolyarithmosManager.experiment_ids_within_polyartihmos,
+        }
+        self._write_with_config(filetype="Polyarithmos", config=config)
+
     def log_experiment(self, sleepstage, signal_type, max_kernel_size, best, second_best, third_best):
         """Log the experiment configuration using template names"""
-        it = LoggingTemplate()
 
         config = {
-            it.experiment_id: self.Experiment_ID,
+            self.lt.experiment_id: self.Experiment_ID,
             "name": LoggingSettings.experiment_name,
             "start_time": self.start_time,
             "end_time": datetime.now(),
@@ -112,19 +118,18 @@ class LogManager:
         for person in population:
             people_in_layers_count[person.layer] += 1
         
-        it = LoggingTemplate()
 
         generation_configs = {
-        it.experiment_id: self.Experiment_ID,
-        it.generation: LoggingSettings.current_generation_id,
+        self.lt.experiment_id: self.Experiment_ID,
+        self.lt.generation: LoggingSettings.current_generation_id,
         "number_of_trained_individuals": number_of_trained_individual,
         "individual_count_per_layer": people_in_layers_count,
-        "fitness_mean": round(mean, it.rounding_number),
-        "fitness_std": round(std_deviation, it.rounding_number),
-        "fitness_median": round(median, it.rounding_number),
-        "fitness_min": round(min, it.rounding_number),
-        "fitness_max": round(fit_max, it.rounding_number),
-        "best_individual_info": f"(exp:{self.Experiment_ID},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation[it.indi_id]}), fitness:{round(self.best_individual_in_generation[it.fitness], 7)}, branches:{str(self.best_individual_in_generation[it.branches])}",
+        "fitness_mean": round(mean, self.lt.rounding_number),
+        "fitness_std": round(std_deviation, self.lt.rounding_number),
+        "fitness_median": round(median, self.lt.rounding_number),
+        "fitness_min": round(min, self.lt.rounding_number),
+        "fitness_max": round(fit_max, self.lt.rounding_number),
+        "best_individual_info": f"(exp:{self.Experiment_ID},gen:{LoggingSettings.current_generation_id},id:{self.best_individual_in_generation[self.lt.indi_id]}), fitness:{round(self.best_individual_in_generation[self.lt.fitness], 7)}, branches:{str(self.best_individual_in_generation[self.lt.branches])}",
         }
 
         self._write_with_config(filetype="Generation", config=generation_configs)
@@ -152,12 +157,12 @@ class LogManager:
                     individual=str(individual),
                     age= individual.age,
                     layer= individual.layer,
-                    train_loss= individual.model_performance.get(it.train_loss, 0.0),
-                    test_loss= individual.model_performance.get(it.test_loss, 0.0),
-                    precision= individual.model_performance.get(it.precision, 0.0),
-                    recall= individual.model_performance.get(it.recall, 0.0),
-                    f1= individual.model_performance.get(it.best_f1, 0.0),
-                    accuracy= individual.model_performance.get(it.accuracy, 0.0),
+                    train_loss= individual.model_performance.get(self.lt.train_loss, 0.0),
+                    test_loss= individual.model_performance.get(self.lt.test_loss, 0.0),
+                    precision= individual.model_performance.get(self.lt.precision, 0.0),
+                    recall= individual.model_performance.get(self.lt.recall, 0.0),
+                    f1= individual.model_performance.get(self.lt.best_f1, 0.0),
+                    accuracy= individual.model_performance.get(self.lt.accuracy, 0.0),
                     fitness= individual.fitness.values[0],
                     reason= LoggingTemplate.reason_map["Best In Layer"]
                 )
@@ -169,13 +174,12 @@ class LogManager:
         fitness = individual.fitness.values[0]
         ind_id = individual.individual_id
 
-        it = LoggingTemplate()
-        train_loss= individual.model_performance.get(it.train_loss, 0.0)
-        test_loss= individual.model_performance.get(it.test_loss, 0.0)
-        precision= individual.model_performance.get(it.precision, 0.0)
-        recall= individual.model_performance.get(it.recall, 0.0)
-        f1= individual.model_performance.get(it.best_f1, 0.0)
-        accuracy= individual.model_performance.get(it.accuracy, 0.0)
+        train_loss= individual.model_performance.get(self.lt.train_loss, 0.0)
+        test_loss= individual.model_performance.get(self.lt.test_loss, 0.0)
+        precision= individual.model_performance.get(self.lt.precision, 0.0)
+        recall= individual.model_performance.get(self.lt.recall, 0.0)
+        f1= individual.model_performance.get(self.lt.best_f1, 0.0)
+        accuracy= individual.model_performance.get(self.lt.accuracy, 0.0)
         fitness= individual.fitness.values[0]
 
 
@@ -194,11 +198,11 @@ class LogManager:
             f1=f1,
             accuracy=accuracy,
             fitness=fitness,
-            reason=it.reason_map["Checked For Best In Generation"]
+            reason=self.lt.reason_map["Checked For Best In Generation"]
         )
 
         best = self.best_individual_in_generation
-        if (best[it.fitness] <= fitness):
+        if (best[self.lt.fitness] <= fitness):
             self.best_individual_in_generation = individual_log_entry
 
         if (LoggingSettings.LOG_ALL_INDIVIDUALS):
@@ -209,23 +213,22 @@ class LogManager:
                                train_loss, test_loss, precision, recall, f1, accuracy, fitness, reason):
         """Fill in the individual template with provided values"""
 
-        it = LoggingTemplate()
         try:
             individual_template = {
-                it.experiment_id: self.Experiment_ID,
-                it.generation: generation,
-                it.indi_id: ind_id,
-                it.branches: str(individual),
-                it.age: age,
-                it.layer: layer,
-                it.train_loss: round(train_loss, it.rounding_number),
-                it.test_loss: round(test_loss, it.rounding_number),
-                it.precision: round(precision, it.rounding_number),
-                it.recall: round(recall, it.rounding_number),
-                it.best_f1: round(f1, it.rounding_number),
-                it.accuracy: round(accuracy, it.rounding_number),
-                it.fitness: round(fitness, it.rounding_number),
-                it.reason: reason
+                self.lt.experiment_id: self.Experiment_ID,
+                self.lt.generation: generation,
+                self.lt.indi_id: ind_id,
+                self.lt.branches: str(individual),
+                self.lt.age: age,
+                self.lt.layer: layer,
+                self.lt.train_loss: round(train_loss, self.lt.rounding_number),
+                self.lt.test_loss: round(test_loss, self.lt.rounding_number),
+                self.lt.precision: round(precision, self.lt.rounding_number),
+                self.lt.recall: round(recall, self.lt.rounding_number),
+                self.lt.best_f1: round(f1, self.lt.rounding_number),
+                self.lt.accuracy: round(accuracy, self.lt.rounding_number),
+                self.lt.fitness: round(fitness, self.lt.rounding_number),
+                self.lt.reason: reason
             }
             return individual_template
         except TypeError as e:

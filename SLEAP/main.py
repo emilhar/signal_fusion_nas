@@ -8,7 +8,7 @@ import torch
 from Globals import Sleepstage, Signal, SLEAPyException
 from EAController.KernelSizeEvolutionOptimizer import KernelSizeEvolutionaryOptimizer
 from Logs.LogManager import LogManager
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions, AlpsManager, TimeWall, LoggingTemplate
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions, AlpsManager, TimeWall, LoggingTemplate, PolyarithmosManager
 
 class SLEAPy:
     """
@@ -27,104 +27,123 @@ class SLEAPy:
         self.signal_type = None
         self.args = args
         
-    def run_experiment(self, run_omega=False, minimax=False):
+    def run_experiment(self, run_every_possible_experiment=False, minimax=False):
         """Run the setup and evolution process"""
         print("\n" + "="*68)
         print("🧠 SLEAPy - Sleep Labeling using Evolutionary Algorithms and PyTorch")
         print("="*68)
         
-        # Get user configuration
-        if run_omega:
-            print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")
-            configs = self._generate_all_configs()
-            self.sleepstage = "All sleep stages"
-            self.signal_type = "All signal types"
-
-            if LoggingSettings.LOGGING:
-                while True:
-                    print("\n",LoggingSettings.LOG_IDS)
-                    potential_log_id = input("Enter logging ID: ").upper().strip()
-                    if potential_log_id in LoggingSettings.LOG_IDS:
-                        LoggingSettings.LOGGER_ID = potential_log_id
-                        break
-                    else:
-                        print("❌ Please enter valid ID\n")
-            
-                a = input("Enter Experiment Name: ")
-                a = a if a != "" else LoggingSettings.experiment_name
-                LoggingSettings.experiment_name = a
-
-                #create folder
-                id_helper = LogManager()
-                model_folder_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ModelStateDicts/{id_helper.Experiment_ID}"
-                os.makedirs(model_folder_path, exist_ok=True)
-
-            self._print_experiment_settings()
-
-            input("OK? ")
-
-            for config in configs:
-                self.sleepstage = config[0]
-                self.signal_type = config[1]
-
-                print("\n" + "="*68)
-                print(f"🚀 Starting experiment for {self.sleepstage} stage with {self.signal_type} signal")
-                print("="*68)
-
-                self._create_optimizer()
-                self.optimizer.run_evolution()
-                self.optimizer.log_results(model_folder_path)
+        if run_every_possible_experiment:
+            self._run_every_possible_experiment()
           
         elif minimax:
-            if LoggingSettings.LOGGING:
-                while True:
-                    print("\n",LoggingSettings.LOG_IDS)
-                    potential_log_id = input("Enter logging ID: ").upper().strip()
-                    if potential_log_id in LoggingSettings.LOG_IDS:
-                        LoggingSettings.LOGGER_ID = potential_log_id
-                        break
-                    else:
-                        print("❌ Please enter valid ID\n")
-            
-                a = input("Enter Experiment Name: ")
-                a = a if a != "" else LoggingSettings.experiment_name
-                LoggingSettings.experiment_name = a
-
-            self._print_experiment_settings()
-            self.sleepstage = Sleepstage.N3
-            self.signal_type = Signal.EEG.Fpz_Cz
-
-            input("OK? ")
-            
-            FitnessFunctions.MINIMIZE_FITNESS = True
-            self._create_optimizer()
-            self.optimizer.run_evolution()
-            if LoggingSettings.LOGGING:
-                self.optimizer.log_results()
-            self.optimizer.print_results()
-
-            FitnessFunctions.MINIMIZE_FITNESS = False
-            self._create_optimizer()
-            self.optimizer.run_evolution()
-            if LoggingSettings.LOGGING:
-                self.optimizer.log_results()
-            self.optimizer.print_results()
+            self._run_minimax()
 
         else:
             self._get_user_configuration()
-
-            # Create optimizer with user Manager
             self._create_optimizer()
-            
-            # Run evolution
             self.optimizer.run_evolution()
-            
-            if LoggingSettings.LOGGING:
-                self.optimizer.log_results()
-
-            # Show results
-            self.optimizer.print_results()
     
+    def _run_every_possible_experiment(self):
+        print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")
+        configs = self._generate_all_configs()
+        self.sleepstage = "All sleep stages"
+        self.signal_type = "All signal types"
+
+        if LoggingSettings.LOGGING:
+            while True:
+                print("\n",LoggingSettings.LOG_IDS)
+                potential_log_id = input("Enter logging ID: ").upper().strip()
+                if potential_log_id in LoggingSettings.LOG_IDS:
+                    LoggingSettings.LOGGER_ID = potential_log_id
+                    break
+                else:
+                    print("❌ Please enter valid ID\n")
+        
+            a = input("Enter Experiment Name: ")
+            a = a if a != "" else LoggingSettings.experiment_name
+            LoggingSettings.experiment_name = a
+
+            #create folder
+            id_helper = LogManager()
+            model_folder_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ModelStateDicts/{id_helper.Experiment_ID}"
+            os.makedirs(model_folder_path, exist_ok=True)
+            PolyarithmosManager.folder_path = model_folder_path
+
+        self._print_experiment_settings()
+
+        input("OK? ")
+
+        for config in configs:
+            self.sleepstage = config[0]
+            self.signal_type = config[1]
+
+            print("\n" + "="*68)
+            print(f"🚀 Starting experiment for {self.sleepstage} stage with {self.signal_type} signal")
+            print("="*68)
+
+            self._create_optimizer()
+            self.optimizer.run_evolution()
+            if LoggingSettings.LOGGING:
+                id_helper = LogManager()
+                experiment_id = id_helper.Experiment_ID - 1
+                PolyarithmosManager.experiment_ids_within_polyartihmos.append(experiment_id)
+
+        if LoggingSettings.LOGGING:
+            polyLogger = LogManager()
+            polyLogger.log_polyarithmos()
+
+    def _generate_all_configs(self):
+        configs = []
+
+        for signal_type in Signal.ALL_SIGNALS:
+            for sleep_type in Sleepstage.ALL_STAGES:
+                configs.append( (sleep_type, signal_type) )
+
+        return configs
+
+    def _run_minimax(self):
+
+        if LoggingSettings.LOGGING:
+            while True:
+                print("\n",LoggingSettings.LOG_IDS)
+                potential_log_id = input("Enter logging ID: ").upper().strip()
+                if potential_log_id in LoggingSettings.LOG_IDS:
+                    LoggingSettings.LOGGER_ID = potential_log_id
+                    break
+                else:
+                    print("❌ Please enter valid ID\n")
+        
+            a = input("Enter Experiment Name: ")
+            a = a if a != "" else LoggingSettings.experiment_name
+            LoggingSettings.experiment_name = a
+
+        self._print_experiment_settings()
+        self.sleepstage = Sleepstage.N3
+        self.signal_type = Signal.EEG.Fpz_Cz
+
+        input("OK? ")
+        
+        self._run_mini_or_max(mini=True)
+        self._run_mini_or_max(mini=False)
+
+        if LoggingSettings.LOGGING:
+            poly_logger = LogManager()
+            poly_logger.log_polyarithmos()
+
+    def _run_mini_or_max(self,mini):
+        if mini:
+            FitnessFunctions.MINIMIZE_FITNESS = True
+        else:
+            FitnessFunctions.MINIMIZE_FITNESS = False
+
+        self._create_optimizer()
+        self.optimizer.run_evolution()
+
+        if LoggingSettings.LOGGING:
+            id_man = LogManager()
+            PolyarithmosManager.experiment_ids_within_polyartihmos.append(id_man.Experiment_ID - 1)
+
     def _get_user_configuration(self):
         """Get configuration from user input"""
         skip_sleep_stage = self.args.sleep_stage is not None
@@ -215,15 +234,6 @@ class SLEAPy:
         
         self._print_experiment_settings()
         input("OK? ")
-    
-    def _generate_all_configs(self):
-        configs = []
-
-        for signal_type in Signal.ALL_SIGNALS:
-            for sleep_type in Sleepstage.ALL_STAGES:
-                configs.append( (sleep_type, signal_type) )
-
-        return configs
 
     def _create_optimizer(self):
         """Create the evolutionary optimizer with given configuration"""
@@ -233,6 +243,7 @@ class SLEAPy:
             sleepstage=self.sleepstage,
             signal_type=self.signal_type,
         )
+
     def _print_experiment_settings(self):
         print("\n🧪 Experiment Configuration Summary")
         print("=" * 40)
@@ -303,7 +314,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='SLEAPy - Sleep Labeling using Evolutionary Algorithms and PyTorch')
     
     # General options
-    parser.add_argument('--omega', action='store_true', help='Run all possible configurations (ultimate test mode)')
+    parser.add_argument('--polyarithmos', action='store_true', help='Run all possible configurations (ultimate test mode)')
     
     # ModelManager options
     parser.add_argument('--batch-size', type=int, help=f'Batch size (default: {ModelManager.BATCH_SIZE})')
@@ -411,7 +422,7 @@ def main():
         sleapy.run_experiment(minimax=True)
 
 
-    # sleapy.run_experiment(run_omega=args.omega)
+    # sleapy.run_experiment(run_every_possible_experiment=args.polyarithmos)
 
 if __name__ == "__main__":
     try:
