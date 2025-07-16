@@ -10,6 +10,7 @@ GECCO 2006 - Genetic and Evolutionary Computation Conference. 1.
 
 import time
 import random
+import numpy as np
 from Globals import EvolutionManager, AlpsManager, TimeWall, LoggingSettings, Clr, LoggingTemplate
 
 class SLeaMuPlusLambda:
@@ -20,8 +21,7 @@ class SLeaMuPlusLambda:
         self.lambda_ = lambda_
         self.halloffame = halloffame
         self.LogManager = LogManager
-        
-
+    
     def main(self, stats):
         """See: DEAP/Algorithms
             mu: The number of individuals to select for the next generation.
@@ -72,7 +72,7 @@ class SLeaMuPlusLambda:
                 TimeWall.ON = True
                 TimeWall.time_wall_percentage = TimeWall.STARTING_PERCENTAGE
 
-            elif gen > flip_on_generation and (gen - flip_on_generation) % (int(EvolutionManager.GENERATIONS * 0.05)) == 0:
+            elif gen > flip_on_generation and (gen - flip_on_generation) % (max(1, int(EvolutionManager.GENERATIONS * 0.05))) == 0:
                 if TimeWall.time_wall_percentage <= TimeWall.MAX_PERCENTAGE - TimeWall.INCREASE:
                     TimeWall.time_wall_percentage += TimeWall.INCREASE
 
@@ -123,8 +123,19 @@ class SLeaMuPlusLambda:
         return self.population
 
     def end_generation(self, stats, invalid_ind):
-
+        
+        # record only handles fitness values
         record = stats.compile(self.population) if stats is not None else {}
+
+        # manually calc loss mean, std, med, min, max
+        lt = LoggingTemplate()
+        losses = [indi.model_performance[lt.train_loss] for indi in self.population]
+
+        l_mean = np.mean(losses)
+        l_std = np.std(losses)
+        l_med = np.median(losses)
+        l_min = np.min(losses)
+        l_max = np.max(losses)
 
         # Delete duplicates
         self.delete_duplicates()
@@ -140,10 +151,9 @@ class SLeaMuPlusLambda:
 
         # Log the generation
         if LoggingSettings.LOGGING:
-            for individual in self.population:
-                self.LogManager.check_for_best_in_gen(individual)
-                
-            self.LogManager.log_generation_stats(self.population, len(invalid_ind), record['avg'], record['std'], record['med'], record['min'], record['max'])
+            self.LogManager.log_generation_stats(self.population, len(invalid_ind), 
+                                                 record['avg'], record['std'], record['med'], record['min'], record['max'],
+                                                 l_mean, l_std, l_med, l_min, l_max)
 
     def isolated_evolution(self, layer_to_evolve):
         """Runs a single evolution for a single layer"""
@@ -240,7 +250,7 @@ class SLeaMuPlusLambda:
                     ind.layer = original.layer
 
             except ValueError:
-                continue # TODO, even with popsize 20 this still managed to happen once, simply ignore for now.
+                continue
 
         return offspring, genetic_material_used
     
@@ -257,7 +267,7 @@ class SLeaMuPlusLambda:
                 if parent not in marked:
                     parent.age += 1
                     marked.append(parent)
-                
+
     def create_new_layer(self):
         # Get the current maximum layer
         current_highest_layer = max([individual.layer for individual in self.population])
@@ -308,7 +318,7 @@ class SLeaMuPlusLambda:
         # Remove old layer 0 individuals from population
         self.population = [ind for ind in self.population if ind.layer != 0]
         self.population.extend(new_individuals)
-
+    
     def print_layered_population(self):
         """Prints all individuals grouped by layer in a justified table format"""
         # Group individuals by layer
@@ -370,7 +380,7 @@ class SLeaMuPlusLambda:
                     seen[new_key] = True
 
         self.population = new_population
-
+    
     def _loading_bar(self, gen, max_time_per_gen, elapsed_time):
         bar_size = 60  # Total width of the progress bar
         

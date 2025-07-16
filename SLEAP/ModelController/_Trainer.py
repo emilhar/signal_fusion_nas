@@ -90,11 +90,6 @@ def train_model(model, device, train_loader, test_loader, pos_weight, verbose=Fa
             
 
         elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
-        if have_time_limit:
-            if elapsed > ModelManager.MAX_TIME_SPENT_TRAINING:
-                if verbose:
-                    print(f"Stopping training: elapsed time {elapsed:.1f}s > max {ModelManager.MAX_TIME_SPENT_TRAINING}s")
-                break
 
         if verbose:
             if epoch % output_period == 0 or epoch == epochs-1:

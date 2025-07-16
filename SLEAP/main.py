@@ -84,14 +84,6 @@ class SLEAPy:
 
             self._create_optimizer()
             self.optimizer.run_evolution()
-            if LoggingSettings.LOGGING:
-                id_helper = LogManager()
-                experiment_id = id_helper.Experiment_ID - 1
-                PolyarithmosManager.experiment_ids_within_polyartihmos.append(experiment_id)
-
-        if LoggingSettings.LOGGING:
-            polyLogger = LogManager()
-            polyLogger.log_polyarithmos()
 
     def _generate_all_configs(self):
         configs = []
@@ -119,17 +111,13 @@ class SLEAPy:
             LoggingSettings.experiment_name = a
 
         self._print_experiment_settings()
-        self.sleepstage = Sleepstage.N3
-        self.signal_type = Signal.EEG.Fpz_Cz
+        self.sleepstage = Sleepstage.N2
+        self.signal_type = Signal.EEG.Pz_Oz
 
         input("OK? ")
         
         self._run_mini_or_max(mini=True)
         self._run_mini_or_max(mini=False)
-
-        if LoggingSettings.LOGGING:
-            poly_logger = LogManager()
-            poly_logger.log_polyarithmos()
 
     def _run_mini_or_max(self,mini):
         if mini:
@@ -139,10 +127,6 @@ class SLEAPy:
 
         self._create_optimizer()
         self.optimizer.run_evolution()
-
-        if LoggingSettings.LOGGING:
-            id_man = LogManager()
-            PolyarithmosManager.experiment_ids_within_polyartihmos.append(id_man.Experiment_ID - 1)
 
     def _get_user_configuration(self):
         """Get configuration from user input"""
@@ -318,7 +302,6 @@ def parse_arguments():
     
     # ModelManager options
     parser.add_argument('--batch-size', type=int, help=f'Batch size (default: {ModelManager.BATCH_SIZE})')
-    parser.add_argument('--max-ttime', type=int, help=f'Max training time in minutes (default: {ModelManager.MAX_TIME_SPENT_TRAINING})')
     parser.add_argument('--lr', type=float, help=f'Learning rate (default: {ModelManager.LEARNING_RATE})')
     parser.add_argument('--min-ks', type=int, help=f'Minimum kernel size (default: {ModelManager.MIN_KERNEL_SIZE})')
     parser.add_argument('--max-ks', type=int, help=f'Maximum kernel size (default: {ModelManager.MAX_KERNEL_SIZE})')
@@ -359,8 +342,6 @@ def apply_arguments(args):
     # ModelManager settings
     if args.batch_size:
         ModelManager.BATCH_SIZE = args.batch_size
-    if args.max_ttime:
-        ModelManager.MAX_TIME_SPENT_TRAINING = args.max_training_time
     if args.lr:
         ModelManager.LEARNING_RATE = args.learning_rate
     if args.min_ks:
@@ -411,18 +392,16 @@ def apply_arguments(args):
     if args.exp_name:
         LoggingSettings.experiment_name = args.exp_name
 
+    if args.polyarithmos:
+        return args.polyarithmos
+
 def main():
     """Main entry point"""
     args = parse_arguments()
-    apply_arguments(args)
+    repe = apply_arguments(args)
     
     sleapy = SLEAPy(args)
-
-    if True:
-        sleapy.run_experiment(minimax=True)
-
-
-    # sleapy.run_experiment(run_every_possible_experiment=args.polyarithmos)
+    sleapy.run_experiment(run_every_possible_experiment=repe)
 
 if __name__ == "__main__":
     try:

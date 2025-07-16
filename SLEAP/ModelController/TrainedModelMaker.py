@@ -28,9 +28,7 @@ class TrainedModelMaker:
 
                  epochs:int,
                  batch_size:int,
-                 learning_rate:int,
-
-                 have_time_limit:bool = False
+                 learning_rate:int
         ):
         
         self.STAGE = sleepstage
@@ -45,6 +43,7 @@ class TrainedModelMaker:
 
         model_args = get_branch_configs(branches, name, self.n_samples) # See ModelManager
         model_args["batch_size"] = batch_size
+
 
         model = CNN_BinaryClassifier(**model_args).to(self.device) #TODO: Get save'að þetta statedict
 

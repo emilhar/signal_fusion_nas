@@ -24,8 +24,8 @@ def get_branch_configs(branches:list[list[int]], name:str, sample_count:int):
           "kernel_sizes": branch,
           "paddings": _kernel_to_pad(branch),
           "strides": [conv_stride, 1, 1],
-          "pool_sizes": [pool_size, pool_size//2],
-          "pool_strides": [pool_strides, pool_strides//2],
+          "pool_sizes": [pool_size, clamp_num(pool_size)],
+          "pool_strides": [pool_strides, clamp_num(pool_size)],
           "dropout_rates": [0.1, 0.0]
       }
   
@@ -37,6 +37,9 @@ def get_branch_configs(branches:list[list[int]], name:str, sample_count:int):
     }
   
   return model_args
+
+def clamp_num(num):
+  return max(1, num//2)
 
 
 def _kernel_to_pad(numbers: list[int]):

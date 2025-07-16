@@ -122,6 +122,8 @@ class KernelSizeEvolutionaryOptimizer:
         epochs =AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["training_epochs"]
         learning_rate = ModelManager.LEARNING_RATE
 
+        
+
         new_model = TrainedModelMaker(
             branches = individual,
             name=f"{individual}, {batch_size}batch, {epochs}epochs",
@@ -177,10 +179,6 @@ class KernelSizeEvolutionaryOptimizer:
             aspirants = [random.choice(population) for _ in range(tournsize)]
             best = max(aspirants, key= lambda x: x.fitness.values[0])
             self.chosen_for_next_generation.append(best)
-
-        if LoggingSettings.LOGGING:
-            for individual in population:
-                self.LogManager.check_for_best_in_gen(individual)
         
         return self.chosen_for_next_generation
 
