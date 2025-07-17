@@ -233,29 +233,16 @@ class KernelSizeEvolutionaryOptimizer:
         # Update the original individuals with the two new, varied branches
         single_branch[0] = child1[0]
         other[branch_choice_index] = child2[0]
-
+        #TODO copy up/down
         return single_branch, other
 
     def _small_branch_crossover(self, ind1, ind2):
         """Crossover function for when both individuals have exactly 1 branch. 
         Performs one-point crossover on the single branch from two individuals."""
-        branch1 = ind1[0]
-        branch2 = ind2[0]
-
-        if min(len(branch1), len(branch2))-1 < 1:
-            picked = max([ind1, ind2], key=lambda x: len(x[0]))
-            return picked, picked
+        # TODO 2: Clone
+        picked = max([ind1, ind2], key=lambda x: len(x[0]))
+        return picked, picked
             
-        
-        cx_point = random.randint(1, min(len(branch1), len(branch2))-1)
-        child_branch1 = branch1[:cx_point] + branch2[cx_point:]
-        child_branch2 = branch2[:cx_point] + branch1[cx_point:]
-
-        ind1[0] = child_branch1
-        ind2[0] = child_branch2
-
-        return ind1, ind2
-
     def mutate(self, individual):
         """Mutate an individual by randomly modifying branches or kernel sizes."""
         
@@ -314,6 +301,8 @@ class KernelSizeEvolutionaryOptimizer:
         """
         Randomly selects a mutation type based on predefined probability ranges.
         """
+
+        #TODO 3: Taka í burtu remove
         num = random.randint(0, 99)
 
         if ModelManager.SORT_KERNELS:
