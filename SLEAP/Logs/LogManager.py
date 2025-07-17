@@ -100,27 +100,40 @@ class LogManager:
                              fit_mean, fit_std_deviation, fit_median, fit_min, fit_max,
                              l_mean, l_std_deviation, l_median, l_min, l_max):
 
-        layers = {}
-        for ind in population:
-            if ind.layer not in layers:
-                layers[ind.layer] = []
-            layers[ind.layer].append(ind)
-        
-        people_in_layers_count = []
-
-        for _, layer_population in layers.items():
-            people_in_layers_count.append(len(layer_population))
-            best = max(layer_population, key=lambda x: x.fitness.values[0])
+        if not LoggingSettings.LOG_ALL_INDIVIDUALS:
+            layers = {}
+            for ind in population:
+                if ind.layer not in layers:
+                    layers[ind.layer] = []
+                layers[ind.layer].append(ind)
             
-            best_in_layer = self.fill_individual_template(
-                generation= LoggingSettings.current_generation_id,
-                ind_id= best.individual_id,
-                age= best.age,
-                layer= best.layer,
-                model_performance= best.model_performance
-            )
+            people_in_layers_count = []
 
-            self._write_with_config(filetype="Individual", config=best_in_layer)
+            for _, layer_population in layers.items():
+                people_in_layers_count.append(len(layer_population))
+                best = max(layer_population, key=lambda x: x.fitness.values[0])
+                
+                best_in_layer = self.fill_individual_template(
+                    generation= LoggingSettings.current_generation_id,
+                    ind_id= best.individual_id,
+                    age= best.age,
+                    layer= best.layer,
+                    model_performance= best.model_performance
+                )
+
+                self._write_with_config(filetype="Individual", config=best_in_layer)
+
+        else:
+            for indi in population:
+                indi_config = self.fill_individual_template(
+                    generation= LoggingSettings.current_generation_id,
+                    ind_id= indi.individual_id,
+                    age= indi.age,
+                    layer= indi.layer,
+                    model_performance= indi.model_performance
+                )
+
+                self._write_with_config(filetype="Individual", config=indi_config)
 
         generation_configs = {
             self.lt.experiment_id: self.Experiment_ID,
