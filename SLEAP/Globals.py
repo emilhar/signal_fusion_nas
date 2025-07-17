@@ -70,7 +70,7 @@ class TimeWall:
     Time Wall cuts out the worst TIME_WALL_PERCENTAGE% of performers when it comes to training time."""
 
     # After what % of generations do you turn on the time wall?
-    FLIP_ON = 0.5
+    FLIP_ON = 2553243258
     ON = False
 
     STARTING_PERCENTAGE = 0.25
@@ -103,7 +103,7 @@ class AlpsManager:
     TEST_PERCENTAGES = [0.05, 0.05, 0.05]
     teitur_percentages = [0.10, 0.20, 1.00]
 
-    percentages = TEST_PERCENTAGES
+    percentages = teitur_percentages
     TRAINING_SETTINGS_FOR_LAYERS = None
     # TRAINING_SETTINGS_FOR_LAYERS = {
     #     0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
@@ -118,8 +118,8 @@ class AlpsManager:
     def _get_manager(percentages):
         return {
         0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        1: {"dataset_percentage": percentages[1], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
+        1: {"dataset_percentage": percentages[1], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
         # 3: {"dataset_percentage": percentages[3], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE * 4,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
         # 4: {"dataset_percentage": percentages[4], "training_epochs": epochs[4],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         # 5: {"dataset_percentage": percentages[5], "training_epochs": epochs[5],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
@@ -221,7 +221,7 @@ class FitnessFunctions:
 
 
     @staticmethod
-    def random_fitness(individual, population):
+    def random_fitness(individual_performance):
         return random.random()
 
     @staticmethod
