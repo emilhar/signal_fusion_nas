@@ -89,8 +89,8 @@ class SLeaMuPlusLambda:
             # Evolve each layer
             all_layers = set(individual.layer for individual in self.population)
             for layer in range(len(all_layers)):
-                if any([person for person in self.population if person.layer == layer]):
-                    self.isolated_evolution(layer_to_evolve= layer)
+                # if any([person for person in self.population if person.layer == layer]):
+                self.isolated_evolution(layer_to_evolve= layer)
 
             # Check if you need to create a new layer
             if gen in AlpsManager.LAYER_CREATION_THRESHOLDS:
@@ -227,7 +227,18 @@ class SLeaMuPlusLambda:
                     ind1, ind2 = self.toolbox.mate(ind1, ind2)
                     del ind1.fitness.values
                     ind1.age = max(ind1.age, ind2.age) + 1
-                    ind1.layer = max(ind1.layer, ind2.layer)
+                        
+                    lower_layer = 0
+                    if len(previous_layer_population) > 0:
+                        lower_layer = previous_layer_population[0].layer
+
+                    if ind1.layer == ind2.layer == lower_layer:
+                        layers = set([indi.layer for indi in self.population])
+                        if lower_layer+1 not in layers and lower_layer+1 in AlpsManager.created_layers:
+                            print("PO")
+                            ind1.layer = lower_layer + 1
+                    else:
+                        ind1.layer = max(ind1.layer, ind2.layer)
 
                     genetic_material_used[id(ind1)] = parents
                     offspring.append(ind1)
@@ -249,7 +260,7 @@ class SLeaMuPlusLambda:
                     ind.age = original.age
                     ind.layer = original.layer
 
-            except ValueError:
+            except (ValueError, IndexError):
                 continue
 
         return offspring, genetic_material_used
@@ -295,6 +306,7 @@ class SLeaMuPlusLambda:
             ind.layer = new_layer
 
         # Add the new layer population to the population
+        AlpsManager.created_layers.append(new_layer)
         self.population.extend(offspring)
 
     def remove_older_individuals(self):

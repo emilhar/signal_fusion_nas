@@ -3,6 +3,7 @@ These names are used by many classes, good idea to keep them global
 """
 import random
 import inspect
+import sympy
 
 class Sleepstage:
     WAKE = "wake"
@@ -86,7 +87,7 @@ class AlpsManager:
         FIBBONACCI = [1, 2, 3, 5, 8, 13, 21, "NA"]
         LINEAR = [1, 2, 3, 4, 5, 6, "NA"]
 
-        teitur = [1, 3, "NA"]
+        teitur = [5, 12, "NA"]
     
         used_aging_scheme = teitur
         uas_str = "Linear"
@@ -98,6 +99,7 @@ class AlpsManager:
 
     # Create layers just before individuals try to move into them
     LAYER_CREATION_THRESHOLDS = [max_age for max_age in MAX_AGE_IN_LAYERS if not isinstance(max_age, str)]
+    created_layers = [0]
 
     REAL_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
     TEST_PERCENTAGES = [0.05, 0.05, 0.05]
@@ -118,8 +120,10 @@ class AlpsManager:
     def _get_manager(percentages):
         return {
         0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        1: {"dataset_percentage": percentages[1], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
+        1: {"dataset_percentage": percentages[1], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        #3: {"dataset_percentage": percentages[3], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        #4: {"dataset_percentage": percentages[4], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
         # 3: {"dataset_percentage": percentages[3], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE * 4,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
         # 4: {"dataset_percentage": percentages[4], "training_epochs": epochs[4],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         # 5: {"dataset_percentage": percentages[5], "training_epochs": epochs[5],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
@@ -204,6 +208,41 @@ class FitnessFunctions:
         return fitness
     
     @staticmethod
+    def random_fitness(individual_performance):
+        return random.random()
+
+    @staticmethod
+    def prime_fitness(branches):
+        return sum(item for branch in branches for item in branch if sympy.isprime(item))
+    
+    @staticmethod
+    def closeness_to_global_opt(branches):
+        global_optimum = [[19, 18], [420, 120, 8], [1000, 1000, 1000]]
+        
+        # Sort each branch in both the input and global optimum
+        sorted_branches = sorted(branches, key=lambda x: len(x))
+        
+        score = 0
+        
+        # Length mismatch penalty
+        if len(sorted_branches) != len(global_optimum):
+            score -= 10_000
+            return score  # Early return for severe mismatch
+        
+        # Compare each corresponding branch
+        for branch, optimum_branch in zip(sorted_branches, global_optimum):
+            # Length mismatch within branch
+            if len(branch) != len(optimum_branch):
+                score -= 1_000
+                continue
+                
+            # Calculate element-wise distance (using Manhattan distance)
+            for a, b in zip(branch, optimum_branch):
+                score -= abs(a - b)  # Negative because lower distance is better
+                
+        return score
+    
+    @staticmethod
     def train_loss_normalize(individual, population):
 
         losses = [x.fitness.values[0] for x in population]
@@ -217,19 +256,13 @@ class FitnessFunctions:
             fitness = (highest_loss_val - loss) / (highest_loss_val - lowest_loss_val)
 
         individual.fitness.values = (fitness,)
-    
-
-
-    @staticmethod
-    def random_fitness(individual_performance):
-        return random.random()
 
     @staticmethod
     def no_normalization(individual, population):
         pass
 
-    MINIMIZE_FITNESS = True
-    fitness_function = train_loss
+    MINIMIZE_FITNESS = False
+    fitness_function = closeness_to_global_opt
     normalization_function = no_normalization
 
 class SLEAPyException(Exception):

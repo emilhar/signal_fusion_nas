@@ -107,10 +107,10 @@ class LogManager:
                     layers[ind.layer] = []
                 layers[ind.layer].append(ind)
             
-            people_in_layers_count = []
+            people_in_layers_count = [0 for _ in AlpsManager.teitur_percentages]
 
-            for _, layer_population in layers.items():
-                people_in_layers_count.append(len(layer_population))
+            for layer, layer_population in layers.items():
+                people_in_layers_count[layer] = (len(layer_population))
                 best = max(layer_population, key=lambda x: x.fitness.values[0])
                 
                 best_in_layer = self.fill_individual_template(
@@ -124,7 +124,9 @@ class LogManager:
                 self._write_with_config(filetype="Individual", config=best_in_layer)
 
         else:
+            people_in_layers_count = [0 for _ in AlpsManager.teitur_percentages]
             for indi in population:
+                people_in_layers_count[indi.layer]+=1
                 indi_config = self.fill_individual_template(
                     generation= LoggingSettings.current_generation_id,
                     ind_id= indi.individual_id,

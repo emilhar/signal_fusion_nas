@@ -80,15 +80,17 @@ class KernelSizeEvolutionaryOptimizer:
         number_of_branches = random.randint( ModelManager.NUMBER_OF_BRANCHES_RANGE[0], ModelManager.NUMBER_OF_BRANCHES_RANGE[1])
         kernel_per_branch = [ random.randint( ModelManager.NUMBER_OF_KERNELS_RANGE[0], ModelManager.NUMBER_OF_KERNELS_RANGE[1]) for _ in range(number_of_branches) ]
 
-        for i in range(number_of_branches):
-            first = max(1, random.choice( range(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE, 20) ) - 1)
-            branch = [first]
+        # for i in range(number_of_branches):
+        #     first = max(1, random.choice( range(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE, 20) ) - 1)
+        #     branch = [first]
             
-            for _ in range(kernel_per_branch[i]-1):
-                item  = max( branch[-1] // 2, 1)
-                branch.append(item)
+        #     for _ in range(kernel_per_branch[i]-1):
+        #         item  = max( branch[-1] // 2, 1)
+        #         branch.append(item)
                 
-            branches.append(branch)
+        #     branches.append(branch)
+
+        branches = [[random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(kernel_per_branch[i])] for i in range(number_of_branches)]
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
 
@@ -102,10 +104,31 @@ class KernelSizeEvolutionaryOptimizer:
         """Evaluate an individual by training a model
         arg: individual"""
 
-        model_performance = self.create_trained_individual(individual, individual.layer)
-        fitness = self.calculate_fitness(model_performance)
+        fitness = FitnessFunctions.closeness_to_global_opt(individual)
 
+        it = LoggingTemplate()
+        model_performance = {
+            it.epoch: 0,
+            it.train_loss: FitnessFunctions.closeness_to_global_opt(individual),
+            it.test_loss: 0,
+            it.precision: 0,
+            it.recall: 0,
+            it.accuracy: 0,
+            it.lr: 0,
+            it.branches: individual,
+            it.best_f1: 0,
+            it.best_auc: 0,
+            it.best_true: 0,
+            it.best_scores: 0,
+            it.time: 0,
+            it.state_dict: 0
+        }
         individual.model_performance = model_performance
+
+        # model_performance = self.create_trained_individual(individual, individual.layer)
+        # fitness = self.calculate_fitness(model_performance)
+
+        # individual.model_performance = model_performance
         individual.individual_id = LoggingSettings.current_individual_id
         LoggingSettings.current_individual_id += 1
 
@@ -184,75 +207,10 @@ class KernelSizeEvolutionaryOptimizer:
 
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
-
-        branch_count_ind1 = len(ind1)
-        branch_count_ind2 = len(ind2)
-
-        # Both individuals have >1 branch
-        if ( (branch_count_ind1 > 1) and (branch_count_ind2 > 1) ):
-            children = self._large_branch_crossover(ind1, ind2)
-            
-        # Both individuals have exactly 1 branch
-        elif ( (branch_count_ind1 == 1) and (branch_count_ind2 == 1) ):
-            children = self._small_branch_crossover(ind1, ind2)
-
-        # Exactly one individual has 1 branch while other has >1 branches
-        else:
-            if branch_count_ind1 == 1:
-                single_branch = ind1
-                other = ind2
-
-            elif branch_count_ind2 == 1:
-                single_branch = ind2
-                other = ind1
-
-            children =  self._mixed_branch_crossover(single_branch, other)
-
-        return children
-
-    def _large_branch_crossover(self, ind1, ind2):
-        """Crossover function for individuals when BOTH individuals have more than one branch.
-        Individuals trade a single branch"""
-
-        # Decide branch to trade
-        range_max = min(len(ind1), len(ind2)) - 1
-        trade_branch_index = random.randrange(range_max)
-
-        # Trade branches
-        ind1[trade_branch_index], ind2[trade_branch_index] = ind2[trade_branch_index], ind1[trade_branch_index]
-
-        return ind1, ind2
-
-    def _mixed_branch_crossover(self, single_branch, other):
-        """Crossover function for when one individual has exactly 1 branch, but the other has many branches.
-        A single branch is chosen from the larger individual, then small_branch_crossover is performed on those branches"""
-        branch_choice_index = random.randrange(len(other)-1)
-
-        child1, child2 = self._small_branch_crossover(single_branch, [other[branch_choice_index]])
-
-        # Update the original individuals with the two new, varied branches
-        single_branch[0] = child1[0]
-        other[branch_choice_index] = child2[0]
-
-        return single_branch, other
-
-    def _small_branch_crossover(self, ind1, ind2):
-        """Crossover function for when both individuals have exactly 1 branch. 
-        Performs one-point crossover on the single branch from two individuals."""
-        branch1 = ind1[0]
-        branch2 = ind2[0]
-
-        if min(len(branch1), len(branch2))-1 < 1:
-            picked = max([ind1, ind2], key=lambda x: len(x[0]))
-            return picked, picked
-            
+        idx1 = random.randint(0, len(ind1) - 1)
+        idx2 = random.randint(0, len(ind2) - 1)
         
-        cx_point = random.randint(1, min(len(branch1), len(branch2))-1)
-        child_branch1 = branch1[:cx_point] + branch2[cx_point:]
-        child_branch2 = branch2[:cx_point] + branch1[cx_point:]
-
-        ind1[0] = child_branch1
-        ind2[0] = child_branch2
+        ind1[idx1], ind2[idx2] = ind2[idx2], ind1[idx1]
 
         return ind1, ind2
 
@@ -260,7 +218,7 @@ class KernelSizeEvolutionaryOptimizer:
         """Mutate an individual by randomly modifying branches or kernel sizes."""
         
         # Clone the individual to avoid in-place issues
-        mutant = creator.Individual([branch[:] for branch in individual])
+        mutant: list[list] = creator.Individual([branch[:] for branch in individual])
         mutant.age = individual.age
         mutant.layer = individual.layer
 
@@ -272,7 +230,11 @@ class KernelSizeEvolutionaryOptimizer:
         for _ in range(number_of_mutations):
             mutation_type = self._mutation_choice()
         
-            if mutation_type == "add_branch":
+            if mutation_type == "remove_branch":
+                if len(mutant) > ModelManager.NUMBER_OF_BRANCHES_RANGE[0]:
+                    mutant.pop(random.randrange(len(mutant)))
+            
+            elif mutation_type == "add_branch":
                 if len(mutant) < ModelManager.NUMBER_OF_BRANCHES_RANGE[1]:
                     branch_length = random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE)
                     first_kernel = max(1, random.choice(range(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE, 20))-1)
@@ -281,32 +243,36 @@ class KernelSizeEvolutionaryOptimizer:
                         new_branch.append(max( new_branch[-1] // 2, 1))
                     mutant.append(new_branch)
 
-            elif mutation_type == "remove_branch":
-                if len(mutant) > ModelManager.NUMBER_OF_BRANCHES_RANGE[0]:
-                    mutant.pop(random.randrange(len(mutant)))
-
             elif mutation_type == "add_kernel":
                 branch_idx = random.randrange(len(mutant))
                 if len(mutant[branch_idx]) < ModelManager.NUMBER_OF_KERNELS_RANGE[1]:
-                    new_kernel = max(ModelManager.MIN_KERNEL_SIZE, mutant[branch_idx][-1] // 2)
-                    mutant[branch_idx].append(new_kernel)
-
-            elif mutation_type == "remove_kernel":
-                branch_idx = random.randrange(len(mutant))
-                if len(mutant[branch_idx]) > ModelManager.NUMBER_OF_KERNELS_RANGE[0]:
-                    mutant[branch_idx].pop(random.randrange(len(mutant[branch_idx])))
+                    new_kernel = random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE)
+                    nk_index = random.randint(0, len(mutant[branch_idx])-1)
+                    
+                    mutant[branch_idx].insert(nk_index, new_kernel)
 
             elif mutation_type == "change_kernel":
+
                 branch_idx = random.randrange(len(mutant))
                 kernel_idx = random.randrange(len(mutant[branch_idx]))
                 current_value = mutant[branch_idx][kernel_idx]
-                change = random.choice([-100, -50, 50, 100])
-                new_value = min(max(current_value + change, ModelManager.MIN_KERNEL_SIZE), ModelManager.MAX_KERNEL_SIZE)
+                
+                # Get random percentage change between 10% and 20% (0.10 to 0.20)
+                percentage_change = random.uniform(0.10, 0.20)
+                
+                # Randomly decide whether to increase or decrease
+                if random.random() < 0.5:
+                    percentage_change = -percentage_change
+                
+                # Calculate new value (current_value ± (current_value * percentage_change))
+                new_value = current_value + (current_value * percentage_change)
+                
+                # Round to nearest integer and clamp to valid kernel sizes
+                new_value = int(round(new_value))
+                new_value = min(max(new_value, ModelManager.MIN_KERNEL_SIZE), ModelManager.MAX_KERNEL_SIZE)
+                
+                # Apply mutation
                 mutant[branch_idx][kernel_idx] = new_value
-
-            elif mutation_type == "randomize_kernel_order_in_branch":
-                branch_idx = random.randrange(len(mutant))
-                random.shuffle(mutant[branch_idx])
 
         return (mutant,)
 
@@ -314,35 +280,16 @@ class KernelSizeEvolutionaryOptimizer:
         """
         Randomly selects a mutation type based on predefined probability ranges.
         """
-        num = random.randint(0, 99)
+        num = random.randint(1, 100)
 
-        if ModelManager.SORT_KERNELS:
-            # Sorted kernels
-            if 0 <= num <= 14:       # 15%: Remove branch
-                return "remove_branch"
-            elif 15 <= num <= 29:    # 15%: Add branch
-                return "add_branch"
-            elif 30 <= num <= 54:    # 25%: Add kernel
-                return "add_kernel"
-            elif 55 <= num <= 69:    # 15%: Remove kernel
-                return "remove_kernel"
-            else:                    # 30%: Change kernel
-                return "change_kernel"
-
-        else:
-            # Unsorted kernels (unsort added)
-            if 0 <= num <= 14:       # 15%: Remove branch
-                return "remove_branch"
-            elif 15 <= num <= 29:    # 15%: Add branch
-                return "add_branch"
-            elif 30 <= num <= 49:    # 20%: Add kernel
-                return "add_kernel"
-            elif 50 <= num <= 59:    # 10%: Remove kernel
-                return "remove_kernel"
-            elif 60 <= num <= 84:    # 25%: Change kernel
-                return "change_kernel"
-            else:                    # 15%: Unsort
-                return "randomize_kernel_order_in_branch"
+        if 1 <= num <= 5:       # 5%: Remove branch
+            return "remove_branch"
+        elif 5 <= num <= 20:    # 15%: Add branch
+            return "add_branch"
+        elif 20 <= num <= 45:    # 25%: Add kernel
+            return "add_kernel"
+        else:                    # 55%: Change kernel
+            return "change_kernel"
 
     def run_evolution(self):
         """Run the evolutionary algorithm"""
