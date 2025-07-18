@@ -7,10 +7,10 @@ from matplotlib import colormaps
 # GLOBAL SETTINGS (adjust these as needed)
 COLORMAP_NAME = 'plasma'  # Change this to any valid colormap name ('viridis', 'plasma', etc.)
 LINE_WIDTH = 2.5         # Default line width
-DEFAULT_METRIC = 'mean_loss'  # Default aggregation metric
+DEFAULT_METRIC = 'max'  # Default aggregation metric
 NEW_LAYER_LINE_STYLE = '--'  # Style for new layer indicator lines
 NEW_LAYER_ALPHA = 0.75        # Transparency for new layer lines
-ST = "train_loss"
+ST = "time"
 
 
 def analyze_by_metric(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE_WIDTH, st = ST):
@@ -48,19 +48,7 @@ def analyze_by_metric(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE_
     df[st] = df['model_performance'].apply(safe_parse)
     df = df.dropna(subset=[st])
 
-    # 3. Calculate specified metric
-    METRICS = {
-        'mean_loss': 'mean',
-        'max_loss': 'max',
-        'min_loss': 'min', 
-        'median_loss': 'median'
-    }
-    
-    if metric not in METRICS:
-        print(f"Invalid metric. Using {DEFAULT_METRIC}. Options: {list(METRICS.keys())}")
-        metric = DEFAULT_METRIC
-        
-    loss_data = df.groupby(['experiment_id', 'generation', 'layer'])[st].agg(METRICS[metric]).reset_index()
+    loss_data = df.groupby(['experiment_id', 'generation', 'layer'])[st].agg(metric).reset_index()
 
     # 4. Visualization with modern colormap API
     plt.figure(figsize=(12, 7))
@@ -124,5 +112,5 @@ ID = input("id please: [T/O]: ")
 ID = ID.upper()
 while True:
     ids = int(input("id: "))
-    analyze_by_metric([6, 8], ID)  # Uses global settings
+    analyze_by_metric([ids], ID)  # Uses global settings
     # To change colormap: modify COLORMAP_NAME at the top
