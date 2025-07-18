@@ -41,11 +41,18 @@ class SLEAPy:
 
         else:
             self._get_user_configuration()
-            for x in [FitnessFunctions.train_loss]:#, FitnessFunctions.random_fitness]:
-                FitnessFunctions.fitness_function = x
-                FitnessFunctions.MINIMIZE_FITNESS = True
+            for signal in [Signal.EOG.HORIZONTAL, Signal.EOG.HORIZONTAL, Signal.EMG.SUBMENTAL]:
+                self.sleepstage = None
+                if signal == Signal.EOG.HORIZONTAL:
+                    LoggingSettings.experiment_name = "Weekend run with (EOG, REM) x2, (EMG, N3) 1x"
+                    self.sleepstage = Sleepstage.REM
+                else:
+                    self.sleepstage = Sleepstage.N3
+
                 self._create_optimizer()
                 self.optimizer.run_evolution()
+
+            self._run_every_possible_experiment()
         
     def _run_every_possible_experiment(self):
         print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")

@@ -113,7 +113,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, verbose=Fa
         it.recall: recall,
         it.accuracy: accuracy,
         it.lr: current_lr,
-        it.branches: kernel_sizes[0],
+        it.branches: kernel_sizes,
         it.best_f1: best_f1,
         it.best_auc: best_auc,
         it.best_true: best_true,

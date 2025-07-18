@@ -80,16 +80,6 @@ class KernelSizeEvolutionaryOptimizer:
         number_of_branches = random.randint( ModelManager.NUMBER_OF_BRANCHES_RANGE[0], ModelManager.NUMBER_OF_BRANCHES_RANGE[1])
         kernel_per_branch = [ random.randint( ModelManager.NUMBER_OF_KERNELS_RANGE[0], ModelManager.NUMBER_OF_KERNELS_RANGE[1]) for _ in range(number_of_branches) ]
 
-        # for i in range(number_of_branches):
-        #     first = max(1, random.choice( range(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE, 20) ) - 1)
-        #     branch = [first]
-            
-        #     for _ in range(kernel_per_branch[i]-1):
-        #         item  = max( branch[-1] // 2, 1)
-        #         branch.append(item)
-                
-        #     branches.append(branch)
-
         branches = [[random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(kernel_per_branch[i])] for i in range(number_of_branches)]
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
@@ -103,27 +93,6 @@ class KernelSizeEvolutionaryOptimizer:
     def evaluate_individual(self, individual):
         """Evaluate an individual by training a model
         arg: individual"""
-
-        # fitness = FitnessFunctions.closeness_to_global_opt(individual)
-
-        # it = LoggingTemplate
-        # model_performance = {
-        #     it.epoch: 0,
-        #     it.train_loss: FitnessFunctions.closeness_to_global_opt(individual),
-        #     it.test_loss: 0,
-        #     it.precision: 0,
-        #     it.recall: 0,
-        #     it.accuracy: 0,
-        #     it.lr: 0,
-        #     it.branches: individual,
-        #     it.best_f1: 0,
-        #     it.best_auc: 0,
-        #     it.best_true: 0,
-        #     it.best_scores: 0,
-        #     it.time: 0,
-        #     it.state_dict: 0
-        # }
-        # individual.model_performance = model_performance
 
         model_performance = self.create_trained_individual(individual, individual.layer)
         fitness = self.calculate_fitness(model_performance)

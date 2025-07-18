@@ -82,6 +82,8 @@ class LogManager:
         """Log the experiment configuration using template names"""
         lt = LoggingTemplate
 
+        LoggingSettings.experiment_name += f"--batch-size {ModelManager.BATCH_SIZE} --lr {ModelManager.LEARNING_RATE} --min-ks {ModelManager.MIN_KERNEL_SIZE} --max-ks {ModelManager.MAX_KERNEL_SIZE} --pop-size {EvolutionManager.POPULATION_SIZE_PER_LAYER} --generations {EvolutionManager.GENERATIONS} --st-size {EvolutionManager.SELECTION_TOURNAMENT_SIZE} --hof-size {EvolutionManager.HALL_OF_FAME_MEMBERS} --cx-prob {EvolutionManager.CX_PROB} --mut-prob {EvolutionManager.MUTATION_PROB} --sleep-stage {sleepstage} --signal {signal_type} --dataset {DataManager.DATASET} --max-mem {DataManager.MAX_MEMORY} --even-split {DataManager.EVEN_DATA_SPLIT} --log-id {LoggingSettings.LOGGER_ID} --log-all {LoggingSettings.LOG_ALL_INDIVIDUALS}"
+        
         config = {
             lt.experiment_id: self.Experiment_ID,
             "name": LoggingSettings.experiment_name,
