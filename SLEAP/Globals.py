@@ -39,7 +39,6 @@ class ModelManager:
     # Kernel size constraints
     MIN_KERNEL_SIZE = 1
     MAX_KERNEL_SIZE = None
-    SORT_KERNELS = False
 
 class EvolutionManager:
 
@@ -62,7 +61,6 @@ class EvolutionManager:
     MUTATION_PROB: float = 0.5
 
     # Misc
-    SMALLER_FILES = False
     VERBOSE = False # Shows Layers
     VERY_VERBOSE = False # Shows Individual Training sessions
     
@@ -71,7 +69,7 @@ class TimeWall:
     Time Wall cuts out the worst TIME_WALL_PERCENTAGE% of performers when it comes to training time."""
 
     # After what % of generations do you turn on the time wall?
-    FLIP_ON = 2553243258
+    FLIP_ON = 0.5
     ON = False
 
     STARTING_PERCENTAGE = 0.25
@@ -87,7 +85,7 @@ class AlpsManager:
         FIBBONACCI = [1, 2, 3, 5, 8, 13, 21, "NA"]
         LINEAR = [1, 2, 3, 4, 5, 6, "NA"]
 
-        teitur = [1, 5, "NA"]
+        teitur = [1, 14, "NA"]
     
         used_aging_scheme = teitur
         uas_str = "Linear"
@@ -116,15 +114,15 @@ class AlpsManager:
     def _get_manager(percentages):
         return {
         0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        1: {"dataset_percentage": percentages[1], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        1: {"dataset_percentage": percentages[1], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": 15, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE*4,    "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1,}
         #3: {"dataset_percentage": percentages[3], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         #4: {"dataset_percentage": percentages[4], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
         # 3: {"dataset_percentage": percentages[3], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE * 4,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
         # 4: {"dataset_percentage": percentages[4], "training_epochs": epochs[4],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         # 5: {"dataset_percentage": percentages[5], "training_epochs": epochs[5],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         # 6: {"dataset_percentage": percentages[6], "training_epochs": epochs[6], "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
-    }
+        }
     
 class PolyarithmosManager:
     folder_path = None
@@ -152,45 +150,6 @@ class LoggingSettings:
     population_size = 0
 
     experiment_name = "Unnamed"
-
-class LoggingTemplate:
-    def __init__(self):
-        pass
-
-    rounding_number = 2
-
-    PID = "PID"
-    experiment_ids_within_polyarithmos = "experiment_ids_within_polyartihmos"
-    p_type = "p_type"
-
-    experiment_id = "experiment_id"
-    generation = "generation"
-    indi_id = "individual_id"
-    age = "age"
-    layer = "layer"
-    fitness = "fitness"
-    reason = "reason"
-
-    epoch = "epoch"
-    lr = "learning_rate"
-    branches= "branches"
-    train_loss = "train_loss"
-    test_loss = "test_loss"
-    precision = "precision"
-    recall = "recall"
-    accuracy = "accuracy"
-    best_f1 = "best_f1"
-    best_auc = "best_auc"
-    time = "time"
-    best_true = "true_labels"
-    best_scores = "best_scores"
-    state_dict = "state_dict"
-
-    # Translation table
-    reason_map = {
-        "Best In Layer": 0,
-        "Checked For Best In Generation": 1
-    }
 
 class FitnessFunctions:
     @staticmethod
@@ -261,33 +220,6 @@ class FitnessFunctions:
     fitness_function = closeness_to_global_opt
     normalization_function = no_normalization
 
-class SLEAPyException(Exception):
-    def __init__(self, **kwargs):
-        super().__init__()
-        print(f"{Clr("All classes and their contents in Globals.py", "blue")}:")
-
-        for k, v in kwargs.items():
-            print(f"{Clr(k, "red")}: {Clr(v, "red")}")
-
-        # Collect all top-level classes in the module
-        module_classes = {
-            name: obj for name, obj in globals().items()
-            if inspect.isclass(obj) and obj.__module__ == __name__
-        }
-
-        for class_name, cls in module_classes.items():
-            print(f"\nClass: {class_name}")
-            for attr_name, attr_value in inspect.getmembers(cls):
-                if attr_name.startswith("__") and attr_name.endswith("__"):
-                    continue  # Skip dunder methods
-
-                if inspect.isfunction(attr_value):
-                    print(f"  Method: {attr_name}()")
-                elif isinstance(attr_value, (int, float, str, list, dict, tuple, bool)):
-                    print(f"  Variable: {attr_name} = {repr(attr_value)}")
-                elif inspect.isclass(attr_value):
-                    print(f"  Nested Class: {attr_name}")
-
 class Clr:
     def __init__(self, string, color=None, bg_color=None):
         self.string = str(string)
@@ -350,3 +282,103 @@ class Clr:
         color_code = "".join(codes)
         
         return f"{color_code}{self.string}{reset_code}"
+
+class LoggingTemplate:
+    rounding_number = 2
+
+    accuracy = "accuracy"
+    age = "age"
+    age_gap = "age_gap"
+    aging_scheme = "aging_scheme"
+    alps_manager = "alps_manager"
+    base_batch_size = "base_batch_size"
+    best = "best"
+    best_auc = "best_auc"
+    best_f1 = "best_f1"
+    best_scores = "best_scores"
+    best_true = "true_labels"
+    branches = "branches"
+    crossover_prob = "crossover_prob"
+    data_split_testing = "data_split_testing"
+    data_split_training = "data_split_training"
+    dataset_name = "dataset_name"
+    elitism = "elitism"
+    end_time = "end_time"
+    epoch = "epoch"
+    even_data_split = "even_data_split"
+    experiment_id = "experiment_id"
+    experiment_ids_within_polyarithmos = "experiment_ids_within_polyartihmos"
+    fitness = "fitness"
+    fitness_function = "fitness_function"
+    generation = "generation"
+    generations = "generations"
+    hall_of_fame_members = "hall_of_fame_members"
+    indi_id = "individual_id"
+    layer = "layer"
+    layer_creation_thresholds = "layer_creation_thresholds"
+    learning_rate = "learning_rate"
+    lr = "learning_rate"
+    max_age_in_layers = "max_age_in_layers"
+    max_kernel_size = "max_kernel_size"
+    max_memory = "max_memory"
+    max_number_of_mutations = "max_number_of_mutations"
+    min_kernel_size = "min_kernel_size"
+    minimize_fitness = "minimize_fitness"
+    mutation_prob = "mutation_prob"
+    name = "name"
+    number_of_branches_range = "number_of_branches_range"
+    number_of_kernels_range = "number_of_kernels_range"
+    p_type = "p_type"
+    percentages = "percentages"
+    population_size = "population_size"
+    precision = "precision"
+    reason = "reason"
+    recall = "recall"
+    rounding_number = 2
+    second_best = "second_best"
+    selection_tournament_size = "selection_tournament_size"
+    signal_type = "signal_type"
+    sleepstage = "sleepstage"
+    start_time = "start_time"
+    state_dict = "state_dict"
+    test_loss = "test_loss"
+    third_best = "third_best"
+    time = "time"
+    time_wall_flip_on = "time_wall_flip_on"
+    time_wall_increase = "time_wall_increase"
+    time_wall_max_percentage = "time_wall_max_percentage"
+    time_wall_starting_percentage = "time_wall_starting_percentage"
+    train_loss = "train_loss"
+
+    # Translation table
+    reason_map = {
+        "Best In Layer": 0,
+        "Checked For Best In Generation": 1
+    }
+
+class SLEAPyException(Exception):
+    def __init__(self, **kwargs):
+        super().__init__()
+        print(f"{Clr("All classes and their contents in Globals.py", "blue")}:")
+
+        for k, v in kwargs.items():
+            print(f"{Clr(k, "red")}: {Clr(v, "red")}")
+
+        # Collect all top-level classes in the module
+        module_classes = {
+            name: obj for name, obj in globals().items()
+            if inspect.isclass(obj) and obj.__module__ == __name__
+        }
+
+        for class_name, cls in module_classes.items():
+            print(f"\nClass: {class_name}")
+            for attr_name, attr_value in inspect.getmembers(cls):
+                if attr_name.startswith("__") and attr_name.endswith("__"):
+                    continue  # Skip dunder methods
+
+                if inspect.isfunction(attr_value):
+                    print(f"  Method: {attr_name}()")
+                elif isinstance(attr_value, (int, float, str, list, dict, tuple, bool)):
+                    print(f"  Variable: {attr_name} = {repr(attr_value)}")
+                elif inspect.isclass(attr_value):
+                    print(f"  Nested Class: {attr_name}")

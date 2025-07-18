@@ -104,7 +104,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, verbose=Fa
     for branch in model.branches.values():
         kernel_sizes.append(_get_kernel_sizes(branch))
     
-    it = LoggingTemplate()
+    it = LoggingTemplate
     output = {
         it.epoch: epoch,
         it.train_loss: train_loss,
@@ -113,7 +113,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, verbose=Fa
         it.recall: recall,
         it.accuracy: accuracy,
         it.lr: current_lr,
-        it.branches: kernel_sizes[0],
+        it.branches: kernel_sizes,
         it.best_f1: best_f1,
         it.best_auc: best_auc,
         it.best_true: best_true,

@@ -28,6 +28,8 @@ def remove_experiment_from_csv(file_path, experiment_id):
 
 def main():
     experiment_id = input("Enter the experiment ID you want to delete: ").strip()
+    user_id = input("input logger id [T/O]: ").strip().upper()
+    
     if not experiment_id:
         print("No experiment ID provided. Exiting.")
         return
@@ -39,9 +41,9 @@ def main():
     
     # Define the files to process
     files = [
-        "Logs/OLogs/GenerationStatsLog.csv",
-        "Logs/OLogs/ExperimentStatsLog.csv",
-        "Logs/OLogs/IndividualLog.csv"
+        f"Logs/{user_id}Logs/ExperimentStatsLog.csv",
+        f"Logs/{user_id}Logs/GenerationStatsLog.csv",
+        f"Logs/{user_id}Logs/IndividualLog.csv"
     ]
     
     # Process each file

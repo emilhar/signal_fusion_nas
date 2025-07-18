@@ -10,10 +10,12 @@ LINE_WIDTH = 2.5         # Default line width
 DEFAULT_METRIC = 'mean_loss'  # Default aggregation metric
 NEW_LAYER_LINE_STYLE = '--'  # Style for new layer indicator lines
 NEW_LAYER_ALPHA = 0.75        # Transparency for new layer lines
+ST = "train_loss"
 
-def analyze_train_loss(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE_WIDTH):
+
+def analyze_by_metric(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE_WIDTH, st = ST):
     """
-    Advanced train_loss visualization with customizable metrics
+    Advanced by_metric visualization with customizable metrics
     
     Parameters:
         experiment_ids (list): List of experiment IDs to analyze (e.g., [0, 1, 2])
@@ -36,15 +38,15 @@ def analyze_train_loss(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE
         
             
 
-    # 2. Parse JSON and extract train_loss
+    # 2. Parse JSON and extract by_metric
     def safe_parse(perf_str):
         try:
-            return abs(ast.literal_eval(perf_str)['train_loss'])  # Absolute value
+            return abs(ast.literal_eval(perf_str)[st])  # Absolute value
         except:
             return np.nan
     
-    df['train_loss'] = df['model_performance'].apply(safe_parse)
-    df = df.dropna(subset=['train_loss'])
+    df[st] = df['model_performance'].apply(safe_parse)
+    df = df.dropna(subset=[st])
 
     # 3. Calculate specified metric
     METRICS = {
@@ -58,7 +60,7 @@ def analyze_train_loss(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE
         print(f"Invalid metric. Using {DEFAULT_METRIC}. Options: {list(METRICS.keys())}")
         metric = DEFAULT_METRIC
         
-    loss_data = df.groupby(['experiment_id', 'generation', 'layer'])['train_loss'].agg(METRICS[metric]).reset_index()
+    loss_data = df.groupby(['experiment_id', 'generation', 'layer'])[st].agg(METRICS[metric]).reset_index()
 
     # 4. Visualization with modern colormap API
     plt.figure(figsize=(12, 7))
@@ -85,7 +87,7 @@ def analyze_train_loss(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE
                              (loss_data['layer'] == layer)]
             
             if not subset.empty:
-                plt.plot(subset['generation'], subset['train_loss'],
+                plt.plot(subset['generation'], subset[st],
                         color=colors[layer_idx],
                         linestyle=linestyles[exp_idx],
                         linewidth=linewidth,
@@ -122,5 +124,5 @@ ID = input("id please: [T/O]: ")
 ID = ID.upper()
 while True:
     ids = int(input("id: "))
-    analyze_train_loss([6, 8], ID)  # Uses global settings
+    analyze_by_metric([6, 8], ID)  # Uses global settings
     # To change colormap: modify COLORMAP_NAME at the top

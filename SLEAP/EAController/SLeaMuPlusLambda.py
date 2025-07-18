@@ -128,7 +128,7 @@ class SLeaMuPlusLambda:
         record = stats.compile(self.population) if stats is not None else {}
 
         # manually calc loss mean, std, med, min, max
-        lt = LoggingTemplate()
+        lt = LoggingTemplate
         losses = [indi.model_performance[lt.train_loss] for indi in self.population]
 
         l_mean = np.mean(losses)
