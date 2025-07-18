@@ -104,31 +104,31 @@ class KernelSizeEvolutionaryOptimizer:
         """Evaluate an individual by training a model
         arg: individual"""
 
-        fitness = FitnessFunctions.closeness_to_global_opt(individual)
+        # fitness = FitnessFunctions.closeness_to_global_opt(individual)
 
-        it = LoggingTemplate()
-        model_performance = {
-            it.epoch: 0,
-            it.train_loss: FitnessFunctions.closeness_to_global_opt(individual),
-            it.test_loss: 0,
-            it.precision: 0,
-            it.recall: 0,
-            it.accuracy: 0,
-            it.lr: 0,
-            it.branches: individual,
-            it.best_f1: 0,
-            it.best_auc: 0,
-            it.best_true: 0,
-            it.best_scores: 0,
-            it.time: 0,
-            it.state_dict: 0
-        }
-        individual.model_performance = model_performance
-
-        # model_performance = self.create_trained_individual(individual, individual.layer)
-        # fitness = self.calculate_fitness(model_performance)
-
+        # it = LoggingTemplate()
+        # model_performance = {
+        #     it.epoch: 0,
+        #     it.train_loss: FitnessFunctions.closeness_to_global_opt(individual),
+        #     it.test_loss: 0,
+        #     it.precision: 0,
+        #     it.recall: 0,
+        #     it.accuracy: 0,
+        #     it.lr: 0,
+        #     it.branches: individual,
+        #     it.best_f1: 0,
+        #     it.best_auc: 0,
+        #     it.best_true: 0,
+        #     it.best_scores: 0,
+        #     it.time: 0,
+        #     it.state_dict: 0
+        # }
         # individual.model_performance = model_performance
+
+        model_performance = self.create_trained_individual(individual, individual.layer)
+        fitness = self.calculate_fitness(model_performance)
+
+        individual.model_performance = model_performance
         individual.individual_id = LoggingSettings.current_individual_id
         LoggingSettings.current_individual_id += 1
 

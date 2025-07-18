@@ -11,7 +11,7 @@ DEFAULT_METRIC = 'mean_loss'  # Default aggregation metric
 NEW_LAYER_LINE_STYLE = '--'  # Style for new layer indicator lines
 NEW_LAYER_ALPHA = 0.75        # Transparency for new layer lines
 
-def analyze_train_loss(experiment_ids, metric=DEFAULT_METRIC, linewidth=LINE_WIDTH):
+def analyze_train_loss(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE_WIDTH):
     """
     Advanced train_loss visualization with customizable metrics
     
@@ -20,9 +20,9 @@ def analyze_train_loss(experiment_ids, metric=DEFAULT_METRIC, linewidth=LINE_WID
         metric (str): 'mean_loss', 'max_loss', 'min_loss', 'median_loss'
         linewidth (float): Thickness of plot lines
     """
-    df = pd.read_csv('Logs/OLogs/IndividualLog.csv')
+    df = pd.read_csv(f'Logs/{ID}Logs/IndividualLog.csv')
     df = df[df['experiment_id'].isin(experiment_ids)]
-    gen_df = pd.read_csv("./Logs/OLogs/GenerationStatsLog.csv")
+    gen_df = pd.read_csv(f"./Logs/{ID}Logs/GenerationStatsLog.csv")
     gen_df = gen_df[gen_df["experiment_id"] == experiment_ids[0]]
     newlayer_gens = [0] # Ignore this, not really relevant
     idx = 1
@@ -118,7 +118,9 @@ def analyze_train_loss(experiment_ids, metric=DEFAULT_METRIC, linewidth=LINE_WID
     plt.show()
 
 # Example usage:
+ID = input("id please: [T/O]: ")
+ID = ID.upper()
 while True:
     ids = int(input("id: "))
-    analyze_train_loss([ids])  # Uses global settings
+    analyze_train_loss([6, 8], ID)  # Uses global settings
     # To change colormap: modify COLORMAP_NAME at the top

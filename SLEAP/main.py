@@ -41,10 +41,11 @@ class SLEAPy:
 
         else:
             self._get_user_configuration()
-            # for x in [FitnessFunctions.train_loss, FitnessFunctions.random_fitness]:
-            #     FitnessFunctions.fitness_function = x
-            self._create_optimizer()
-            self.optimizer.run_evolution()
+            for x in [FitnessFunctions.train_loss]:#, FitnessFunctions.random_fitness]:
+                FitnessFunctions.fitness_function = x
+                FitnessFunctions.MINIMIZE_FITNESS = True
+                self._create_optimizer()
+                self.optimizer.run_evolution()
         
     def _run_every_possible_experiment(self):
         print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")

@@ -87,7 +87,7 @@ class AlpsManager:
         FIBBONACCI = [1, 2, 3, 5, 8, 13, 21, "NA"]
         LINEAR = [1, 2, 3, 4, 5, 6, "NA"]
 
-        teitur = [5, 12, "NA"]
+        teitur = [1, 5, "NA"]
     
         used_aging_scheme = teitur
         uas_str = "Linear"
@@ -106,16 +106,12 @@ class AlpsManager:
     teitur_percentages = [0.10, 0.20, 1.00]
 
     percentages = teitur_percentages
-    TRAINING_SETTINGS_FOR_LAYERS = None
-    # TRAINING_SETTINGS_FOR_LAYERS = {
-    #     0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-    #     1: {"dataset_percentage": percentages[1], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-    #     2: {"dataset_percentage": percentages[2], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-    #     3: {"dataset_percentage": percentages[3], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-    #     4: {"dataset_percentage": percentages[4], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-    #     5: {"dataset_percentage": percentages[5], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-    #     6: {"dataset_percentage": percentages[6], "training_epochs": 1, "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
-    # }
+    # TRAINING_SETTINGS_FOR_LAYERS = None
+    TRAINING_SETTINGS_FOR_LAYERS = {
+        0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        1: {"dataset_percentage": percentages[1], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+        2: {"dataset_percentage": percentages[2], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
+    }
 
     def _get_manager(percentages):
         return {
