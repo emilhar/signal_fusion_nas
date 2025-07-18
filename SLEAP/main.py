@@ -159,36 +159,31 @@ class SLEAPy:
                 except ValueError:
                     print("❌ Please enter a valid number")
         
-        # Signal type selection
-        if EvolutionManager.SMALLER_FILES:
-            print("\nWARNING: YOU ARE USING SMALLER FILES, file 'sleepEDFX/smaller_EEG_Fpz_CZ' automatically chosen")
-            self.signal_type = f"smaller_{Signal.EEG.Fpz_Cz}"
-        
-        else:
-            if skip_signal:
-                self.signal_type = self.args.signal
 
-            else:
-                print("\n🔌 Available Signal Types:")
-                signal_options = [
-                    (Signal.EEG.Fpz_Cz, "EEG Fpz-Cz"),
-                    (Signal.EEG.Pz_Oz, "EEG Pz-Oz"),
-                    (Signal.EOG.HORIZONTAL, "EOG Horizontal"),
-                    (Signal.EMG.SUBMENTAL, "EMG Submental")
-                ]
-                
-                for i, (signal, name) in enumerate(signal_options, 1):
-                    print(f"  {i}. {name}")
-                
-                while True:
-                    try:
-                        choice = int(input("\nSelect signal type (1-4): "))
-                        if 1 <= choice <= 4:
-                            self.signal_type = signal_options[choice-1][0]
-                            break
-                        print("❌ Please enter a number between 1-4")
-                    except ValueError:
-                        print("❌ Please enter a valid number")
+        if skip_signal:
+            self.signal_type = self.args.signal
+
+        else:
+            print("\n🔌 Available Signal Types:")
+            signal_options = [
+                (Signal.EEG.Fpz_Cz, "EEG Fpz-Cz"),
+                (Signal.EEG.Pz_Oz, "EEG Pz-Oz"),
+                (Signal.EOG.HORIZONTAL, "EOG Horizontal"),
+                (Signal.EMG.SUBMENTAL, "EMG Submental")
+            ]
+            
+            for i, (signal, name) in enumerate(signal_options, 1):
+                print(f"  {i}. {name}")
+            
+            while True:
+                try:
+                    choice = int(input("\nSelect signal type (1-4): "))
+                    if 1 <= choice <= 4:
+                        self.signal_type = signal_options[choice-1][0]
+                        break
+                    print("❌ Please enter a number between 1-4")
+                except ValueError:
+                    print("❌ Please enter a valid number")
 
         if no_logging:
             LoggingSettings.LOGGING = False
@@ -250,8 +245,6 @@ class SLEAPy:
         print(f"{'Max mutations:':30} {EvolutionManager.MAX_NUMBER_OF_MUTATIONS}")
         print(f"{'Crossover prob:':30} {EvolutionManager.CX_PROB}")
         print(f"{'Mutation prob:':30} {EvolutionManager.MUTATION_PROB}")
-        print(f"{'Smaller files:':30} {EvolutionManager.SMALLER_FILES}")
-
         print("\n⏱️ Time Wall Settings")
         print(f"{'Activation generation %:':30} {TimeWall.FLIP_ON*100}%")
         print(f"{'Starting percentage:':30} {TimeWall.STARTING_PERCENTAGE*100}%")
@@ -270,7 +263,6 @@ class SLEAPy:
         print(f"{'Learning rate:':30} {ModelManager.LEARNING_RATE}")
         print(f"{'Min kernel size:':30} {ModelManager.MIN_KERNEL_SIZE}")
         print(f"{'Max kernel size:':30} {ModelManager.MAX_KERNEL_SIZE}")
-        print(f"{'Sort kernels:':30} {ModelManager.SORT_KERNELS}")
         print(f"{'Branch count range:':30} {ModelManager.NUMBER_OF_BRANCHES_RANGE}")
         print(f"{'Kernel count range:':30} {ModelManager.NUMBER_OF_KERNELS_RANGE}")
 
@@ -316,7 +308,6 @@ def parse_arguments():
     parser.add_argument('--hof-size', type=int, help=f'Hall of fame size (default: {EvolutionManager.HALL_OF_FAME_MEMBERS})')
     parser.add_argument('--cx-prob', type=float, help=f'Crossover probability (default: {EvolutionManager.CX_PROB})')
     parser.add_argument('--mut-prob', type=float, help=f'Mutation probability (default: {EvolutionManager.MUTATION_PROB})')
-    parser.add_argument('--smaller-files', action='store_true', help=f'Use smaller files (default: {EvolutionManager.SMALLER_FILES})')
     parser.add_argument('--verbose', action='store_true', help=f'Verbose output (default: {EvolutionManager.VERBOSE})')
     parser.add_argument('--v-verbose', action='store_true', help=f'Prints individual training sessions, (default {EvolutionManager.VERY_VERBOSE})' )
 
@@ -368,8 +359,6 @@ def apply_arguments(args):
         EvolutionManager.CX_PROB = args.cx_prob
     if args.mut_prob:
         EvolutionManager.MUTATION_PROB = args.mut_prob
-    if args.smaller_files:
-        EvolutionManager.SMALLER_FILES = True
     if args.verbose:
         EvolutionManager.VERBOSE = True
     if args.v_verbose:

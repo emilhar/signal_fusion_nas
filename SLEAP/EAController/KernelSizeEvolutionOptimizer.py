@@ -106,7 +106,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         # fitness = FitnessFunctions.closeness_to_global_opt(individual)
 
-        # it = LoggingTemplate()
+        # it = LoggingTemplate
         # model_performance = {
         #     it.epoch: 0,
         #     it.train_loss: FitnessFunctions.closeness_to_global_opt(individual),

@@ -2,26 +2,38 @@ import csv
 import os
 from datetime import datetime
 import pandas as pd
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, AlpsManager, FitnessFunctions, LoggingTemplate
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, AlpsManager, FitnessFunctions, LoggingTemplate, TimeWall
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
     
     def __init__(self):
-        self.lt = LoggingTemplate()
+        self.lt = LoggingTemplate
         self.start_time = datetime.now()
         self.Experiment_ID = self._get_id_by("Experiment")
     
     def _get_id_by(self, filetype="Experiment"):
-        """Get the next experiment ID based on the CSV log"""
-
-        filepath = self._get_filepath(filetype=filetype)
-        df = pd.read_csv(filepath)
-        if df.empty:
+        """Get the next experiment ID based on the CSV log.
+        Returns 0 if the log is empty, doesn't exist, or is corrupt.
+        """
+        try:
+            filepath = self._get_filepath(filetype=filetype)
+            
+            # Check if file exists and has content
+            if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
+                return 0
+                
+            df = pd.read_csv(filepath)
+            
+            if df.empty:
+                return 0
+                
+            if filetype == "Experiment":
+                return int(df[self.lt.experiment_id].max()) + 1
+            # Add handling for other filetypes here if needed
+                
+        except (FileNotFoundError, pd.errors.EmptyDataError):
             return 0
-        
-        if filetype == "Experiment":
-            return df[self.lt.experiment_id].max() + 1
 
     def _write_with_config(self, filetype, config):
         filepath = self._get_filepath(filetype=filetype)
@@ -68,30 +80,55 @@ class LogManager:
 
     def log_experiment(self, sleepstage, signal_type, max_kernel_size, best, second_best, third_best):
         """Log the experiment configuration using template names"""
+        lt = LoggingTemplate
 
         config = {
-            self.lt.experiment_id: self.Experiment_ID,
+            lt.experiment_id: self.Experiment_ID,
             "name": LoggingSettings.experiment_name,
             "start_time": self.start_time,
             "end_time": datetime.now(),
-            "sleepstage": sleepstage,
-            "signal_type": signal_type,
-            "base_batch_size": ModelManager.BATCH_SIZE,
-            "population_size": EvolutionManager.POPULATION_SIZE_PER_LAYER,
-            "generations": EvolutionManager.GENERATIONS,
-            "crossover_prob": EvolutionManager.CX_PROB,
-            "mutation_prob": EvolutionManager.MUTATION_PROB,
-            "selection_tournament_size": EvolutionManager.SELECTION_TOURNAMENT_SIZE,
-            "min_kernel_size": ModelManager.MIN_KERNEL_SIZE,
-            "max_kernel_size": max_kernel_size,
+            lt.sleepstage: sleepstage,
+            lt.signal_type: signal_type,
+
+            lt.population_size: EvolutionManager.POPULATION_SIZE_PER_LAYER,
+            lt.generations: EvolutionManager.GENERATIONS,
+            lt.crossover_prob: EvolutionManager.CX_PROB,
+            lt.mutation_prob: EvolutionManager.MUTATION_PROB,
+            lt.selection_tournament_size: EvolutionManager.SELECTION_TOURNAMENT_SIZE,
+            lt.elitism: EvolutionManager.ELITISM,
+            lt.hall_of_fame_members: EvolutionManager.HALL_OF_FAME_MEMBERS,
+            lt.max_number_of_mutations: EvolutionManager.MAX_NUMBER_OF_MUTATIONS,
+            lt.data_split_training: EvolutionManager.DATA_SPLIT_TRAINING,
+            lt.data_split_testing: EvolutionManager.DATA_SPLIT_TESTING,
+
+            lt.base_batch_size: ModelManager.BATCH_SIZE,
+            lt.min_kernel_size: ModelManager.MIN_KERNEL_SIZE,
+            lt.max_kernel_size: max_kernel_size,
+            lt.number_of_branches_range: ModelManager.NUMBER_OF_BRANCHES_RANGE,
+            lt.number_of_kernels_range: ModelManager.NUMBER_OF_KERNELS_RANGE,
+            lt.learning_rate: ModelManager.LEARNING_RATE,
+
+            lt.age_gap: AlpsManager.AGE_GAP,
+            lt.aging_scheme: AlpsManager.AgingScheme.uas_str,
+            lt.max_age_in_layers: AlpsManager.MAX_AGE_IN_LAYERS,
+            lt.layer_creation_thresholds: AlpsManager.LAYER_CREATION_THRESHOLDS,
+            lt.percentages: AlpsManager.percentages,
+
+            lt.dataset_name: DataManager.DATASET,
+            lt.max_memory: DataManager.MAX_MEMORY,
+            lt.even_data_split: DataManager.EVEN_DATA_SPLIT,
+
+            lt.fitness_function: FitnessFunctions.fitness_function.__name__,
+            lt.minimize_fitness: FitnessFunctions.MINIMIZE_FITNESS,
+
+            lt.time_wall_flip_on: TimeWall.FLIP_ON,
+            lt.time_wall_starting_percentage: TimeWall.STARTING_PERCENTAGE,
+            lt.time_wall_max_percentage: TimeWall.MAX_PERCENTAGE,
+            lt.time_wall_increase: TimeWall.INCREASE,
             "best": best,
             "second_best": second_best,
             "third_best": third_best,
-            "dataset_name": DataManager.DATASET,
-            "fitness_function": FitnessFunctions.fitness_function.__name__,
-            "age_gap": AlpsManager.AGE_GAP,
-            "aging_scheme": AlpsManager.AgingScheme.uas_str,
-            "alps_Manager": AlpsManager.TRAINING_SETTINGS_FOR_LAYERS.__repr__()
+            lt.alps_manager: AlpsManager.TRAINING_SETTINGS_FOR_LAYERS.__repr__(),
         }
 
         self._write_with_config(filetype="Experiment", config=config)
