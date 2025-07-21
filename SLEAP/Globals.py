@@ -103,7 +103,7 @@ class AlpsManager:
     TEST_PERCENTAGES = [0.05, 0.05, 0.05]
     teitur_percentages = [0.10, 0.20, 1.00]
 
-    percentages = teitur_percentages
+    percentages = TEST_PERCENTAGES
     # TRAINING_SETTINGS_FOR_LAYERS = None
     TRAINING_SETTINGS_FOR_LAYERS = {
         0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},

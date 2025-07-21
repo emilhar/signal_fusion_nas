@@ -161,10 +161,18 @@ class KernelSizeEvolutionaryOptimizer:
             remaining_to_select = number_of_people_to_select
         
         # Time wall
-        if TimeWall.ON:
+        if TimeWall.ON and population[0].layer != 0:
+            print(f"""\n\nTIME WALL RANK FOR LAYER {population[0].layer}""")
             population = sorted(population, reverse=True, key=lambda x: x.model_performance[LoggingTemplate.time])
+            for i, guy in enumerate(population):
+                print(i+1,guy, guy.model_performance[LoggingTemplate.time]) 
+
             n = int(len(population) * TimeWall.time_wall_percentage)
             population = population[n:]
+
+            print("\nTIME WALL AFTER")
+            for i, guy in enumerate(population):
+                print(i+1,guy, guy.model_performance[LoggingTemplate.time]) 
 
         # Perform tournament selection for remaining individuals
         for _ in range(remaining_to_select):
