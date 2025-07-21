@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from datetime import datetime
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, AlpsManager, FitnessFunctions, LoggingTemplate, TimeWall
+from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions, LoggingTemplate
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
@@ -47,7 +47,6 @@ class LogManager:
         else:
             df.to_csv(filepath, mode='a', header=False, index=False)
 
-
     def _get_filepath(self, filetype):
 
         if filetype == "Experiment":
@@ -80,7 +79,7 @@ class LogManager:
         """Log the experiment configuration using template names"""
         lt = LoggingTemplate
 
-        LoggingSettings.experiment_name += f"--batch-size {ModelManager.BATCH_SIZE} --lr {ModelManager.LEARNING_RATE} --min-ks {ModelManager.MIN_KERNEL_SIZE} --max-ks {ModelManager.MAX_KERNEL_SIZE} --pop-size {EvolutionManager.POPULATION_SIZE_PER_LAYER} --generations {EvolutionManager.GENERATIONS} --st-size {EvolutionManager.SELECTION_TOURNAMENT_SIZE} --hof-size {EvolutionManager.HALL_OF_FAME_MEMBERS} --cx-prob {EvolutionManager.CX_PROB} --mut-prob {EvolutionManager.MUTATION_PROB} --sleep-stage {sleepstage} --signal {signal_type} --dataset {DataManager.DATASET} --max-mem {DataManager.MAX_MEMORY} --even-split {DataManager.EVEN_DATA_SPLIT} --log-id {LoggingSettings.LOGGER_ID} --log-all {LoggingSettings.LOG_ALL_INDIVIDUALS}"
+        LoggingSettings.experiment_name += f"--batch-size {ModelManager.BATCH_SIZE} --lr {ModelManager.LEARNING_RATE} --min-ks {ModelManager.MIN_KERNEL_SIZE} --max-ks {ModelManager.MAX_KERNEL_SIZE} --pop-size {EvolutionManager.POPULATION_SIZE} --generations {EvolutionManager.GENERATIONS} --st-size {EvolutionManager.SELECTION_TOURNAMENT_SIZE} --hof-size {EvolutionManager.HALL_OF_FAME_MEMBERS} --cx-prob {EvolutionManager.CX_PROB} --mut-prob {EvolutionManager.MUTATION_PROB} --sleep-stage {sleepstage} --signal {signal_type} --dataset {DataManager.DATASET} --max-mem {DataManager.MAX_MEMORY} --even-split {DataManager.EVEN_DATA_SPLIT} --log-id {LoggingSettings.LOGGER_ID} --log-all {LoggingSettings.LOG_ALL_INDIVIDUALS}"
         
         config = {
             lt.experiment_id: self.Experiment_ID,
@@ -90,7 +89,7 @@ class LogManager:
             lt.sleepstage: sleepstage,
             lt.signal_type: signal_type,
 
-            lt.population_size: EvolutionManager.POPULATION_SIZE_PER_LAYER,
+            lt.population_size: EvolutionManager.POPULATION_SIZE,
             lt.generations: EvolutionManager.GENERATIONS,
             lt.crossover_prob: EvolutionManager.CX_PROB,
             lt.mutation_prob: EvolutionManager.MUTATION_PROB,
@@ -102,17 +101,13 @@ class LogManager:
             lt.data_split_testing: EvolutionManager.DATA_SPLIT_TESTING,
 
             lt.base_batch_size: ModelManager.BATCH_SIZE,
+            lt.learning_rate: ModelManager.LEARNING_RATE,
+            lt.epoch: ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL,
             lt.min_kernel_size: ModelManager.MIN_KERNEL_SIZE,
             lt.max_kernel_size: max_kernel_size,
             lt.number_of_branches_range: ModelManager.NUMBER_OF_BRANCHES_RANGE,
             lt.number_of_kernels_range: ModelManager.NUMBER_OF_KERNELS_RANGE,
             lt.learning_rate: ModelManager.LEARNING_RATE,
-
-            lt.age_gap: AlpsManager.AGE_GAP,
-            lt.aging_scheme: AlpsManager.AgingScheme.uas_str,
-            lt.max_age_in_layers: AlpsManager.MAX_AGE_IN_LAYERS,
-            lt.layer_creation_thresholds: AlpsManager.LAYER_CREATION_THRESHOLDS,
-            lt.percentages: AlpsManager.percentages,
 
             lt.dataset_name: DataManager.DATASET,
             lt.max_memory: DataManager.MAX_MEMORY,
@@ -120,15 +115,9 @@ class LogManager:
 
             lt.fitness_function: FitnessFunctions.fitness_function.__name__,
             lt.minimize_fitness: FitnessFunctions.MINIMIZE_FITNESS,
-
-            lt.time_wall_flip_on: TimeWall.FLIP_ON,
-            lt.time_wall_starting_percentage: TimeWall.STARTING_PERCENTAGE,
-            lt.time_wall_max_percentage: TimeWall.MAX_PERCENTAGE,
-            lt.time_wall_increase: TimeWall.INCREASE,
             "best": best,
             "second_best": second_best,
             "third_best": third_best,
-            lt.alps_manager: AlpsManager.TRAINING_SETTINGS_FOR_LAYERS.__repr__(),
         }
 
         self._write_with_config(filetype="Experiment", config=config)
@@ -138,37 +127,29 @@ class LogManager:
                              l_mean, l_std_deviation, l_median, l_min, l_max):
 
         if not LoggingSettings.LOG_ALL_INDIVIDUALS:
-            layers = {}
-            for ind in population:
-                if ind.layer not in layers:
-                    layers[ind.layer] = []
-                layers[ind.layer].append(ind)
-            
-            people_in_layers_count = [0 for _ in AlpsManager.teitur_percentages]
+            # Log the best individual in the population
 
-            for layer, layer_population in layers.items():
-                people_in_layers_count[layer] = (len(layer_population))
-                best = max(layer_population, key=lambda x: x.fitness.values[0])
-                
-                best_in_layer = self.fill_individual_template(
-                    generation= LoggingSettings.current_generation_id,
-                    ind_id= best.individual_id,
-                    age= best.age,
-                    layer= best.layer,
-                    model_performance= best.model_performance
-                )
-
-                self._write_with_config(filetype="Individual", config=best_in_layer)
-
-        else:
-            people_in_layers_count = [0 for _ in AlpsManager.teitur_percentages]
+            best = population[0]
             for indi in population:
-                people_in_layers_count[indi.layer]+=1
+                if FitnessFunctions.MINIMIZE_FITNESS:
+                    if indi.fitness.values[0] < best.fitness.values[0]:
+                        best = indi
+                else:
+                    if indi.fitness.values[0] > best.fitness.values[0]:
+                        best = indi
+
+            best_config = self.fill_individual_template(
+                generation= LoggingSettings.current_generation_id,
+                ind_id= best.individual_id,
+                model_performance= best.model_performance
+            )
+            self._write_with_config(filetype="Individual", config=best_config)
+        
+        else:
+            for indi in population:
                 indi_config = self.fill_individual_template(
                     generation= LoggingSettings.current_generation_id,
                     ind_id= indi.individual_id,
-                    age= indi.age,
-                    layer= indi.layer,
                     model_performance= indi.model_performance
                 )
 
@@ -178,7 +159,6 @@ class LogManager:
             self.lt.experiment_id: self.Experiment_ID,
             self.lt.generation: LoggingSettings.current_generation_id,
             "number_of_trained_individuals": number_of_trained_individual,
-            "individual_count_per_layer": people_in_layers_count,
             "fitness_mean": round(fit_mean, self.lt.rounding_number),
             "fitness_std": round(fit_std_deviation, self.lt.rounding_number),
             "fitness_median": round(fit_median, self.lt.rounding_number),
@@ -193,16 +173,13 @@ class LogManager:
 
         self._write_with_config(filetype="Generation", config=generation_configs)
 
-    def fill_individual_template(self, generation, ind_id, age, layer, 
-                               model_performance):
+    def fill_individual_template(self, generation, ind_id, model_performance):
         """Fill in the individual template with provided values"""
         
         individual_template = {
             self.lt.experiment_id: self.Experiment_ID,
             self.lt.generation: generation,
             self.lt.indi_id: ind_id,
-            self.lt.age: age,
-            self.lt.layer: layer,
             "model_performance": {
                 k: round(v, self.lt.rounding_number) if isinstance(v, float) else v 
                 for k, v in model_performance.items()

@@ -5,7 +5,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions, TimeWall, PolyarithmosManager
+from Globals import Signal, ModelManager, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -85,8 +85,6 @@ class KernelSizeEvolutionaryOptimizer:
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
 
         individual = creator.Individual(branches)
-        individual.age =  0
-        individual.layer = 0
 
         return individual
     
@@ -94,7 +92,7 @@ class KernelSizeEvolutionaryOptimizer:
         """Evaluate an individual by training a model
         arg: individual"""
 
-        model_performance = self.create_trained_individual(individual, individual.layer)
+        model_performance = self.create_trained_individual(individual)
         fitness = self.calculate_fitness(model_performance)
 
         individual.model_performance = model_performance
@@ -103,31 +101,18 @@ class KernelSizeEvolutionaryOptimizer:
 
         return (fitness,)
     
-    def create_trained_individual(self, individual, layer):
+    def create_trained_individual(self, individual):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
-        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(
-            dataset_percentage = AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["dataset_percentage"],
-            batch_size=AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]) 
-        
-        batch_size = AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["batch_size"]
-        epochs =AlpsManager.TRAINING_SETTINGS_FOR_LAYERS[layer]["training_epochs"]
-        learning_rate = ModelManager.LEARNING_RATE
-
-        
+        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
 
         new_model = TrainedModelMaker(
-            branches = individual,
-            name=f"{individual}, {batch_size}batch, {epochs}epochs",
-            sleepstage = self.sleepstage,
-            signal_type=self.signal_type,
-            batch_size= batch_size,
-            train_loader = individual_training_set,
-            test_loader = individual_test_set,
-            epochs= epochs,
-            learning_rate=learning_rate,
-            N_SAMPLES= n_samples,
-            pos_weight= pos_weight,
+            branches=individual,
+            name=f"{individual}",
+            N_SAMPLES=n_samples,
+            pos_weight=pos_weight,
+            train_loader=individual_training_set,
+            test_loader=individual_test_set
         )
 
         return new_model.model_performance
@@ -159,20 +144,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         else:
             remaining_to_select = number_of_people_to_select
-        
-        # Time wall
-        if TimeWall.ON and population[0].layer != 0:
-            print(f"""\n\nTIME WALL RANK FOR LAYER {population[0].layer}""")
-            population = sorted(population, reverse=True, key=lambda x: x.model_performance[LoggingTemplate.time])
-            for i, guy in enumerate(population):
-                print(i+1,guy, guy.model_performance[LoggingTemplate.time]) 
-
-            n = int(len(population) * TimeWall.time_wall_percentage)
-            population = population[n:]
-
-            print("\nTIME WALL AFTER")
-            for i, guy in enumerate(population):
-                print(i+1,guy, guy.model_performance[LoggingTemplate.time]) 
+    
 
         # Perform tournament selection for remaining individuals
         for _ in range(remaining_to_select):
@@ -196,8 +168,6 @@ class KernelSizeEvolutionaryOptimizer:
         
         # Clone the individual to avoid in-place issues
         mutant: list[list] = creator.Individual([branch[:] for branch in individual])
-        mutant.age = individual.age
-        mutant.layer = individual.layer
 
         mutation_number_options = [i + 1 for i in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS)
               for _ in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS - i)]
@@ -268,39 +238,34 @@ class KernelSizeEvolutionaryOptimizer:
         else:                    # 55%: Change kernel
             return "change_kernel"
 
-    def run_evolution(self):
+    def run_evolution(self, logging_folder_for_omega_runs=None):
         """Run the evolutionary algorithm"""
         if EvolutionManager.VERBOSE:
-            print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE_PER_LAYER} individuals for {EvolutionManager.GENERATIONS} generations")
+            print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE} individuals for {EvolutionManager.GENERATIONS} generations")
 
         # Create initial population
-        population = self.toolbox.population(n=EvolutionManager.POPULATION_SIZE_PER_LAYER)
-
-        mu= EvolutionManager.POPULATION_SIZE_PER_LAYER
-        lambda_ = mu // 2
+        population = self.toolbox.population(n=EvolutionManager.POPULATION_SIZE)
         
         # Run evolution
         evolver = SLeaMuPlusLambda(
             population=population,
             toolbox=self.toolbox,
-            mu= mu,
-            lambda_ = lambda_,
             halloffame= self.hall_of_fame,
             LogManager= self.LogManager,
         )
         
-        result_pop = evolver.main(
+        result_pop = evolver.eaMuPlusLambda(
             stats= self.stats,
         )
 
         if LoggingSettings.LOGGING:
-            self.log_results()
+            self.log_results(logging_folder_for_omega_runs)
 
         self.print_results()
         
         return result_pop, self.hall_of_fame, self.stats
 
-    def log_results(self):
+    def log_results(self, logging_folder_for_omega_runs):
         
         def get_hall_of_fame_format(i):
             individual = self.hall_of_fame[i]
@@ -315,9 +280,9 @@ class KernelSizeEvolutionaryOptimizer:
             third_best= get_hall_of_fame_format(2),
         )
 
-        if PolyarithmosManager.folder_path:
+        if logging_folder_for_omega_runs:
             best_individual = self.hall_of_fame[0]
-            torch.save(best_individual.model_performance[LoggingTemplate.state_dict], PolyarithmosManager.folder_path + "/" + f"{self.sleepstage}-{self.signal_type}")
+            torch.save(best_individual.model_performance[LoggingTemplate.state_dict], logging_folder_for_omega_runs + "/" + f"{self.sleepstage}-{self.signal_type}")
         
     def print_results(self):
         """Print evolution results"""

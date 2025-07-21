@@ -27,8 +27,8 @@ def remove_experiment_from_csv(file_path, experiment_id):
     return True
 
 def main():
-    experiment_id = input("Enter the experiment ID you want to delete: ").strip()
     user_id = input("input logger id [T/O]: ").strip().upper()
+    experiment_id = input("Enter the experiment ID you want to delete: ").strip()
     
     if not experiment_id:
         print("No experiment ID provided. Exiting.")

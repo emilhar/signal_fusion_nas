@@ -13,6 +13,7 @@ class Sleepstage:
     REM = "REM"
 
     ALL_STAGES = [WAKE, N1, N2, N3, REM]
+    current_sleepstage = None
 
 class Signal:
 
@@ -28,12 +29,14 @@ class Signal:
 
     SIGNAL_COUNT = 3000
     ALL_SIGNALS = [EEG.Fpz_Cz, EEG.Pz_Oz, EOG.HORIZONTAL, EMG.SUBMENTAL]
+    current_signal = None
 
 class ModelManager:
     # Base
     NUMBER_OF_BRANCHES_RANGE = (1, 3)
     NUMBER_OF_KERNELS_RANGE = (2, 4)
     BATCH_SIZE = 32
+    TRAINING_EPOCHS_PER_INDIVIDUAL = 1
     LEARNING_RATE = 5e-4
 
     # Kernel size constraints
@@ -43,9 +46,9 @@ class ModelManager:
 class EvolutionManager:
 
     # Overview Manager
-    POPULATION_SIZE_PER_LAYER: int = 5
+    POPULATION_SIZE: int = 20
     GENERATIONS: int = 2
-    SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE_PER_LAYER * 0.2))
+    SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE * 0.2))
     ELITISM = 1
     HALL_OF_FAME_MEMBERS = 3
 
@@ -61,72 +64,9 @@ class EvolutionManager:
     MUTATION_PROB: float = 0.5
 
     # Misc
-    VERBOSE = False # Shows Layers
+    VERBOSE = False
     VERY_VERBOSE = False # Shows Individual Training sessions
-    
-class TimeWall:
-    """After FLIP_ON% of generations, 
-    Time Wall cuts out the worst TIME_WALL_PERCENTAGE% of performers when it comes to training time."""
 
-    # After what % of generations do you turn on the time wall?
-    FLIP_ON = 0.5
-    ON = False
-
-    STARTING_PERCENTAGE = 0.25
-    MAX_PERCENTAGE = 0.75
-    INCREASE = 0.05
-    
-    time_wall_percentage = 0.0
-
-class AlpsManager:
-    AGE_GAP = 2
-
-    class AgingScheme:
-        FIBBONACCI = [1, 2, 3, 5, 8, 13, 21, "NA"]
-        LINEAR = [1, 2, 3, 4, 5, 6, "NA"]
-
-        teitur = [1, 14, "NA"]
-    
-        used_aging_scheme = teitur
-        uas_str = "Linear"
-
-    MAX_AGE_IN_LAYERS = []
-    for x in AgingScheme.used_aging_scheme:
-        MAX_AGE_IN_LAYERS.append(x * AGE_GAP if isinstance(x, int) else x)
-
-
-    # Create layers just before individuals try to move into them
-    LAYER_CREATION_THRESHOLDS = [max_age for max_age in MAX_AGE_IN_LAYERS if not isinstance(max_age, str)]
-    created_layers = [0]
-
-    REAL_PERCENTAGES = [0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 1.00]
-    TEST_PERCENTAGES = [0.05, 0.05, 0.05]
-    teitur_percentages = [0.10, 0.20, 1.00]
-
-    percentages = TEST_PERCENTAGES
-    # TRAINING_SETTINGS_FOR_LAYERS = None
-    TRAINING_SETTINGS_FOR_LAYERS = {
-        0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        1: {"dataset_percentage": percentages[1], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-    }
-
-    def _get_manager(percentages):
-        return {
-        0: {"dataset_percentage": percentages[0], "training_epochs": 1,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        1: {"dataset_percentage": percentages[1], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": 15, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        2: {"dataset_percentage": percentages[2], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE*4,    "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1,}
-        #3: {"dataset_percentage": percentages[3], "training_epochs": 3,  "batch_size": ModelManager.BATCH_SIZE,    "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        #4: {"dataset_percentage": percentages[4], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
-        # 3: {"dataset_percentage": percentages[3], "training_epochs": 10,  "batch_size": ModelManager.BATCH_SIZE * 4,     "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
-        # 4: {"dataset_percentage": percentages[4], "training_epochs": epochs[4],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        # 5: {"dataset_percentage": percentages[5], "training_epochs": epochs[5],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
-        # 6: {"dataset_percentage": percentages[6], "training_epochs": epochs[6], "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
-        }
-    
-class PolyarithmosManager:
-    folder_path = None
-    
 class DataManager:
     class DatasetNames:
         EDF_20 = "sleep-EDF-20"
@@ -137,6 +77,9 @@ class DataManager:
 
     DATASET = _datasets[0]
     MAX_MEMORY = 256
+
+    # SleepDataLoader
+    dataset_percentage = 0.3
     EVEN_DATA_SPLIT = False
 
 class LoggingSettings:
@@ -163,38 +106,28 @@ class FitnessFunctions:
         return fitness
     
     @staticmethod
-    def random_fitness(individual_performance):
-        return random.random()
-
-    @staticmethod
     def prime_fitness(branches):
         return sum(item for branch in branches for item in branch if sympy.isprime(item))
     
     @staticmethod
     def closeness_to_global_opt(branches):
         global_optimum = [[19, 18], [420, 120, 8], [1000, 1000, 1000]]
-        
         # Sort each branch in both the input and global optimum
         sorted_branches = sorted(branches, key=lambda x: len(x))
-        
         score = 0
-        
         # Length mismatch penalty
         if len(sorted_branches) != len(global_optimum):
             score -= 10_000
             return score  # Early return for severe mismatch
-        
         # Compare each corresponding branch
         for branch, optimum_branch in zip(sorted_branches, global_optimum):
             # Length mismatch within branch
             if len(branch) != len(optimum_branch):
                 score -= 1_000
                 continue
-                
             # Calculate element-wise distance (using Manhattan distance)
             for a, b in zip(branch, optimum_branch):
                 score -= abs(a - b)  # Negative because lower distance is better
-                
         return score
     
     @staticmethod
@@ -216,8 +149,8 @@ class FitnessFunctions:
     def no_normalization(individual, population):
         pass
 
-    MINIMIZE_FITNESS = False
-    fitness_function = closeness_to_global_opt
+    MINIMIZE_FITNESS = True
+    fitness_function = train_loss
     normalization_function = no_normalization
 
 class Clr:
@@ -285,12 +218,8 @@ class Clr:
 
 class LoggingTemplate:
     rounding_number = 2
-
+    
     accuracy = "accuracy"
-    age = "age"
-    age_gap = "age_gap"
-    aging_scheme = "aging_scheme"
-    alps_manager = "alps_manager"
     base_batch_size = "base_batch_size"
     best = "best"
     best_auc = "best_auc"
@@ -307,18 +236,14 @@ class LoggingTemplate:
     epoch = "epoch"
     even_data_split = "even_data_split"
     experiment_id = "experiment_id"
-    experiment_ids_within_polyarithmos = "experiment_ids_within_polyartihmos"
     fitness = "fitness"
     fitness_function = "fitness_function"
     generation = "generation"
     generations = "generations"
     hall_of_fame_members = "hall_of_fame_members"
     indi_id = "individual_id"
-    layer = "layer"
-    layer_creation_thresholds = "layer_creation_thresholds"
     learning_rate = "learning_rate"
     lr = "learning_rate"
-    max_age_in_layers = "max_age_in_layers"
     max_kernel_size = "max_kernel_size"
     max_memory = "max_memory"
     max_number_of_mutations = "max_number_of_mutations"
@@ -328,13 +253,10 @@ class LoggingTemplate:
     name = "name"
     number_of_branches_range = "number_of_branches_range"
     number_of_kernels_range = "number_of_kernels_range"
-    p_type = "p_type"
-    percentages = "percentages"
     population_size = "population_size"
     precision = "precision"
     reason = "reason"
     recall = "recall"
-    rounding_number = 2
     second_best = "second_best"
     selection_tournament_size = "selection_tournament_size"
     signal_type = "signal_type"
@@ -344,17 +266,7 @@ class LoggingTemplate:
     test_loss = "test_loss"
     third_best = "third_best"
     time = "time"
-    time_wall_flip_on = "time_wall_flip_on"
-    time_wall_increase = "time_wall_increase"
-    time_wall_max_percentage = "time_wall_max_percentage"
-    time_wall_starting_percentage = "time_wall_starting_percentage"
     train_loss = "train_loss"
-
-    # Translation table
-    reason_map = {
-        "Best In Layer": 0,
-        "Checked For Best In Generation": 1
-    }
 
 class SLEAPyException(Exception):
     def __init__(self, **kwargs):
