@@ -1,7 +1,6 @@
-import csv
 import os
-from datetime import datetime
 import pandas as pd
+from datetime import datetime
 from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, AlpsManager, FitnessFunctions, LoggingTemplate, TimeWall
 
 class LogManager:
@@ -41,14 +40,13 @@ class LogManager:
         # Check if file exists and is empty to determine if we need to write headers
         write_header = not os.path.exists(filepath) or os.stat(filepath).st_size == 0
         
-        with open(filepath, mode='a', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=config.keys())
-            
-            # Write header only if file is new/empty
-            if write_header:
-                writer.writeheader()
-                
-            writer.writerow(config)
+        df = pd.DataFrame([config])
+
+        if write_header:
+            df.to_csv(filepath, mode='a', index=False)
+        else:
+            df.to_csv(filepath, mode='a', header=False, index=False)
+
 
     def _get_filepath(self, filetype):
 
