@@ -7,7 +7,7 @@ from matplotlib import colormaps
 # GLOBAL SETTINGS (adjust these as needed)
 COLORMAP_NAME = 'plasma'  # Change this to any valid colormap name ('viridis', 'plasma', etc.)
 LINE_WIDTH = 2.5         # Default line width
-DEFAULT_METRIC = 'max'  # Default aggregation metric
+DEFAULT_METRIC = 'mean'  # Default aggregation metric
 NEW_LAYER_LINE_STYLE = '--'  # Style for new layer indicator lines
 NEW_LAYER_ALPHA = 0.75        # Transparency for new layer lines
 ST = "time"
@@ -93,9 +93,9 @@ def analyze_by_metric(experiment_ids, ID, metric=DEFAULT_METRIC, linewidth=LINE_
                     alpha=0.7, fontsize=10)
 
     # 5. Perfect styling
-    plt.title(f'Train Loss ({metric.replace("_", " ").title()})', fontsize=14, pad=20)
+    plt.title(f'Time ({metric.replace("_", " ").title()})', fontsize=14, pad=20)
     plt.xlabel('Generation', fontsize=12)
-    plt.ylabel('Loss Value', fontsize=12)
+    plt.ylabel('Seconds', fontsize=12)
     plt.grid(True, alpha=0.15)
     
     legend = plt.legend(bbox_to_anchor=(1.05, 1), 
