@@ -13,13 +13,13 @@ from Logs.LogManager import LogManager
 class KernelSizeEvolutionaryOptimizer:
 
     def __init__(self, sleepstage: str, signal_type: str):
-        
-        # Base
+
         self.sleepstage = sleepstage
         self.signal_type = signal_type
 
         if ModelManager.MAX_KERNEL_SIZE == None:
-            ModelManager.MAX_KERNEL_SIZE = self.find_max_kernel_size()
+            ModelManager.MAX_KERNEL_SIZE = Signal.SIGNAL_COUNT // 2
+
             if EvolutionManager.VERBOSE: print(f"Max kernel size set at {ModelManager.MAX_KERNEL_SIZE}")
         
         self.SDL = SleepDataLoader(
@@ -35,18 +35,20 @@ class KernelSizeEvolutionaryOptimizer:
 
         self.setup_deap()
     
-    def find_max_kernel_size(self):
-        return Signal.SIGNAL_COUNT // 2
-
     def setup_deap(self):
         """Setup DEAP framework"""
+
+        for attr in ['FitnessMinMax', 'Individual']:
+            if hasattr(creator, attr):
+                delattr(creator, attr)
+
         # Create fitness and individual classes
         if FitnessFunctions.MINIMIZE_FITNESS:
-            creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-            creator.create("Individual", list, fitness=creator.FitnessMin)
+            creator.create("FitnessMinMax", base.Fitness, weights=(-1.0,))
         else:
-            creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-            creator.create("Individual", list, fitness=creator.FitnessMax)
+            creator.create("FitnessMinMax", base.Fitness, weights=(1.0,))
+        
+        creator.create("Individual", list, fitness=creator.FitnessMinMax)
 
         self.toolbox = base.Toolbox()
         
@@ -58,8 +60,6 @@ class KernelSizeEvolutionaryOptimizer:
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
         self.toolbox.register("select", self.select, tournsize=EvolutionManager.SELECTION_TOURNAMENT_SIZE)
-        
-        # Genetic operatorss
         self.toolbox.register("evaluate", self.evaluate_individual)
         
         # Statistics and Hall of Fame
@@ -83,7 +83,6 @@ class KernelSizeEvolutionaryOptimizer:
         branches = [[random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(kernel_per_branch[i])] for i in range(number_of_branches)]
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
-
         individual = creator.Individual(branches)
 
         return individual
@@ -93,7 +92,7 @@ class KernelSizeEvolutionaryOptimizer:
         arg: individual"""
 
         model_performance = self.create_trained_individual(individual)
-        fitness = self.calculate_fitness(model_performance)
+        fitness = FitnessFunctions.fitness_function(model_performance)
 
         individual.model_performance = model_performance
         individual.individual_id = LoggingSettings.current_individual_id
@@ -108,7 +107,6 @@ class KernelSizeEvolutionaryOptimizer:
 
         new_model = TrainedModelMaker(
             branches=individual,
-            name=f"{individual}",
             N_SAMPLES=n_samples,
             pos_weight=pos_weight,
             train_loader=individual_training_set,
@@ -116,10 +114,7 @@ class KernelSizeEvolutionaryOptimizer:
         )
 
         return new_model.model_performance
-
-    def calculate_fitness(self, model_performance):
-        return FitnessFunctions.fitness_function(model_performance)
-
+    
     def select(self, population, number_of_people_to_select, tournsize):
         """Tournament selection with elitism"""
         
@@ -145,7 +140,6 @@ class KernelSizeEvolutionaryOptimizer:
         else:
             remaining_to_select = number_of_people_to_select
     
-
         # Perform tournament selection for remaining individuals
         for _ in range(remaining_to_select):
             aspirants = [random.choice(population) for _ in range(tournsize)]

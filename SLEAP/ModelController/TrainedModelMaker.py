@@ -12,7 +12,6 @@ class TrainedModelMaker:
 
     def __init__(self, 
                  branches:list[list[int]],
-                 name:str,
                  N_SAMPLES:int, 
                  pos_weight:torch.FloatTensor, 
                  train_loader:DataLoader, 
@@ -21,7 +20,7 @@ class TrainedModelMaker:
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        model_args = get_branch_configs(branches, name, N_SAMPLES) # See ModelManager
+        model_args = get_branch_configs(branches, N_SAMPLES) # See ModelManager
         model_args["batch_size"] = ModelManager.BATCH_SIZE
         model = CNN_BinaryClassifier(**model_args).to(device)
 
