@@ -5,7 +5,7 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions, TimeWall, PolyarithmosManager
+from Globals import Signal, ModelManager, EvolutionManager, AlpsManager, LoggingSettings, LoggingTemplate, FitnessFunctions, TimeWall
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -268,7 +268,7 @@ class KernelSizeEvolutionaryOptimizer:
         else:                    # 55%: Change kernel
             return "change_kernel"
 
-    def run_evolution(self):
+    def run_evolution(self, logging_folder_for_omega_runs=None):
         """Run the evolutionary algorithm"""
         if EvolutionManager.VERBOSE:
             print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE_PER_LAYER} individuals for {EvolutionManager.GENERATIONS} generations")
@@ -294,13 +294,13 @@ class KernelSizeEvolutionaryOptimizer:
         )
 
         if LoggingSettings.LOGGING:
-            self.log_results()
+            self.log_results(logging_folder_for_omega_runs)
 
         self.print_results()
         
         return result_pop, self.hall_of_fame, self.stats
 
-    def log_results(self):
+    def log_results(self, logging_folder_for_omega_runs):
         
         def get_hall_of_fame_format(i):
             individual = self.hall_of_fame[i]
@@ -315,9 +315,9 @@ class KernelSizeEvolutionaryOptimizer:
             third_best= get_hall_of_fame_format(2),
         )
 
-        if PolyarithmosManager.folder_path:
+        if logging_folder_for_omega_runs:
             best_individual = self.hall_of_fame[0]
-            torch.save(best_individual.model_performance[LoggingTemplate.state_dict], PolyarithmosManager.folder_path + "/" + f"{self.sleepstage}-{self.signal_type}")
+            torch.save(best_individual.model_performance[LoggingTemplate.state_dict], logging_folder_for_omega_runs + "/" + f"{self.sleepstage}-{self.signal_type}")
         
     def print_results(self):
         """Print evolution results"""

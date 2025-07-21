@@ -13,6 +13,7 @@ class Sleepstage:
     REM = "REM"
 
     ALL_STAGES = [WAKE, N1, N2, N3, REM]
+    current_sleepstage = None
 
 class Signal:
 
@@ -28,6 +29,7 @@ class Signal:
 
     SIGNAL_COUNT = 3000
     ALL_SIGNALS = [EEG.Fpz_Cz, EEG.Pz_Oz, EOG.HORIZONTAL, EMG.SUBMENTAL]
+    current_signal = None
 
 class ModelManager:
     # Base
@@ -123,10 +125,7 @@ class AlpsManager:
         # 5: {"dataset_percentage": percentages[5], "training_epochs": epochs[5],  "batch_size": ModelManager.BATCH_SIZE * 2, "learning_rate":ModelManager.LEARNING_RATE, "mu": EvolutionManager.POPULATION_SIZE_PER_LAYER, "lambda_": EvolutionManager.POPULATION_SIZE_PER_LAYER//2},
         # 6: {"dataset_percentage": percentages[6], "training_epochs": epochs[6], "batch_size": ModelManager.BATCH_SIZE * 4, "learning_rate":ModelManager.LEARNING_RATE, "mu": 5, "lambda_": 1},
         }
-    
-class PolyarithmosManager:
-    folder_path = None
-    
+
 class DataManager:
     class DatasetNames:
         EDF_20 = "sleep-EDF-20"

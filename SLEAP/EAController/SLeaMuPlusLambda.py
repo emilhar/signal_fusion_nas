@@ -67,7 +67,6 @@ class SLeaMuPlusLambda:
             
 
             flip_on_generation = int(EvolutionManager.GENERATIONS * TimeWall.FLIP_ON)
-            print("flip gen: ", flip_on_generation, gen)
 
             if gen == flip_on_generation:
                 TimeWall.ON = True
