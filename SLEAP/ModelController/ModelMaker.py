@@ -11,6 +11,13 @@ class _Branch(nn.Module):
         layers = []
         in_channels = 1
 
+        if len(num_kernels) != len(kernel_sizes):
+            raise ValueError()
+        if len(num_kernels) != len(paddings):
+            raise ValueError()
+        if len(num_kernels) != len(strides):
+            raise ValueError()
+
         for i, (out_channels, k, p, s) in enumerate(zip(num_kernels, kernel_sizes, paddings, strides)):
             layers.extend([
                 nn.Conv1d(in_channels, out_channels, kernel_size=k, padding=p, stride=s, bias=False),

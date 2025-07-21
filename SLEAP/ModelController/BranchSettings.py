@@ -19,14 +19,13 @@ def get_branch_configs(branches:list[list[int]], name:str, sample_count:int):
   for i, branch in enumerate(branches):
 
       branch_configs[f"branch_{i}"] = {
-          "num_kernels": [32, 64, 64],
-          #"num_kernels": [16, 32, 32],
+          "num_kernels": _get_num_kernels(branch),
           "kernel_sizes": branch,
           "paddings": _kernel_to_pad(branch),
-          "strides": [conv_stride, 1, 1],
-          "pool_sizes": [pool_size, clamp_num(pool_size)],
-          "pool_strides": [pool_strides, clamp_num(pool_size)],
-          "dropout_rates": [0.1, 0.0]
+          "strides": _get_strides(branch, sample_count),
+          "pool_sizes": _get_pool_sizes(branch, sample_count),
+          "pool_strides": _get_pool_strides(branch, sample_count),
+          "dropout_rates": [0.1] + [0.0] * (len(branch)-1)
       }
   
 
@@ -63,3 +62,18 @@ def _find_pool_sizes(n_samples: int):
     pool_strides = max(pool_size // 2, 1)
 
     return conv_stride, pool_size, pool_strides
+
+def _get_num_kernels(branch):
+    return [32] + [64]*(len(branch)-1)
+
+def _get_strides(branch, n_samples):
+    conv_stride = max(n_samples // 30 // 16, 1)
+    return [conv_stride] + [1]*(len(branch)-1)
+
+def _get_pool_sizes(branch, n_samples):
+    pool_size = max(n_samples // 30 // 12, 1)
+    return [pool_size] + [clamp_num(pool_size)] * (len(branch)-1)
+
+def _get_pool_strides(branch, n_samples):
+    pool_stride = max(max(n_samples // 30 // 12, 1) // 2, 1)
+    return [pool_stride] + [clamp_num(pool_stride)] * (len(branch)-1)
