@@ -110,13 +110,13 @@ class SleepDataLoader:
             
         return torch.tensor([label_counts[0] / max(1, label_counts[1])])
 
-    def get_random_subset(self, dataset_percentage, batch_size):
+    def get_random_subset(self):
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset
 
         # Calculate subset sizes
-        train_size = int(len(train_dataset) * dataset_percentage * EvolutionManager.DATA_SPLIT_TRAINING)
-        test_size = int(len(test_dataset) * dataset_percentage * EvolutionManager.DATA_SPLIT_TESTING)
+        train_size = int(len(train_dataset) * DataManager.dataset_percentage * EvolutionManager.DATA_SPLIT_TRAINING)
+        test_size = int(len(test_dataset) * DataManager.dataset_percentage * EvolutionManager.DATA_SPLIT_TESTING)
         
         # Create index-based subsets
         if DataManager.EVEN_DATA_SPLIT:
@@ -129,8 +129,8 @@ class SleepDataLoader:
 
 
         return (
-            DataLoader(train_subset, batch_size=batch_size, shuffle=True),
-            DataLoader(test_subset, batch_size=batch_size, shuffle=False),
+            DataLoader(train_subset, batch_size=ModelManager.BATCH_SIZE, shuffle=True),
+            DataLoader(test_subset, batch_size=ModelManager.BATCH_SIZE, shuffle=False),
             self.n_samples,
             self.pos_weight
         )

@@ -16,7 +16,6 @@ def run_experiment(polyarithmos):
         optimizer = _create_optimizer()
         optimizer.run_evolution()
 
-    
 def _run_every_possible_experiment():
 
     print("\n🔥 ULTIMATE TEST MODE: Running all possible configurations")

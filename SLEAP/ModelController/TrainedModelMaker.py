@@ -1,7 +1,3 @@
-"""
-Most important file, this connects to main.
-"""
-
 # Base Imports
 import torch
 from torch.utils.data import DataLoader
@@ -10,44 +6,34 @@ from torch.utils.data import DataLoader
 from ModelController._Trainer import train_model
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from ModelController.BranchSettings import get_branch_configs
-from Globals import EvolutionManager, LoggingSettings
+from Globals import EvolutionManager, ModelManager, LoggingSettings
 
 class TrainedModelMaker:
 
     def __init__(self, 
                  branches:list[list[int]],
-                 name:str, 
-                 
-                 sleepstage:str, 
-                 signal_type:str, 
-
+                 name:str,
                  N_SAMPLES:int, 
                  pos_weight:torch.FloatTensor, 
                  train_loader:DataLoader, 
-                 test_loader:DataLoader,
-
-                 epochs:int,
-                 batch_size:int,
-                 learning_rate:int
+                 test_loader:DataLoader
         ):
-        
-        self.STAGE = sleepstage
-        self.EXG_SIGNAL = signal_type
-        self.lr = learning_rate
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.n_samples = N_SAMPLES
-        self.pos_weight = pos_weight
-        self.train_loader = train_loader
-        self.test_loader = test_loader
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        model_args = get_branch_configs(branches, name, self.n_samples) # See ModelManager
-        model_args["batch_size"] = batch_size
-
-
-        model = CNN_BinaryClassifier(**model_args).to(self.device) #TODO: Get save'að þetta statedict
+        model_args = get_branch_configs(branches, name, N_SAMPLES) # See ModelManager
+        model_args["batch_size"] = ModelManager.BATCH_SIZE
+        model = CNN_BinaryClassifier(**model_args).to(device)
 
         if EvolutionManager.VERY_VERBOSE:
             print(f"\n\nTraining model: {branches=}, Generation: {LoggingSettings.current_generation_id}/{EvolutionManager.GENERATIONS}, Generation Completeness: {LoggingSettings.current_individual_id}/{LoggingSettings.population_size}")
 
-        self.model_performance = train_model(model, self.device, self.train_loader, self.test_loader, self.pos_weight, verbose=EvolutionManager.VERY_VERBOSE, lr=self.lr, epochs=epochs)
+        self.model_performance = train_model(
+            model, 
+            device, 
+            train_loader, 
+            test_loader, 
+            pos_weight, 
+            verbose=EvolutionManager.VERY_VERBOSE, 
+            lr=ModelManager.LEARNING_RATE, 
+            epochs=ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL)

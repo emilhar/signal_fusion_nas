@@ -12,7 +12,7 @@ def parse_arguments():
     parser.add_argument('--max-ks', type=int, help=f'Maximum kernel size (default: {ModelManager.MAX_KERNEL_SIZE})')
     
     # EvolutionManager options
-    parser.add_argument('--pop-size', type=int, help=f'Population size per layer (default: {EvolutionManager.POPULATION_SIZE_PER_LAYER})')
+    parser.add_argument('--pop-size', type=int, help=f'Population size (default: {EvolutionManager.POPULATION_SIZE})')
     parser.add_argument('--generations', type=int, help=f'Number of generations (default: {EvolutionManager.GENERATIONS})')
     parser.add_argument('--st-size', type=int, help=f'Selection tournament size (default: {EvolutionManager.SELECTION_TOURNAMENT_SIZE})')
     parser.add_argument('--hof-size', type=int, help=f'Hall of fame size (default: {EvolutionManager.HALL_OF_FAME_MEMBERS})')
@@ -60,10 +60,9 @@ def apply_arguments(args):
     
     # EvolutionManager settings
     if args.pop_size:
-        EvolutionManager.POPULATION_SIZE_PER_LAYER = args.pop_size
-        AlpsManager.TRAINING_SETTINGS_FOR_LAYERS = AlpsManager._get_manager(AlpsManager.percentages)
+        EvolutionManager.POPULATION_SIZE = args.pop_size
         # Update tournament size if it's based on population size
-        EvolutionManager.SELECTION_TOURNAMENT_SIZE = max(3, int(EvolutionManager.POPULATION_SIZE_PER_LAYER * 0.2))
+        EvolutionManager.SELECTION_TOURNAMENT_SIZE = max(3, int(EvolutionManager.POPULATION_SIZE * 0.2))
     if args.generations:
         EvolutionManager.GENERATIONS = args.generations - 1
     if args.st_size:
@@ -77,6 +76,7 @@ def apply_arguments(args):
     if args.verbose:
         EvolutionManager.VERBOSE = True
     if args.v_verbose:
+        EvolutionManager.VERBOSE = True
         EvolutionManager.VERY_VERBOSE = True
     
     # DataManager settings
