@@ -86,13 +86,14 @@ class SleepDataLoader:
         train_size = int(len(train_dataset) * DataManager.dataset_percentage * EvolutionManager.DATA_SPLIT_TRAINING)
         test_size = int(len(test_dataset) * DataManager.dataset_percentage * EvolutionManager.DATA_SPLIT_TESTING)
         
-        # Create index-based subsets
-        if DataManager.EVEN_DATA_SPLIT:
-            train_subset = self.create_balanced_subset(train_dataset, train_size)
-            test_subset = self.create_balanced_subset(test_dataset, test_size)
-        else:
-            train_subset = Subset(train_dataset, sample(range(len(train_dataset)), train_size))
-            test_subset = Subset(test_dataset, sample(range(len(test_dataset)), test_size))
+        train_subset = Subset(train_dataset, sample(range(len(train_dataset)), train_size))
+        test_subset = Subset(test_dataset, sample(range(len(test_dataset)), test_size))
+
+        if EvolutionManager.VERY_VERBOSE:
+            print("\nTraining Dataset")
+            self.see_dataset_breakdown(train_dataset)
+            print("\nTesting Dataset")
+            self.see_dataset_breakdown(test_dataset)
         
         return (
             DataLoader(train_subset, batch_size=ModelManager.BATCH_SIZE, shuffle=True),
@@ -100,34 +101,6 @@ class SleepDataLoader:
             self.n_samples,
             self.pos_weight
         )
-
-    def create_balanced_subset(self, dataset, size):
-        """Create balanced subset without full dataset iteration"""
-        # Use precomputed indices if available
-        indices = self.train_indices if dataset == self.train_loader.dataset else self.test_indices
-        
-        # Get random batch of indices
-        batch_indices = sample(indices, min(10000, len(indices)))
-
-        sample_size = min(10000, len(dataset))
-        sampled_indices = sample(range(len(dataset)), sample_size)
-        
-        for idx in sampled_indices:
-            _, label = dataset[idx]
-            batch_indices[int(label)].append(idx)
-        
-        # Determine samples per class
-        n_per_class = size // 2
-        selected = []
-        
-        # Sample from each class
-        for label in [0, 1]:
-            if len(batch_indices[label]) > n_per_class:
-                selected.extend(sample(batch_indices[label], n_per_class))
-            else:
-                selected.extend(batch_indices[label])
-        
-        return Subset(dataset, selected)
 
     def see_dataset_breakdown(self, dataset):
         labels = [dataset[i][1] for i in range(len(dataset))]

@@ -24,7 +24,6 @@ def parse_arguments():
     # DataManager options
     parser.add_argument('--dataset', choices=['sleep-EDF-20', 'sleep-EDF-78', 'sleep-EDFx'], help=f'Dataset to use (default: {DataManager.DATASET})')
     parser.add_argument('--max-mem', type=int, help=f'Maximum memory for lazyloader cache (default: {DataManager.MAX_MEMORY})')
-    parser.add_argument('--even-split', action='store_true', help=f'Use even data  (default: {DataManager.EVEN_DATA_SPLIT})')
     
     # LoggingSettings options
     parser.add_argument('--no-logging', action='store_true', help='Disable logging')
@@ -84,8 +83,6 @@ def apply_arguments(args):
         DataManager.DATASET = args.dataset
     if args.max_mem:
         DataManager.MAX_MEMORY = args.max_mem
-    if args.even_split:
-        DataManager.EVEN_DATA_SPLIT = True
     
     # LoggingSettings settings
     if args.no_logging:
