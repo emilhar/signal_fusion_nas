@@ -80,7 +80,6 @@ class DataManager:
 
     # SleepDataLoader
     dataset_percentage = 0.3
-    EVEN_DATA_SPLIT = False
 
 class LoggingSettings:
     LOG_IDS = ['O', 'T']
@@ -149,8 +148,8 @@ class FitnessFunctions:
     def no_normalization(individual, population):
         pass
 
-    MINIMIZE_FITNESS = True
-    fitness_function = train_loss
+    MINIMIZE_FITNESS = False
+    fitness_function = closeness_to_global_opt
     normalization_function = no_normalization
 
 class Clr:
@@ -234,7 +233,6 @@ class LoggingTemplate:
     elitism = "elitism"
     end_time = "end_time"
     epoch = "epoch"
-    even_data_split = "even_data_split"
     experiment_id = "experiment_id"
     fitness = "fitness"
     fitness_function = "fitness_function"

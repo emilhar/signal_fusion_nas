@@ -107,7 +107,6 @@ def _print_experiment_settings(user_check = True):
     print(f"{'Dataset:':30} {DataManager.DATASET}")
     print(f"{'Available datasets:':30} {DataManager._datasets}")
     print(f"{'Max memory (MB):':30} {DataManager.MAX_MEMORY}")
-    print(f"{'Even data split:':30} {DataManager.EVEN_DATA_SPLIT}")
     print(f"{'Train split:':30} {EvolutionManager.DATA_SPLIT_TRAINING}")
     print(f"{'Test split:':30} {EvolutionManager.DATA_SPLIT_TESTING}")
     print(f"{'Split valid:':30} {EvolutionManager.VALID_DATA_SPLIT}")
