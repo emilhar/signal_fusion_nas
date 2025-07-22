@@ -83,9 +83,8 @@ class CNN_BinaryClassifier(nn.Module):
     N3 = 3
     REM = 4
 
-    def __init__(self, name, n_samples, branch_configs, batch_size):
+    def __init__(self, n_samples, branch_configs, batch_size):
         super().__init__()
-        self.name = name
         self.n_samples = n_samples
         self.batch_size = batch_size
         self.branches = nn.ModuleDict()
