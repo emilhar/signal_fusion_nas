@@ -71,9 +71,7 @@ class KernelSizeEvolutionaryOptimizer:
     
     def get_grid_individuals(self):
         """Only used to 'create' the first generation of individuals"""
-
         population = [self.generate_individual() for _ in range(EvolutionManager.POPULATION_SIZE)]
-
         return population
     
     def generate_individual(self):
@@ -87,16 +85,16 @@ class KernelSizeEvolutionaryOptimizer:
         
         return new_indi
         
-    def evaluate_individual(self, individual):
+    def evaluate_individual(self, individual, _debug=True):
         """Evaluate an individual by training a model
         arg: individual"""
 
+        if _debug:
+            individual.model_performance = self._debug_model_performance(individual)
+            individual.individual_id = LoggingSettings.current_individual_id
+            LoggingSettings.current_individual_id += 1
 
-        individual.model_performance = self._debug_model_performance(individual)
-        individual.individual_id = LoggingSettings.current_individual_id
-        LoggingSettings.current_individual_id += 1
-
-        return (FitnessFunctions.fitness_function(individual),)
+            return (FitnessFunctions.fitness_function(individual),)
 
         model_performance = self.create_trained_individual(individual)
         fitness = FitnessFunctions.fitness_function(model_performance)
@@ -154,14 +152,11 @@ class KernelSizeEvolutionaryOptimizer:
         chosen_for_next_generation = []
         elitism = EvolutionManager.ELITISM
 
-        # Elitism: preserve the best individuals
         if elitism > 0:
-            # Sort population based on fitness (ascending for minimization, descending for maximization)
             sorted_pop = sorted(population, key=lambda x: x.fitness.values[0], reverse=not FitnessFunctions.MINIMIZE_FITNESS)
             elites = sorted_pop[:elitism]
             chosen_for_next_generation.extend(elites)
             
-            # Adjust number of individuals to select through tournament
             remaining_to_select = number_of_people_to_select - elitism
 
         else:
@@ -184,11 +179,8 @@ class KernelSizeEvolutionaryOptimizer:
 
         return ind1, ind2
 
-    def mutate(self, individual):
+    def mutate(self, mutant:list[list[int]]):
         """Mutate an individual by randomly modifying branches or kernel sizes."""
-        
-        # Clone the individual to avoid in-place issues
-        mutant: list[list] = creator.Individual([branch[:] for branch in individual])
 
         mutation_number_options = [i + 1 for i in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS)
               for _ in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS - i)]
@@ -222,25 +214,21 @@ class KernelSizeEvolutionaryOptimizer:
                     else:
                         mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
 
-
             elif mutation_type == "change_kernel":
 
                 branch_idx = random.randrange(len(mutant))
                 kernel_idx = random.randrange(len(mutant[branch_idx]))
                 current_value = mutant[branch_idx][kernel_idx]
                 
-                # Get random percentage change between 10% and 20% (0.10 to 0.20)
                 percentage_change = random.uniform(0.10, 0.20)
                 
-                # Randomly decide whether to increase or decrease
                 if random.random() < 0.5:
                     percentage_change = -percentage_change
                 
                 # Calculate new value (current_value ± (current_value * percentage_change))
                 new_value = current_value + (current_value * percentage_change)
                 
-                # Round to nearest integer and clamp to valid kernel sizes
-                new_value = int(round(new_value))
+                new_value = round(new_value)
                 new_value = min(max(new_value, ModelManager.MIN_KERNEL_SIZE), ModelManager.MAX_KERNEL_SIZE)
                 
                 # Apply mutation
@@ -265,6 +253,7 @@ class KernelSizeEvolutionaryOptimizer:
 
     def run_evolution(self, logging_folder_for_omega_runs=None):
         """Run the evolutionary algorithm"""
+
         if EvolutionManager.VERBOSE:
             print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE} individuals for {EvolutionManager.GENERATIONS} generations")
 
@@ -279,7 +268,7 @@ class KernelSizeEvolutionaryOptimizer:
             LogManager= self.LogManager,
         )
         
-        result_pop = evolver.eaMuPlusLambda(
+        evolver.eaMuPlusLambda(
             stats= self.stats,
         )
 
@@ -287,8 +276,6 @@ class KernelSizeEvolutionaryOptimizer:
             self.log_results(logging_folder_for_omega_runs)
 
         self.print_results()
-        
-        return result_pop, self.hall_of_fame, self.stats
 
     def log_results(self, logging_folder_for_omega_runs):
         
@@ -310,11 +297,49 @@ class KernelSizeEvolutionaryOptimizer:
             torch.save(best_individual.model_performance[LoggingTemplate.state_dict], logging_folder_for_omega_runs + "/" + f"{self.sleepstage}-{self.signal_type}")
         
     def print_results(self):
-        """Print evolution results"""
-        print("\n" + "="*50)
-        print("EVOLUTION RESULTS")
-        print("="*50)
+        """Print evolution results in a dynamically sized table"""
+        title = "EVOLUTION RESULTS"
+        border = "=" * 80  # Wider border to accommodate large branches
         
+        # Find the longest branch string in the Hall of Fame
+        max_branch_len = max(len(str(ind)) for ind in self.hall_of_fame) if self.hall_of_fame else 20
+        max_branch_len = min(max_branch_len, 50)  # Cap at 50 chars to avoid overflow
+        
+        # Table formatting
+        rank_width = 6
+        fitness_width = 12
+        branches_width = max_branch_len + 2  # +2 for padding
+        
+        # Header
+        print("\n\n" + border)
+        print(title.center(len(border)))
+        print(border)
+        
+        # Table
         print(f"\nHall of Fame (Top {len(self.hall_of_fame)}):")
-        for i, individual in enumerate(self.hall_of_fame):
-            print(f"  {i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}")
+        print("-" * (rank_width + branches_width + fitness_width + 6))  # +6 for separators
+        
+        # Column headers (dynamically spaced)
+        header = (
+            f"{'Rank':<{rank_width}} | "
+            f"{'Branches':<{branches_width}} | "
+            f"{'Fitness':<{fitness_width}}"
+        )
+        print(header)
+        print("-" * (rank_width + branches_width + fitness_width + 6))
+        
+        # Rows
+        for i, ind in enumerate(self.hall_of_fame):
+            # Truncate long branch strings if needed
+            branches_str = str(ind)
+            if len(branches_str) > branches_width:
+                branches_str = branches_str[:branches_width-3] + "..."
+            
+            row = (
+                f"{i+1:<{rank_width}} | "
+                f"{branches_str:<{branches_width}} | "
+                f"{ind.fitness.values[0]:<{fitness_width}.4f}"
+            )
+            print(row)
+        
+        print("-" * (rank_width + branches_width + fitness_width + 6))
