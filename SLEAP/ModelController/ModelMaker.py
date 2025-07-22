@@ -116,11 +116,7 @@ class CNN_BinaryClassifier(nn.Module):
 
 
     def forward(self, x):
-        try:
-            outputs = [branch(x).flatten(1) for branch in self.branches.values()]
-        except RuntimeError as e:
-            print(x.shape)
-            quit()
+        outputs = [branch(x).flatten(1) for branch in self.branches.values()]
         combined = torch.cat(outputs, dim=1)
         x = self.fc(combined)
         return self.classifier(x)
