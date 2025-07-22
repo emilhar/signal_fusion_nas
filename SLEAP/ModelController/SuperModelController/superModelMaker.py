@@ -1,0 +1,10 @@
+from ModelController.ModelMaker import CNN_BinaryClassifier
+from MultimodalDataLoader import get_dataloaders_with_multimodal_datasets
+
+new_model = TrainedModelMaker(
+branches=individual,
+N_SAMPLES=n_samples,
+pos_weight=pos_weight,
+train_loader=individual_training_set,
+test_loader=individual_test_set
+)

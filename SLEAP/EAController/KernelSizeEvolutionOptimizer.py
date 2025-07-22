@@ -299,16 +299,14 @@ class KernelSizeEvolutionaryOptimizer:
     def print_results(self):
         """Print evolution results in a dynamically sized table"""
         title = "EVOLUTION RESULTS"
-        border = "=" * 80  # Wider border to accommodate large branches
+        border = "=" * 80
         
-        # Find the longest branch string in the Hall of Fame
         max_branch_len = max(len(str(ind)) for ind in self.hall_of_fame) if self.hall_of_fame else 20
-        max_branch_len = min(max_branch_len, 50)  # Cap at 50 chars to avoid overflow
+        max_branch_len = min(max_branch_len, 50)
         
-        # Table formatting
         rank_width = 6
         fitness_width = 12
-        branches_width = max_branch_len + 2  # +2 for padding
+        branches_width = max_branch_len + 2
         
         # Header
         print("\n\n" + border)
