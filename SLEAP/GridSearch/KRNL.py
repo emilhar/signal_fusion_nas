@@ -15,14 +15,10 @@ class KRNL_GridSearch:
     """
     Kernel, Reduction function, N-Layer grid search
     """
-    def __init__(self, signal: Signal, sleep_stage: Sleepstage, n_samples=3000, _debug = False):
-        
-        if _debug:
-            return
-        
+    def __init__(self, signal: Signal, sleep_stage: Sleepstage, dataset: DataManager.DatasetNames, dataset_percentage=0.10, n_samples=3000):
         DataManager.MAX_MEMORY = 2048
-        DataManager.DATASET = DataManager.DatasetNames.EDF_78
-        DataManager.dataset_percentage = 0.05
+        DataManager.DATASET = dataset
+        DataManager.dataset_percentage = dataset_percentage
         ModelManager.BATCH_SIZE = 32
 
         self.kernels = self.__get_kernels()
@@ -102,7 +98,7 @@ class KRNL_GridSearch:
             branch.append(kernel)
 
 
-        model_args = get_branch_configs([branch], "", self.n_samples)
+        model_args = get_branch_configs([branch], self.n_samples)
         model_args["batch_size"] = 32
         model = CNN_BinaryClassifier(**model_args).to(self.device)
         
@@ -168,4 +164,143 @@ class KRNL_GridSearch:
         return [identity, halve, rooting, log2, divide5]
 
     
+import time
+import math
+import os
+import json
+import numpy as np
+import torch
+from skopt import Optimizer
+from skopt.space import Integer, Categorical
 
+from Globals import Signal, Sleepstage, DataManager, ModelManager
+from EAController.SleepDataLoader import SleepDataLoader
+from ModelController.ModelMaker import CNN_BinaryClassifier
+from ModelController._Trainer import train_model
+from ModelController.BranchSettings import get_branch_configs
+
+
+
+class KRNL_BayesianSearch:
+    """
+    Bayesian optimization for kernel sizes (no reduction functions).
+    """
+    def __init__(self, signal: Signal, sleep_stage: Sleepstage, dataset: DataManager.DatasetNames, dataset_percentage=0.10, n_samples=3000, n_calls=50):
+        DataManager.MAX_MEMORY = 2048
+        DataManager.DATASET = dataset
+        DataManager.dataset_percentage = dataset_percentage
+        ModelManager.BATCH_SIZE = 32
+
+        self.signal = signal
+        self.sleep_stage = sleep_stage
+        self.n_samples = n_samples
+        self.n_calls = n_calls
+        self.loader = SleepDataLoader(self.signal, self.sleep_stage)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Load fixed dataset subset for consistent evaluation
+        self.train_loader, self.test_loader, _, self.pos_weight = self.loader.get_random_subset()
+        
+        # Define search space: number of layers and kernel sizes for up to 4 layers
+        kernels = self.__get_kernels()
+        self.space = [
+            Integer(1, 4, name='n_layers'),
+            Categorical(kernels, name='kernel1'),
+            Categorical(kernels, name='kernel2'),
+            Categorical(kernels, name='kernel3'),
+            Categorical(kernels, name='kernel4'),
+        ]
+        
+        # Bayesian optimizer
+        self.optimizer = Optimizer(
+            self.space,
+            base_estimator="GP",
+            n_initial_points=min(10, n_calls),
+            acq_func="EI"
+        )
+        
+        self.history = []
+
+    def build_branch(self, params):
+        """Construct branch from parameters"""
+        n_layers = params[0]
+        kernels = [int(k) for k in params[1:1+n_layers]]  # Convert back to int
+        return kernels
+
+    def evaluate_branch(self, branch):
+        """Train and evaluate model with given branch."""
+        model_args = get_branch_configs([branch], self.n_samples)
+        model_args["batch_size"] = 32
+        model = CNN_BinaryClassifier(**model_args).to(self.device)
+        
+        model_performance = train_model(
+            model,
+            self.device,
+            self.train_loader,
+            self.test_loader,
+            self.pos_weight,
+            epochs=1
+        )
+        
+        return {
+            k: v for k, v in model_performance.items()
+            if k not in ["true_labels", "best_scores", "state_dict"]
+        }
+
+    def run_optimization(self):
+        """Execute Bayesian optimization."""
+        print(f"Starting Bayesian optimization for {self.n_calls} iterations...")
+        start_time = time.time()
+        
+        for i in range(self.n_calls):
+            iter_start = time.time()
+            
+            # Get next hyperparameters from optimizer
+            params = self.optimizer.ask()
+            
+            # Build branch from parameters
+            branch = self.build_branch(params)
+            result = self.evaluate_branch(branch)
+            train_loss = result['train_loss']
+            
+            # Store results and update optimizer
+            self.history.append({
+                'params': params,
+                'branch': branch,
+                'result': result
+            })
+            self.optimizer.tell(params, train_loss)  # Minimize train loss
+            
+            # Log progress
+            iter_time = time.time() - iter_start
+            total_time = time.time() - start_time
+            print(f"Iter {i+1}/{self.n_calls}: train loss={train_loss:.4f}, "
+                  f"Branch={list(map(int, branch))}, Time={iter_time:.1f}s, Total={total_time:.1f}s")
+        
+        # Save results
+        self.save_results()
+        print("Optimization completed.")
+
+    def save_results(self):
+        """Save optimization history to JSON file."""
+        results_dir = "./Data/bayesian_results/"
+        os.makedirs(results_dir, exist_ok=True)
+        filename = f"{results_dir}{self.signal}_{self.sleep_stage}.json"
+        
+        with open(filename, 'w') as f:
+            json.dump(list(map(int, self.history)), f, indent=4)
+        print(f"Results saved to {filename}")
+
+    def __get_kernels(self) -> list[int]:
+        k = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        k += [12, 14, 16, 18, 20]
+        k += [22, 24, 26, 28, 30]
+        k += [35, 40, 50]
+        k += [60, 70, 80, 90, 100]
+        k += [120, 140, 160, 180]
+        k += [200, 250, 300, 350, 400]
+        k += [500, 600, 700, 800, 900, 1000]
+        k += [1250, 1500]
+
+        return k
+    
