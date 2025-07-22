@@ -66,7 +66,7 @@ def apply_arguments(args):
     if args.generations:
         EvolutionManager.GENERATIONS = args.generations - 1
     if args.st_size:
-        EvolutionManager.SELECTION_TOURNAMENT_SIZE = args.tournament_size
+        EvolutionManager.SELECTION_TOURNAMENT_SIZE = args.st_size
     if args.hof_size:
         EvolutionManager.HALL_OF_FAME_MEMBERS = args.hof_size
     if args.cx_prob:

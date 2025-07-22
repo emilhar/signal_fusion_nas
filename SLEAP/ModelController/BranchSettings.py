@@ -2,7 +2,7 @@
 This file contains the Manager needed to make a model
 """
 
-def get_branch_configs(branches:list[list[int]], name:str, sample_count:int):
+def get_branch_configs(branches:list[list[int]], sample_count:int):
   """ 
     Get full Manager for a model given
       left_kernel_size: A list of 3 numbers for the kernel sizes of the left branch. e.g. [1, 2, 3]
@@ -30,7 +30,6 @@ def get_branch_configs(branches:list[list[int]], name:str, sample_count:int):
   
 
   model_args = {
-    "name": name,
     "n_samples": sample_count,
     "branch_configs": branch_configs
     }
