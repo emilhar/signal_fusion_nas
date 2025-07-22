@@ -34,18 +34,15 @@ class SleepDataLoader:
 
         data_dir = f"Data/{DataManager.DATASET}/{self.signal_type}"
         all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
-        subject_ids = sorted(set(f[:6] for f in all_files))
+        subject_ids = sorted(set(f[:5] for f in all_files))
         shuffle(subject_ids)
-
-        print("FART")
-        print(subject_ids)
 
         split_idx = int(len(subject_ids) * EvolutionManager.DATA_SPLIT_TRAINING)
         train_subjects = subject_ids[:split_idx]
         test_subjects = subject_ids[split_idx:]
 
-        train_files = [f for f in all_files if f[:6] in train_subjects]
-        test_files = [f for f in all_files if f[:6] in test_subjects]
+        train_files = [f for f in all_files if f[:5] in train_subjects]
+        test_files = [f for f in all_files if f[:5] in test_subjects]
 
         stage_map = self._get_stage_map()
 

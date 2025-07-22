@@ -121,6 +121,7 @@ def train_model(model, device, train_loader, test_loader, pos_weight, verbose=Fa
         it.time: elapsed,
         it.state_dict: best_state_dict
     }
+    
     return output
 
 def _get_kernel_sizes(branch):
