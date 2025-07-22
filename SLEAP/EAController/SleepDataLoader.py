@@ -94,8 +94,6 @@ class SleepDataLoader:
             train_subset = Subset(train_dataset, sample(range(len(train_dataset)), train_size))
             test_subset = Subset(test_dataset, sample(range(len(test_dataset)), test_size))
         
-
-
         return (
             DataLoader(train_subset, batch_size=ModelManager.BATCH_SIZE, shuffle=True),
             DataLoader(test_subset, batch_size=ModelManager.BATCH_SIZE, shuffle=False),
