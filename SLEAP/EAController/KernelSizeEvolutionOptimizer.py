@@ -6,6 +6,7 @@ from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from Globals import Signal, ModelManager, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
+from GridSearch.KRNL import KRNL_GridSearch
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -31,7 +32,7 @@ class KernelSizeEvolutionaryOptimizer:
         else:
             self.LogManager = None
 
-        self.chosen_for_next_generation = []
+        self.KRNL = KRNL_GridSearch(self.signal_type, self.sleepstage, _debug=True)
 
         self.setup_deap()
     
@@ -52,10 +53,6 @@ class KernelSizeEvolutionaryOptimizer:
 
         self.toolbox = base.Toolbox()
         
-        # Individual generation
-        self.toolbox.register("individual", self.generate_individual)
-        self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-        
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
@@ -72,24 +69,34 @@ class KernelSizeEvolutionaryOptimizer:
         
         self.hall_of_fame = tools.HallOfFame(EvolutionManager.HALL_OF_FAME_MEMBERS)
     
+    def get_grid_individuals(self):
+        """Only used to 'create' the first generation of individuals"""
+
+        population = [self.generate_individual() for _ in range(EvolutionManager.POPULATION_SIZE)]
+
+        return population
+    
     def generate_individual(self):
-        """Generate a random individual with kernel branches.
-        Only used to create the first generation of individuals"""
+        new_indi = []
 
-        branches = []
-        number_of_branches = random.randint( ModelManager.NUMBER_OF_BRANCHES_RANGE[0], ModelManager.NUMBER_OF_BRANCHES_RANGE[1])
-        kernel_per_branch = [ random.randint( ModelManager.NUMBER_OF_KERNELS_RANGE[0], ModelManager.NUMBER_OF_KERNELS_RANGE[1]) for _ in range(number_of_branches) ]
-
-        branches = [[random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(kernel_per_branch[i])] for i in range(number_of_branches)]
+        for _ in range(random.randint(*ModelManager.NUMBER_OF_BRANCHES_RANGE)):
+            new_indi.append(self.KRNL.theta())
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
-        individual = creator.Individual(branches)
-
-        return individual
-    
+        new_indi = creator.Individual(new_indi)
+        
+        return new_indi
+        
     def evaluate_individual(self, individual):
         """Evaluate an individual by training a model
         arg: individual"""
+
+
+        individual.model_performance = self._debug_model_performance(individual)
+        individual.individual_id = LoggingSettings.current_individual_id
+        LoggingSettings.current_individual_id += 1
+
+        return (FitnessFunctions.fitness_function(individual),)
 
         model_performance = self.create_trained_individual(individual)
         fitness = FitnessFunctions.fitness_function(model_performance)
@@ -99,6 +106,26 @@ class KernelSizeEvolutionaryOptimizer:
         LoggingSettings.current_individual_id += 1
 
         return (fitness,)
+    
+    def _debug_model_performance(self, indi):
+        it = LoggingTemplate
+        output = {
+            it.epoch: 0,
+            it.train_loss: 0,
+            it.test_loss: 0,
+            it.precision: 0,
+            it.recall: 0,
+            it.accuracy: 0,
+            it.lr: 0,
+            it.branches: indi,
+            it.best_f1: 0,
+            it.best_auc: 0,
+            it.best_true: 0,
+            it.best_scores: 0,
+            it.time: 0,
+            it.state_dict: 0
+        }
+        return output
     
     def create_trained_individual(self, individual):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
@@ -124,7 +151,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Normalize fitness values
         map(lambda x: FitnessFunctions.normalization_function(x, population), population)
 
-        self.chosen_for_next_generation = []
+        chosen_for_next_generation = []
         elitism = EvolutionManager.ELITISM
 
         # Elitism: preserve the best individuals
@@ -132,7 +159,7 @@ class KernelSizeEvolutionaryOptimizer:
             # Sort population based on fitness (ascending for minimization, descending for maximization)
             sorted_pop = sorted(population, key=lambda x: x.fitness.values[0], reverse=not FitnessFunctions.MINIMIZE_FITNESS)
             elites = sorted_pop[:elitism]
-            self.chosen_for_next_generation.extend(elites)
+            chosen_for_next_generation.extend(elites)
             
             # Adjust number of individuals to select through tournament
             remaining_to_select = number_of_people_to_select - elitism
@@ -144,9 +171,9 @@ class KernelSizeEvolutionaryOptimizer:
         for _ in range(remaining_to_select):
             aspirants = [random.choice(population) for _ in range(tournsize)]
             best = max(aspirants, key= lambda x: x.fitness.values[0])
-            self.chosen_for_next_generation.append(best)
+            chosen_for_next_generation.append(best)
         
-        return self.chosen_for_next_generation
+        return chosen_for_next_generation
 
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""
@@ -177,20 +204,24 @@ class KernelSizeEvolutionaryOptimizer:
             
             elif mutation_type == "add_branch":
                 if len(mutant) < ModelManager.NUMBER_OF_BRANCHES_RANGE[1]:
-                    branch_length = random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE)
-                    first_kernel = max(1, random.choice(range(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE, 20))-1)
-                    new_branch = [first_kernel]
-                    for _ in range(branch_length - 1):
-                        new_branch.append(max( new_branch[-1] // 2, 1))
-                    mutant.append(new_branch)
-
-            elif mutation_type == "add_kernel":
-                branch_idx = random.randrange(len(mutant))
-                if len(mutant[branch_idx]) < ModelManager.NUMBER_OF_KERNELS_RANGE[1]:
-                    new_kernel = random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE)
-                    nk_index = random.randint(0, len(mutant[branch_idx])-1)
                     
-                    mutant[branch_idx].insert(nk_index, new_kernel)
+                    if random.random() < 0.5:
+                        mutant.append(self.KRNL.theta())
+                    else:
+                        mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+
+            elif mutation_type == "change_branch":
+                # Remove
+                if len(mutant) > ModelManager.NUMBER_OF_BRANCHES_RANGE[0]:
+                    mutant.pop(random.randrange(len(mutant)))
+            
+                # Then add
+                if len(mutant) < ModelManager.NUMBER_OF_BRANCHES_RANGE[1]:
+                    if random.random() < 0.5:
+                        mutant.append(self.KRNL.theta())
+                    else:
+                        mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+
 
             elif mutation_type == "change_kernel":
 
@@ -223,13 +254,13 @@ class KernelSizeEvolutionaryOptimizer:
         """
         num = random.randint(1, 100)
 
-        if 1 <= num <= 5:       # 5%: Remove branch
+        if 1 <= num <= 15:       # 15%: Remove branch
             return "remove_branch"
-        elif 5 <= num <= 20:    # 15%: Add branch
+        elif 15 <= num <= 30:    # 15%: Add branch
             return "add_branch"
-        elif 20 <= num <= 45:    # 25%: Add kernel
-            return "add_kernel"
-        else:                    # 55%: Change kernel
+        elif 30 <= num <= 60:    # 30% Change branch 
+            return "change_branch"
+        else:                    # 40%: Change kernel
             return "change_kernel"
 
     def run_evolution(self, logging_folder_for_omega_runs=None):
@@ -238,7 +269,7 @@ class KernelSizeEvolutionaryOptimizer:
             print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE} individuals for {EvolutionManager.GENERATIONS} generations")
 
         # Create initial population
-        population = self.toolbox.population(n=EvolutionManager.POPULATION_SIZE)
+        population = self.get_grid_individuals()
         
         # Run evolution
         evolver = SLeaMuPlusLambda(

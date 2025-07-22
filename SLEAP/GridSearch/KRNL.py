@@ -15,7 +15,11 @@ class KRNL_GridSearch:
     """
     Kernel, Reduction function, N-Layer grid search
     """
-    def __init__(self, signal: Signal, sleep_stage: Sleepstage, n_samples=3000):
+    def __init__(self, signal: Signal, sleep_stage: Sleepstage, n_samples=3000, _debug = False):
+        
+        if _debug:
+            return
+        
         DataManager.MAX_MEMORY = 2048
         DataManager.DATASET = DataManager.DatasetNames.EDF_78
         DataManager.dataset_percentage = 0.05
@@ -37,19 +41,16 @@ class KRNL_GridSearch:
 
         print("Finished loading grid.")
 
-
-    def theta(self, n: int) -> list[list[int]]:
+    def theta(self) -> list[list[int]]:
         opt = [[19, 18], [420, 120, 8], [1000, 1000, 1000], [1, 1, 1], [1000], [900, 500, 500]]
 
-        individuals = []
-        for _ in range(n):
-            k = random.choice(opt)
-            for i, x in enumerate(k):
-                k[i] *= random.uniform(0.5, 1.5)
-            random.shuffle(k)
-            individuals.append(k)
 
-        return individuals
+        k = random.choice(opt)
+        for i, x in enumerate(k):
+            k[i] *= random.uniform(0.5, 1.5)
+            k[i] = min(1500, max(1, int(k[i])))
+
+        return k
     
     def compute_grid(self):
         start_time = time.time()

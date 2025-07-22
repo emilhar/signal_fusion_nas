@@ -149,8 +149,8 @@ class FitnessFunctions:
     def no_normalization(individual, population):
         pass
 
-    MINIMIZE_FITNESS = True
-    fitness_function = train_loss
+    MINIMIZE_FITNESS = False
+    fitness_function = closeness_to_global_opt
     normalization_function = no_normalization
 
 class Clr:
