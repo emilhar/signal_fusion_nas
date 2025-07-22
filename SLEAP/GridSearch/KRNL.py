@@ -38,14 +38,18 @@ class KRNL_GridSearch:
         print("Finished loading grid.")
 
 
-    def theta(self, n: int) -> list[int]:
+    def theta(self, n: int) -> list[list[int]]:
         opt = [[19, 18], [420, 120, 8], [1000, 1000, 1000], [1, 1, 1], [1000], [900, 500, 500]]
-        k = random.choice(opt)
-        for i, x in enumerate(k):
-            k[i] *= random.uniform(0.5, 1.5)
-        random.shuffle(k)
 
-        return k
+        individuals = []
+        for _ in range(n):
+            k = random.choice(opt)
+            for i, x in enumerate(k):
+                k[i] *= random.uniform(0.5, 1.5)
+            random.shuffle(k)
+            individuals.append(k)
+
+        return individuals
     
     def compute_grid(self):
         start_time = time.time()
