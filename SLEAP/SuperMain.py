@@ -1,21 +1,34 @@
-from ModelController.SuperModelController.MultimodalDataLoader import get_dataloaders_with_multimodal_datasets
 from ModelController.ModelMaker import CNN_BinaryClassifier
+from ModelController.SuperModelController.MultimodalDataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
 from ModelController.SuperModelController.SuperModelMaker import EnsembleModel
 from ModelController.SuperModelController.SuperTrainer import train_model
+from ModelController.SuperModelController.SuperModelPlotter import analyze_predictions
 from Globals import Sleepstage, Signal, LoggingSettings, device
+from sklearn.metrics import classification_report
+
 from Logs.LogManager import LogManager
+from Globals import DataManager
 
 import os
 import torch
+import numpy as np
 
 LoggingSettings.LOGGER_ID = "O"
 def superMain():
-    print("Loading Data")
+    print("📦 Loading Data...")
     train_loader, test_loader = get_dataloaders_with_multimodal_datasets()
-    print("Loading Models")
+
+    print("🧠 Loading Models...")
     models_dict = load_each_model()
-    print("Training Model")
-    ensomnia(models_dict, train_loader, test_loader)
+
+    print("🚀 Training Model...")
+    model = EnsembleModel(models_dict)
+    trained_state = ensomnia(models_dict, train_loader, test_loader)
+    model.to(device).load_state_dict(trained_state)
+
+    print("📊 Plotting Results...")
+    plot(model)
+
 
 def load_each_model():
         id_helper = LogManager()
@@ -30,7 +43,10 @@ def load_each_model():
         return models_dict
 
 def load_model(model_path):
-    checkpoint = torch.load(model_path, map_location=device)
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=FutureWarning)
+        checkpoint = torch.load(model_path, map_location=device)
 
     model_args = checkpoint["model_args"]
 
@@ -50,11 +66,57 @@ def ensomnia(models_dict, train_loader, test_loader):
         model=model,
         train_loader=train_loader,
         test_loader=test_loader,
-        epochs=5,
+        epochs=1,
         lr=5e-5,
         wd=1e-4,
     )
-    print("FART")
-    print(model.load_state_dict(trained_state))
+
+    
+    return trained_state
+
+
+
+def plot(model):
+    _, _, x_test,y_test = make_training_and_testing_data()
+
+    all_true = []
+    all_preds = []
+
+    model.eval()
+
+    with torch.inference_mode():
+        for i in range(len(y_test)):
+            input_dict = {}
+            for ch in Signal.ALL_SIGNALS:
+                signal = x_test[ch][i]
+                input_dict[ch] = signal.clone().detach().float().transpose(0, 1).unsqueeze(0).to(device)
+
+
+            true_label = y_test[i]
+            output = model(input_dict)
+            pred_label = torch.argmax(output, dim=1).item()
+
+            all_true.append(true_label)
+            all_preds.append(pred_label)
+
+    all_true = np.array(all_true)
+    all_preds = np.array(all_preds)
+
+    print("\nTest Classification Report:")
+    print(classification_report(
+        all_true,
+        all_preds,
+        target_names=Sleepstage.ALL_STAGES,
+        digits=4,
+        zero_division=0
+    ))
+
+    print("\n\n\n\n")
+
+    analyze_predictions(
+        model=model, 
+        X=x_test, 
+        y=y_test
+    )
 
 superMain()

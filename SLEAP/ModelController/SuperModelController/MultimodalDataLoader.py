@@ -21,7 +21,7 @@ class MultimodalDataset(Dataset):
         return self.length
 
     def __getitem__(self, idx):
-        return {signal: data[idx] for signal, data in self.data_dict.items()}, self.labels[idx]
+        return {signal: data[idx].transpose(0,1) for signal, data in self.data_dict.items()}, self.labels[idx]
 
 def get_dataloaders_with_multimodal_datasets() -> tuple[DataLoader, DataLoader]:
     # Load data
@@ -66,6 +66,13 @@ def make_training_and_testing_data():
             y_train.extend(y_train_signal)
         if not y_test:
             y_test.extend(y_test_signal)
+
+    for signal in Signal.ALL_SIGNALS:
+        X_train[signal] = X_train[signal][:1]
+        X_test[signal] = X_test[signal][:1]
+
+    y_train = y_train[:1]
+    y_test = y_test[:1]
     
     # Convert lists to tensors
     for signal in Signal.ALL_SIGNALS:
@@ -74,7 +81,7 @@ def make_training_and_testing_data():
     
     y_train = torch.cat(y_train)
     y_test = torch.cat(y_test)
-    
+
     return X_train, y_train, X_test, y_test
 
 def get_data_from_files(data_dir, files):
