@@ -1,6 +1,6 @@
 from Globals import SLEAPyException
 from MainHelpers import ArgParser, ExperimentRunner, InputHandler
-from SuperMain import superMain
+from ModelController.SuperModelController.SuperMain import superMain
 
 def main():
     """Main entry point"""

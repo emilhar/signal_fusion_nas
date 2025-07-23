@@ -33,7 +33,6 @@ def get_dataloaders_with_multimodal_datasets() -> tuple[DataLoader, DataLoader]:
     return train_load, test_load
 
 def make_training_and_testing_data():
-    dataset = DataManager.DatasetNames.EDF_20
     
     # Initialize dictionaries to hold all signals
     X_train = {signal: [] for signal in Signal.ALL_SIGNALS}
@@ -42,7 +41,7 @@ def make_training_and_testing_data():
     y_test = []
     
     for signal in Signal.ALL_SIGNALS:
-        data_dir = f"Data/{dataset}/{signal}"
+        data_dir = f"Data/{DataManager.DATASET}/{signal}"
         all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
         subject_ids = sorted(set(f[:5] for f in all_files))
 

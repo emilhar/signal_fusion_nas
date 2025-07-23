@@ -77,8 +77,8 @@ class DataManager:
 
     _datasets = [DatasetNames.EDF_20, DatasetNames.EDF_78]
 
-    DATASET = _datasets[1]
-    MAX_MEMORY = 256
+    DATASET = _datasets[0]
+    MAX_MEMORY = 512
 
     # SleepDataLoader
     dataset_percentage = 0.3

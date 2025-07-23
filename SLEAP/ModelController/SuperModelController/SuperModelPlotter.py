@@ -64,7 +64,7 @@ def analyze_predictions(model, X, y):
     all_true = np.array(all_true)
     all_preds = np.array(all_preds)
 
-    cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)))
+    cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize=True)
 
     plt.figure(figsize=(10, 8))
 
