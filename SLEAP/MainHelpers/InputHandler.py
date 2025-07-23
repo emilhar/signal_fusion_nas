@@ -4,12 +4,13 @@ def get_user_configuration(args):
     """Get configuration from user input"""
     skip_sleep_stage = args.sleep_stage is not None
     skip_signal = args.signal is not None
+    polyarithmos = args.polyarithmos is not None
     no_logging = args.no_logging
     
     if skip_sleep_stage:
         Sleepstage.current_sleepstage = args.sleep_stage
 
-    else:
+    elif not polyarithmos:
         print("\n📊 Available Sleep Stages:")
 
         sleep_options = [(stage, str(stage)) for stage in Sleepstage.ALL_STAGES]
@@ -29,7 +30,7 @@ def get_user_configuration(args):
     if skip_signal:
         Signal.current_signal = args.signal
 
-    else:
+    elif not polyarithmos:
         print("\n🔌 Available Signal Types:")
 
         signal_options = [(signal, str(signal)) for signal in Signal.ALL_SIGNALS]
@@ -51,21 +52,24 @@ def get_user_configuration(args):
 
     else:
         print("\n📝 Logging")
-        LoggingSettings.LOGGING = input("Do you want to be logging (y/*)?: ").lower().startswith('y')
+        if not hasattr(args, "log"):
+            LoggingSettings.LOGGING = input("Do you want to be logging (y/*)?: ").lower().startswith('y')
 
         if LoggingSettings.LOGGING:
+            if not args.log_id:
+                while True:
+                    print("\n",LoggingSettings.LOG_IDS)
+                    potential_log_id = input("Enter logging ID: ").upper().strip()
+                    if potential_log_id in LoggingSettings.LOG_IDS:
+                        LoggingSettings.LOGGER_ID = potential_log_id
+                        break
+                    else:
+                        print("❌ Please enter valid ID\n")
 
-            while True:
-                print("\n",LoggingSettings.LOG_IDS)
-                potential_log_id = input("Enter logging ID: ").upper().strip()
-                if potential_log_id in LoggingSettings.LOG_IDS:
-                    LoggingSettings.LOGGER_ID = potential_log_id
-                    break
-                else:
-                    print("❌ Please enter valid ID\n")
-
-            LoggingSettings.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/*)?: ").lower().startswith('y')
-            LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
+            if not args.log_all:
+                LoggingSettings.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/*)?: ").lower().startswith('y')
+            if not args.exp_name:
+                LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
 
         else:
             LoggingSettings.LOGGER_ID = "None"
