@@ -1,13 +1,11 @@
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from ModelController.SuperModelController.MultimodalDataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
-from ModelController.SuperModelController.SuperModelMaker import EnsembleModel
-from ModelController.SuperModelController.SuperTrainer import train_model
-from ModelController.SuperModelController.SuperModelPlotter import analyze_predictions
+from ModelController.EnSomniaC.EnSomniaC_DataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
+from ModelController.EnSomniaC.EnSomniaC_Maker import EnsembleModel
+from ModelController.EnSomniaC.EnSomniaC_Trainer import train_model
+from ModelController.EnSomniaC.EnSomniaC_Plotter import analyze_predictions
 from Globals import Sleepstage, Signal, LoggingSettings, device
 from sklearn.metrics import classification_report
-
 from Logs.LogManager import LogManager
-from Globals import DataManager
 
 import os
 import torch
