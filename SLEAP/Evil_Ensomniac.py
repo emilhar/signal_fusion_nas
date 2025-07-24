@@ -11,7 +11,7 @@ def main():
     print("🔥🔥 MUHAHAH EVIL MODELS 🔥🔥")
     print("👹 Summoning the dark forces... 👹")
     get_random_indis()
-    superMain(model_dir="SavedModels/EvilModels")
+    superMain(given_folder="SavedModels/EvilModels")
     
     print("\n")
     
@@ -19,7 +19,7 @@ def main():
     print("✨✨ GOOD MODELS ✨✨")
     print("🕊️ Calling upon the righteous... 🕊️")
     get_good_indis()
-    superMain(model_dir="SavedModels/GoodModels")
+    superMain(given_folder="SavedModels/GoodModels")
 
 def save_model(tmm, signal_type, sleepstage, prefix):
     os.makedirs(f"SavedModels/{prefix}Models", exist_ok=True)
@@ -30,9 +30,17 @@ def save_model(tmm, signal_type, sleepstage, prefix):
         'model_args': tmm.model_args
     }, model_path)
 
+def model_exists(sleepstage, signal_type, prefix):
+    model_path = f"SavedModels/{prefix}Models/{sleepstage}_{signal_type}_model.pt"
+    return os.path.exists(model_path)
+
 def get_random_indis():
     for sig in Signal.ALL_SIGNALS:
         for st in Sleepstage.ALL_STAGES:
+            if model_exists(st, sig, "Evil"):
+                print(f"Model for {st} in {sig} already exists in EvilModels. Skipping...")
+                continue
+                
             print("\nTRAINING", st, "IN", sig)
             sdl = SleepDataLoader(sig, st)
             indi = []
@@ -51,6 +59,10 @@ def get_random_indis():
 def get_good_indis():
     for sig in Signal.ALL_SIGNALS:
         for st in Sleepstage.ALL_STAGES:
+            if model_exists(st, sig, "Good"):
+                print(f"Model for {st} in {sig} already exists in GoodModels. Skipping...")
+                continue
+                
             print("TRAINING", st, "IN", sig)
             sdl = SleepDataLoader(sig, st)
             m = TrainedModelMaker(
