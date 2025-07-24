@@ -6,7 +6,7 @@ from bisect import bisect_right
 
 from Globals import DataManager
 
-class SleepEDF20LazyDataset(Dataset):
+class LazyDataset(Dataset):
     def __init__(self, files, data_dir, stage_map):
         self.files = files
         self.data_dir = data_dir

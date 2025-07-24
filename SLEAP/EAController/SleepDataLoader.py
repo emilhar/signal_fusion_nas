@@ -4,7 +4,7 @@ import os
 from random import sample, shuffle
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from EAController.SleepEDF20LazyDataset import SleepEDF20LazyDataset
+from EAController.LazyDataset import LazyDataset
 from Globals import Sleepstage, ModelManager, EvolutionManager, DataManager
 
 
@@ -46,8 +46,8 @@ class SleepDataLoader:
 
         stage_map = self._get_stage_map()
 
-        train_dataset = SleepEDF20LazyDataset(train_files, data_dir, stage_map)
-        test_dataset = SleepEDF20LazyDataset(test_files, data_dir, stage_map)
+        train_dataset = LazyDataset(train_files, data_dir, stage_map)
+        test_dataset = LazyDataset(test_files, data_dir, stage_map)
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)
