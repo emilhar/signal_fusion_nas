@@ -9,9 +9,9 @@ import numpy as np
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score, roc_auc_score
 
 import datetime # For max training time
-from Globals import ModelManager, LoggingTemplate
+from Globals import LoggingTemplate, device
 
-def train_model(model, device, train_loader, test_loader, pos_weight, verbose=False, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1):
+def train_model(model, train_loader, test_loader, pos_weight, verbose=False, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1):
 
     training_time_start = datetime.datetime.now()
 

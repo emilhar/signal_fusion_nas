@@ -90,8 +90,11 @@ def apply_arguments(args):
     if args.log:
         LoggingSettings.LOGGING = True
     if args.log_id:
+        LoggingSettings.LOGGING = True
         LoggingSettings.LOGGER_ID = args.log_id
     if args.log_all:
+        LoggingSettings.LOGGING = True
         LoggingSettings.LOG_ALL_INDIVIDUALS = True
     if args.exp_name:
+        LoggingSettings.LOGGING = True
         LoggingSettings.experiment_name = args.exp_name

@@ -1,3 +1,4 @@
+import os
 import random
 import torch
 import numpy as np
@@ -5,8 +6,8 @@ from deap import base, creator, tools
 from EAController.SleepDataLoader import SleepDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from Globals import Signal, ModelManager, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
-from GridSearch.KRNL import KRNL_GridSearch
+from Globals import Signal, ModelManager, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions, DataManager
+#from GridSearch.KRNL import KRNL_GridSearch
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
@@ -32,7 +33,7 @@ class KernelSizeEvolutionaryOptimizer:
         else:
             self.LogManager = None
 
-        self.KRNL = KRNL_GridSearch(self.signal_type, self.sleepstage, _debug=True)
+        #self.KRNL = KRNL_GridSearch(self.signal_type, self.sleepstage)
 
         self.setup_deap()
     
@@ -78,14 +79,15 @@ class KernelSizeEvolutionaryOptimizer:
         new_indi = []
 
         for _ in range(random.randint(*ModelManager.NUMBER_OF_BRANCHES_RANGE)):
-            new_indi.append(self.KRNL.theta())
+            new_indi.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+            #new_indi.append(self.KRNL.theta())
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
         new_indi = creator.Individual(new_indi)
         
         return new_indi
         
-    def evaluate_individual(self, individual, _debug=True):
+    def evaluate_individual(self, individual, _debug=False):
         """Evaluate an individual by training a model
         arg: individual"""
 
@@ -96,10 +98,12 @@ class KernelSizeEvolutionaryOptimizer:
 
             return (FitnessFunctions.fitness_function(individual),)
 
-        model_performance = self.create_trained_individual(individual)
-        fitness = FitnessFunctions.fitness_function(model_performance)
+        model = self.create_trained_individual(individual)
+        fitness = FitnessFunctions.fitness_function(model.model_performance)
 
-        individual.model_performance = model_performance
+        individual.model_performance = model.model_performance
+        individual.model_args = model.model_args
+
         individual.individual_id = LoggingSettings.current_individual_id
         LoggingSettings.current_individual_id += 1
 
@@ -138,7 +142,7 @@ class KernelSizeEvolutionaryOptimizer:
             test_loader=individual_test_set
         )
 
-        return new_model.model_performance
+        return new_model
     
     def select(self, population, number_of_people_to_select, tournsize):
         """Tournament selection with elitism"""
@@ -198,7 +202,8 @@ class KernelSizeEvolutionaryOptimizer:
                 if len(mutant) < ModelManager.NUMBER_OF_BRANCHES_RANGE[1]:
                     
                     if random.random() < 0.5:
-                        mutant.append(self.KRNL.theta())
+                        mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+                        #mutant.append(self.KRNL.theta())
                     else:
                         mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
 
@@ -210,7 +215,8 @@ class KernelSizeEvolutionaryOptimizer:
                 # Then add
                 if len(mutant) < ModelManager.NUMBER_OF_BRANCHES_RANGE[1]:
                     if random.random() < 0.5:
-                        mutant.append(self.KRNL.theta())
+                        mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+                        #mutant.append(self.KRNL.theta())
                     else:
                         mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
 
@@ -294,21 +300,24 @@ class KernelSizeEvolutionaryOptimizer:
 
         if logging_folder_for_omega_runs:
             best_individual = self.hall_of_fame[0]
-            torch.save(best_individual.model_performance[LoggingTemplate.state_dict], logging_folder_for_omega_runs + "/" + f"{self.sleepstage}-{self.signal_type}")
-        
+            torch.save(
+            {
+                "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
+                "model_args": best_individual.model_args,
+            },
+            os.path.join(logging_folder_for_omega_runs, f"{DataManager.DATASET}_{self.sleepstage}_{self.signal_type}_classifier.pt"))
+
     def print_results(self):
         """Print evolution results in a dynamically sized table"""
         title = "EVOLUTION RESULTS"
-        border = "=" * 80  # Wider border to accommodate large branches
+        border = "=" * 80
         
-        # Find the longest branch string in the Hall of Fame
         max_branch_len = max(len(str(ind)) for ind in self.hall_of_fame) if self.hall_of_fame else 20
-        max_branch_len = min(max_branch_len, 50)  # Cap at 50 chars to avoid overflow
+        max_branch_len = min(max_branch_len, 50)
         
-        # Table formatting
         rank_width = 6
         fitness_width = 12
-        branches_width = max_branch_len + 2  # +2 for padding
+        branches_width = max_branch_len + 2
         
         # Header
         print("\n\n" + border)

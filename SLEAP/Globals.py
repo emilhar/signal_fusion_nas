@@ -1,9 +1,11 @@
 """
 These names are used by many classes, good idea to keep them global
 """
-import random
+
 import inspect
 import sympy
+import torch
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Sleepstage:
     WAKE = "wake"
@@ -76,7 +78,7 @@ class DataManager:
     _datasets = [DatasetNames.EDF_20, DatasetNames.EDF_78]
 
     DATASET = _datasets[0]
-    MAX_MEMORY = 256
+    MAX_MEMORY = 512
 
     # SleepDataLoader
     dataset_percentage = 0.3
@@ -148,8 +150,8 @@ class FitnessFunctions:
     def no_normalization(individual, population):
         pass
 
-    MINIMIZE_FITNESS = False
-    fitness_function = closeness_to_global_opt
+    MINIMIZE_FITNESS = True
+    fitness_function = train_loss
     normalization_function = no_normalization
 
 class Clr:

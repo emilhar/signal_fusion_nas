@@ -1,5 +1,6 @@
 from Globals import SLEAPyException
 from MainHelpers import ArgParser, ExperimentRunner, InputHandler
+from ModelController.EnSomniaC.EnSomniaC_Controller import superMain
 
 def main():
     """Main entry point"""
@@ -13,6 +14,8 @@ def main():
         # Run experiment
         if args.polyarithmos:
             ExperimentRunner.run_experiment(polyarithmos=True)
+            superMain()
+
         else:
             ExperimentRunner.run_experiment(polyarithmos=False)
 
@@ -24,4 +27,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    superMain()
