@@ -22,13 +22,13 @@ class TrainedModelMaker:
 
         self.model_args = get_branch_configs(branches, N_SAMPLES) # See ModelManager
         self.model_args["batch_size"] = ModelManager.BATCH_SIZE
-        model = CNN_BinaryClassifier(**self.model_args).to( device )
+        self.model = CNN_BinaryClassifier(**self.model_args).to( device )
 
         if EvolutionManager.VERY_VERBOSE:
             print(f"\n\nTraining model: {branches=}, Generation: {LoggingSettings.current_generation_id}/{EvolutionManager.GENERATIONS}, Generation Completeness: {LoggingSettings.current_individual_id}/{LoggingSettings.population_size}")
 
         self.model_performance = train_model(
-            model, 
+            self.model, 
             train_loader, 
             test_loader, 
             pos_weight, 

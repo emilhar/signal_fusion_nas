@@ -3,7 +3,8 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
-from Globals import device, Signal, Sleepstage
+from Globals import device, Signal, Sleepstage, LoggingSettings
+from Logs.LogManager import LogManager
 
 def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=None, pred_label=None):
     signals = {}
@@ -36,11 +37,12 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
         axs[i].grid(True, alpha=0.3)
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
+
     plt.show()
 
     return true_label, pred_label
 
-def analyze_predictions(model, X, y):
+def analyze_predictions(model, X, y, good_bad=None):
     all_true = []
     all_preds = []
     class_names = Sleepstage.ALL_STAGES
@@ -64,7 +66,7 @@ def analyze_predictions(model, X, y):
     all_true = np.array(all_true)
     all_preds = np.array(all_preds)
 
-    cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize=True)
+    cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize="all")
 
     plt.figure(figsize=(10, 8))
 
@@ -72,11 +74,11 @@ def analyze_predictions(model, X, y):
         confusion_matrix=cm,
         display_labels=class_names
     )
-    disp.plot(cmap="Blues", values_format="d")  # 'd' for integer formatting
+    disp.plot(cmap="Blues", values_format=".2f")
     sns.heatmap(
         cm,
         annot=True,
-        fmt="d",
+        fmt=".2f",
         cmap="Blues",
         xticklabels=class_names,
         yticklabels=class_names,
@@ -85,6 +87,11 @@ def analyze_predictions(model, X, y):
     plt.ylabel("True")
     plt.title("Confusion Matrix")
 
+    id_helper = LogManager()
+    if good_bad:
+        plt.savefig(f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{good_bad}_{id_helper.Experiment_ID-20}")
+    else:
+        plt.savefig(f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{id_helper.Experiment_ID-20}")
     plt.show()
 
     for class_idx, class_name in enumerate(class_names):
@@ -106,28 +113,28 @@ def analyze_predictions(model, X, y):
         tn_indices = np.where((all_true != class_idx) & (all_preds == all_true))[0]
         print(f"True Negatives: {len(tn_indices)} samples")
 
-        if len(tp_indices) > 0:
-            print("\nExample True Positive:")
-            plot_sample_predictions(model, X, y, tp_indices[np.random.choice(len(tp_indices))], class_names)
-        else:
-            print("Your model sux, NO TRUE POSITIVES")
+        # if len(tp_indices) > 0:
+        #     print("\nExample True Positive:")
+        #     plot_sample_predictions(model, X, y, tp_indices[np.random.choice(len(tp_indices))], class_names)
+        # else:
+        #     print("Your model sux, NO TRUE POSITIVES")
 
-        if len(fp_indices) > 0:
-            print("\nExample False Positive:")
-            plot_sample_predictions(model, X, y, fp_indices[np.random.choice(len(fp_indices))], class_names)
-        else:
-            print("Wow, good model... maybe too good, NO FALSE POSITIVES")
+        # if len(fp_indices) > 0:
+        #     print("\nExample False Positive:")
+        #     plot_sample_predictions(model, X, y, fp_indices[np.random.choice(len(fp_indices))], class_names)
+        # else:
+        #     print("Wow, good model... maybe too good, NO FALSE POSITIVES")
 
-        if len(fn_indices) > 0:
-            print("\nExample False Negative:")
-            plot_sample_predictions(model, X, y, fn_indices[np.random.choice(len(fn_indices))], class_names)
-        else:
-            print("hm... NO FALSE NEGATIVES?")
+        # if len(fn_indices) > 0:
+        #     print("\nExample False Negative:")
+        #     plot_sample_predictions(model, X, y, fn_indices[np.random.choice(len(fn_indices))], class_names)
+        # else:
+        #     print("hm... NO FALSE NEGATIVES?")
 
 
-        if len(tn_indices) > 0:
-            print("\nExample True Negative:")
-            plot_sample_predictions(model, X, y, tn_indices[np.random.choice(len(tn_indices))], class_names)
+        # if len(tn_indices) > 0:
+        #     print("\nExample True Negative:")
+        #     plot_sample_predictions(model, X, y, tn_indices[np.random.choice(len(tn_indices))], class_names)
 
-        else:
-            print("no true negatives? Bro get out")
+        # else:
+        #     print("no true negatives? Bro get out")

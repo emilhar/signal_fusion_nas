@@ -12,12 +12,12 @@ import torch
 import numpy as np
 
 LoggingSettings.LOGGER_ID = "O"
-def superMain():
+def superMain(given_folder=None):
     print("📦 Loading Data...")
     train_loader, test_loader = get_dataloaders_with_multimodal_datasets()
 
     print("🧠 Loading Models...")
-    models_dict = load_each_model()
+    models_dict = load_each_model(given_folder)
 
     print("🚀 Training Model...")
     model = EnsembleModel(models_dict)
@@ -28,13 +28,16 @@ def superMain():
     plot(model)
 
 
-def load_each_model():
+def load_each_model(given_folder):
         id_helper = LogManager()
-        data_dir = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ModelStateDicts/{id_helper.Experiment_ID-20}"
+
+        if given_folder:
+            data_dir = given_folder
+        else:
+            data_dir = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ModelStateDicts/{id_helper.Experiment_ID-20}"
+
         all_model_files = [f for f in os.listdir(data_dir)]
-
         models_dict = {}
-
         for signal in Signal.ALL_SIGNALS:
             models_dict[signal] =[load_model(os.path.join(data_dir, model_path)) for model_path in all_model_files if signal in model_path]
 
@@ -117,4 +120,5 @@ def plot(model):
         y=y_test
     )
 
-superMain()
+if __name__ =="__main__":
+    superMain()
