@@ -32,7 +32,7 @@ def parse_arguments():
     parser.add_argument('--log-all', action='store_true', help=f'Log all individuals (default: {LoggingSettings.LOG_ALL_INDIVIDUALS})')
     parser.add_argument('--exp-name', type=str, help=f'Experiment name (default: {LoggingSettings.experiment_name})')
     
-    parser.add_argument('--sleep-stage', type=str, choices=[s for s in Sleepstage.ALL_STAGES],
+    parser.add_argument('--sleep-stage', type=str, choices=[s for s in Classes.All_CLASSES],
                        help='Sleep stage to analyze (wake, N1, N2, N3, REM)')
     parser.add_argument('--signal', type=str, 
                        choices=['EEG_Fpz-Cz', 'EEG_Pz-Oz', 'EOG_horizontal', 'EMG_submental'],

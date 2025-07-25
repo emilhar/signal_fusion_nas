@@ -5,12 +5,12 @@ from random import sample, shuffle
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from EAController.LazyDataset import LazyDataset
-from Globals import Sleepstage, ModelManager, EvolutionManager, DataManager
+from Globals import Classes, ModelManager, EvolutionManager, DataManager
 
 
-class SleepDataLoader:
-    def __init__(self, signal_type, sleepstage):
-        self.sleepstage = sleepstage
+class SDataLoader:
+    def __init__(self, signal_type, classification_class):
+        self.classification_class = classification_class
         self.signal_type = signal_type
         self.stage_map = self._get_stage_map()
 
@@ -21,11 +21,11 @@ class SleepDataLoader:
 
     def _get_stage_map(self):
         STAGE_MAP = {
-            CNN_BinaryClassifier.WAKE: 1 if self.sleepstage == Sleepstage.WAKE else 0,
-            CNN_BinaryClassifier.N1: 1 if self.sleepstage == Sleepstage.N1 else 0,
-            CNN_BinaryClassifier.N2: 1 if self.sleepstage == Sleepstage.N2 else 0,
-            CNN_BinaryClassifier.N3: 1 if self.sleepstage == Sleepstage.N3 else 0,
-            CNN_BinaryClassifier.REM: 1 if self.sleepstage == Sleepstage.REM else 0
+            CNN_BinaryClassifier.WAKE: 1 if self.classification_class == Classes.WAKE else 0,
+            CNN_BinaryClassifier.N1: 1 if self.classification_class == Classes.N1 else 0,
+            CNN_BinaryClassifier.N2: 1 if self.classification_class == Classes.N2 else 0,
+            CNN_BinaryClassifier.N3: 1 if self.classification_class == Classes.N3 else 0,
+            CNN_BinaryClassifier.REM: 1 if self.classification_class == Classes.REM else 0
         }
 
         return STAGE_MAP

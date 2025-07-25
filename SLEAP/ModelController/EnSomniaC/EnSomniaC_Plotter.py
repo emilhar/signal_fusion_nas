@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
-from Globals import device, Signal, Sleepstage, LoggingSettings
+from Globals import device, Signal, Classes, LoggingSettings
 from Logs.LogManager import LogManager
 
 def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=None, pred_label=None):
@@ -45,7 +45,7 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
 def analyze_predictions(model, X, y, good_bad=None):
     all_true = []
     all_preds = []
-    class_names = Sleepstage.ALL_STAGES
+    class_names = Classes.All_CLASSES
 
     model.eval()
     with torch.inference_mode():

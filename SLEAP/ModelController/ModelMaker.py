@@ -75,7 +75,7 @@ class CNN_BinaryClassifier(nn.Module):
         "branch_configs": branch_configs
     }
 
-    model = SleepstageClassifier(**model_args)
+    model = CNN_BinaryClassifier(**model_args)
     """
     WAKE = 0
     N1 = 1

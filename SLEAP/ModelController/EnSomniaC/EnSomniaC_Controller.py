@@ -3,7 +3,7 @@ from ModelController.EnSomniaC.EnSomniaC_DataLoader import get_dataloaders_with_
 from ModelController.EnSomniaC.EnSomniaC_Maker import EnsembleModel
 from ModelController.EnSomniaC.EnSomniaC_Trainer import train_model
 from ModelController.EnSomniaC.EnSomniaC_Plotter import analyze_predictions
-from Globals import Sleepstage, Signal, LoggingSettings, device
+from Globals import Classes, Signal, LoggingSettings, device
 from sklearn.metrics import classification_report
 from Logs.LogManager import LogManager
 
@@ -88,9 +88,10 @@ def plot(model):
     with torch.inference_mode():
         for i in range(len(y_test)):
             input_dict = {}
-            for ch in Signal.ALL_SIGNALS:
-                signal = x_test[ch][i]
-                input_dict[ch] = signal.clone().detach().float().transpose(0, 1).unsqueeze(0).to(device)
+            for signal in Signal.ALL_SIGNALS:
+                signal:torch.Tensor
+                signal = x_test[signal][i][0]
+                input_dict[signal] = signal.clone().detach().float().unsqueeze(0).to(device)
 
 
             true_label = y_test[i]
@@ -107,7 +108,7 @@ def plot(model):
     print(classification_report(
         all_true,
         all_preds,
-        target_names=Sleepstage.ALL_STAGES,
+        target_names=Classes.All_CLASSES,
         digits=4,
         zero_division=0
     ))

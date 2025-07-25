@@ -1,4 +1,4 @@
-from Globals import Signal, Sleepstage, DataManager
+from Globals import Signal, Classes, DataManager
 from GridSearch.KRNL import QKernel_GridSearch, GridSearch
 
 choices = [
@@ -22,7 +22,7 @@ choices = [
 #         qgrid.plot_qkernel_slice_vstime(metric="best_auc", grid_steps=1000)
 
 
-qgrid = QKernel_GridSearch(Signal.EEG.Pz_Oz, Sleepstage.N2, DataManager.DatasetNames.EDF_78, GridSearch._RunType.no_k0_full, 1.00, 10, 3000)
+qgrid = QKernel_GridSearch(Signal.EEG.Pz_Oz, Classes.N2, DataManager.DatasetNames.EDF_78, GridSearch._RunType.no_k0_full, 1.00, 10, 3000)
 # qgrid.plot_qkernel_3d_vstime(metric="best_auc")
 indi1 = qgrid.grid[6, 0, 0][0]["branches"][0]
 indi2 = qgrid.grid[3, 3, 3][0]["branches"][0]
