@@ -9,10 +9,14 @@ from Globals import Classes, ModelManager, EvolutionManager, DataManager
 
 
 class SDataLoader:
-    def __init__(self, signal_type, classification_class):
+    def __init__(self, signal_type, classification_class, stage_map=None):
         self.classification_class = classification_class
         self.signal_type = signal_type
-        self.stage_map = self._get_stage_map()
+        
+        if not stage_map:
+            self.stage_map = self._get_stage_map()
+        else:
+            self.stage_map = stage_map
 
         self.batch_size = ModelManager.BATCH_SIZE
 

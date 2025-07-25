@@ -70,8 +70,10 @@ def make_training_and_testing_data():
         X_train[signal] = X_train[signal][:1]
         X_test[signal] = X_test[signal][:1]
 
+    y_train:list[torch.Tensor]
     y_train = y_train[:1]
     y_test = y_test[:1]
+    
     
     # Convert lists to tensors
     for signal in Signal.ALL_SIGNALS:
