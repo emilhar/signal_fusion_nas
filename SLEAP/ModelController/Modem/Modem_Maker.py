@@ -13,7 +13,6 @@ class _FFE(nn.Module):
         self.model.eval()
 
     def forward(self, x):
-
         branch_outputs = [branch(x).flatten(1) for branch in self.model.branches.values()]
         combined = torch.cat(branch_outputs, dim=1)
         return self.model.fc(combined) # -> (batch_size, 32)

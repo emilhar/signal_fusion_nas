@@ -1,8 +1,8 @@
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from ModelController.EnSomniaC.EnSomniaC_DataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
-from ModelController.EnSomniaC.EnSomniaC_Maker import EnsembleModel
-from ModelController.EnSomniaC.EnSomniaC_Trainer import train_model
-from ModelController.EnSomniaC.EnSomniaC_Plotter import analyze_predictions
+from ModelController.Modem.Modem_DataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
+from ModelController.Modem.Modem_Maker import EnsembleModel
+from ModelController.Modem.Modem_Trainer import train_model
+from ModelController.Modem.Modem_Plotter import analyze_predictions
 from Globals import Classes, Signal, LoggingSettings, device
 from sklearn.metrics import classification_report
 from Logs.LogManager import LogManager
@@ -88,10 +88,9 @@ def plot(model):
     with torch.inference_mode():
         for i in range(len(y_test)):
             input_dict = {}
-            for signal in Signal.ALL_SIGNALS:
-                signal:torch.Tensor
-                signal = x_test[signal][i][0]
-                input_dict[signal] = signal.clone().detach().float().unsqueeze(0).to(device)
+            for ch in Signal.ALL_SIGNALS:
+                signal = x_test[ch][i]
+                input_dict[ch] = signal.clone().detach().float().transpose(0, 1).unsqueeze(0).to(device)
 
 
             true_label = y_test[i]
