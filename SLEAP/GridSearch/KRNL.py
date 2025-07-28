@@ -18,18 +18,21 @@ from ModelController.BranchSettings import get_branch_configs
 
 
 class GridSearch:
-    class _RunType:
+    class RunType:
         k1000_approx = "k0-1000_approx_train"
         k1000_full = "k0-1000_full_train"
         no_k0 = "no_k0"
         no_k0_full = "no_k0_full_train"
+        no_k0_1_filter = "no_k0_1_filter"
+        no_k0_1_filter_full = "no_k0_1_filter_full"
+        any = "any"
 
 
-    def __init__(self, signal: Signal, sleep_stage: Sleepstage, dataset: DataManager.DatasetNames, runtype: _RunType, dataset_percentage, epochs, n_samples=3000):
+    def __init__(self, signal: Signal, sleep_stage: Sleepstage, dataset: DataManager.DatasetNames, runtype: RunType, dataset_percentage, epochs, n_samples=3000):
         DataManager.MAX_MEMORY = 2048
         DataManager.DATASET = dataset
         DataManager.dataset_percentage = dataset_percentage
-        ModelManager.BATCH_SIZE = 32
+        ModelManager.BATCH_SIZE = 128
 
         self.runtype = runtype
         self.signal = signal
@@ -38,6 +41,8 @@ class GridSearch:
         self.epochs = epochs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.loader = SleepDataLoader(self.signal, self.sleep_stage)
+
+        self._train_loader, self._test_loader, n_samples, self._pos_weight = self.loader.get_random_subset()
 
         self.__run_type_validation()
 
@@ -60,24 +65,38 @@ class GridSearch:
         print("Grid has been saved.")
 
     def __run_type_validation(self):
-        if self.runtype == self._RunType.k1000_approx:
-            if DataManager.dataset_percentage != 0.20:
-                raise ValueError(f"{self._RunType.k1000_approx} expects 20% of the dataset.")
-            if self.epochs != 1:
-                raise ValueError(f"{self._RunType.k1000_approx} expects 1 epoch per model")
-            
-        if self.runtype == self._RunType.k1000_full:
-            if DataManager.dataset_percentage != 1.00:
-                raise ValueError(f"{self._RunType.k1000_full} expects 100% of the dataset")
-            if self.epochs != 10:
-                raise ValueError(f"{self._RunType.k1000_full} expects 10 epochs per model.")
-            
-        if self.runtype == self._RunType.no_k0_full:
-            if DataManager.dataset_percentage != 1.00:
-                raise ValueError(f"{self._RunType.no_k0_full} expects 100% of the dataset")
-            if self.epochs != 10:
-                raise ValueError(f"{self._RunType.no_k0_full} expects 10 epochs per model.")
+        if self.runtype == self.RunType.any:
+            return
 
+        if self.runtype == self.RunType.k1000_approx:
+            if DataManager.dataset_percentage != 0.20:
+                raise ValueError(f"{self.RunType.k1000_approx} expects 20% of the dataset.")
+            if self.epochs != 1:
+                raise ValueError(f"{self.RunType.k1000_approx} expects 1 epoch per model")
+            
+        if self.runtype == self.RunType.no_k0_1_filter:
+            if DataManager.dataset_percentage != 0.20:
+                raise ValueError(f"{self.RunType.no_k0_1_filter} expects 20% of the dataset.")
+            if self.epochs != 5:
+                raise ValueError(f"{self.RunType.no_k0_1_filter} expects 5 epoch per model")
+            
+        if self.runtype == self.RunType.k1000_full:
+            if DataManager.dataset_percentage != 1.00:
+                raise ValueError(f"{self.RunType.k1000_full} expects 100% of the dataset")
+            if self.epochs != 10:
+                raise ValueError(f"{self.RunType.k1000_full} expects 10 epochs per model.")
+            
+        if self.runtype == self.RunType.no_k0_full:
+            if DataManager.dataset_percentage != 1.00:
+                raise ValueError(f"{self.RunType.no_k0_full} expects 100% of the dataset")
+            if self.epochs != 10:
+                raise ValueError(f"{self.RunType.no_k0_full} expects 10 epochs per model.")
+
+        if self.runtype == self.RunType.no_k0_1_filter_full:
+            if DataManager.dataset_percentage != 1.00:
+                raise ValueError(f"{self.RunType.no_k0_1_filter_full} expects 100% of the dataset")
+            if self.epochs != 10:
+                raise ValueError(f"{self.RunType.no_k0_1_filter_full} expects 10 epochs per model.")
     
     def __bool__(self):
         return self.grid is not None
@@ -85,7 +104,7 @@ class GridSearch:
 
 
 class QKernel_GridSearch(GridSearch):
-    def __init__(self, signal: Signal, sleep_stage: Sleepstage, dataset: DataManager.DatasetNames, runtype: GridSearch._RunType, dataset_percentage, epochs, n_samples=3000):
+    def __init__(self, signal: Signal, sleep_stage: Sleepstage, dataset: DataManager.DatasetNames, runtype: GridSearch.RunType, dataset_percentage, epochs, n_samples=3000):
         super().__init__(signal, sleep_stage, dataset, runtype, dataset_percentage, epochs, n_samples)
         self.primordial_kernel = 1000 if signal != Signal.EMG.SUBMENTAL else 15
         self.kernels = self.__get_kernels()
@@ -107,52 +126,48 @@ class QKernel_GridSearch(GridSearch):
     
     def compute_grid(self):
         start_time = time.time()
-        total_iterations = len(self.kernels) ** 3
+        total_iterations = len(self.kernels) ** 4
         completed = 0
         
         if self.grid is None:
-            self.grid = np.empty((len(self.kernels), len(self.kernels), len(self.kernels)), dtype=list)
+            self.grid = np.empty((len(self.kernels), len(self.kernels), len(self.kernels), len(self.kernels)), dtype=list)
         for x, k1 in enumerate(self.kernels):
             for y, k2 in enumerate(self.kernels):
                 for z, k3 in enumerate(self.kernels):
-                    if not self.grid[x, y, z]:
-                        self.grid[x, y, z] = []
-                    self.grid[x, y, z].append(self.new_model(k1, k2, k3))
-                    completed += 1
-                    
-                    elapsed = time.time() - start_time
-                    percent = (completed / total_iterations) * 100
-                    
-                    if completed > 0:
-                        iter_time = elapsed / completed
-                        remaining = max(0, (total_iterations - completed) * iter_time)
-                        eta_sec = int(remaining)
-                        eta_str = f"{eta_sec//3600:02d}:{eta_sec%3600//60:02d}:{eta_sec%60:02d}"
-                    else:
-                        eta_str = "--:--:--"
-                    
-                    print(f"\rProgress: [{'='*int(percent/5)}{' '*(20-int(percent/5))}] {percent:.1f}% • ETA: {eta_str}", end="\r")
+                    for a, k4 in enumerate(self.kernels):
+                        if not self.grid[x, y, z, a]:
+                            self.grid[x, y, z, a] = []
+                        self.grid[x, y, z, a].append(self.new_model(k1, k2, k3, k4))
+                        completed += 1
+                        
+                        elapsed = time.time() - start_time
+                        percent = (completed / total_iterations) * 100
+                        
+                        if completed > 0:
+                            iter_time = elapsed / completed
+                            remaining = max(0, (total_iterations - completed) * iter_time)
+                            eta_sec = int(remaining)
+                            eta_str = f"{eta_sec//3600:02d}:{eta_sec%3600//60:02d}:{eta_sec%60:02d}"
+                        else:
+                            eta_str = "--:--:--"
+                        
+                        print(f"\rProgress: [{'='*int(percent/5)}{' '*(20-int(percent/5))}] {percent:.1f}% • ETA: {eta_str}", end="\r")
         
         total_time = time.time() - start_time
         print(f"\nCompleted {total_iterations} models in {total_time:.1f} seconds")
     
     
-    def new_model(self, k1: int, k2: int, k3):
+    def new_model(self, k1, k2, k3, k4):
         train_loader, test_loader, n_samples, pos_weight = self.loader.get_random_subset() 
 
-        branch = []
-        if self.runtype == self._RunType.k1000_approx or self.runtype == self._RunType.k1000_full:
-            branch += [self.primordial_kernel]
-        branch += [k1, k2, k3]
-
+        branch = [k1, k2, k3, k4]
 
         model_args = get_branch_configs([branch], self.n_samples)
-        model_args["batch_size"] = 32
+        model_args["batch_size"] = 128
         model = CNN_BinaryClassifier(**model_args).to(self.device)
         
         model_performance = train_model(
             model,
-            self.device,
             train_loader,
             test_loader,
             pos_weight,
@@ -166,13 +181,11 @@ class QKernel_GridSearch(GridSearch):
 
         return model_performance
     
-    def head2head(self, indi1, indi2):
+    def __head2head(self, indi1, indi2):
         models = []
 
         DataManager.DATASET = DataManager.DatasetNames.EDF_78       
         DataManager.dataset_percentage = 1.00
-        ModelManager.BATCH_SIZE = 128
-        train_loader, test_loader, n_samples, pos_weight = self.loader.get_random_subset()
         
         for individual in (indi1, indi2):
             model_args = get_branch_configs([individual], self.n_samples)
@@ -181,16 +194,17 @@ class QKernel_GridSearch(GridSearch):
             
             model_performance = train_model(
                 model,
-                self.device,
-                train_loader,
-                test_loader,
-                pos_weight,
-                epochs=40,
-                output_period=5,
+                self._train_loader,
+                self._test_loader,
+                self._pos_weight,
+                epochs=100,
+                output_period=10,
                 verbose=True,
+                lr=2.5e-4,
+                p=101,
             )
 
-            model.load_state_dict(model_performance["state_dict"])
+            model.load_state_dict(model_performance["recent_state_dict"])
             model.to(self.device)
             models.append(model)
             print()
@@ -202,103 +216,142 @@ class QKernel_GridSearch(GridSearch):
             'model1': str(indi1),
             'model2': str(indi2),
             'disagreements': 0,
+            'prob_analysis': {
+                'all_probs': [],
+                'disagreement_probs': [],
+                'average_prob_fidd': 0,
+                'max_prob_diff': 0,
+                'min_prob_diff': 0,
+                'prob_deviation_stats': {}
+            },
             'examples': {
                 'model1_correct_model2_wrong': [],
                 'model2_correct_model1_wrong': [],
                 'both_wrong': [],
-                'both_correct': []
+                'both_correct': [],
+                'high_disagreement': []
             },
             'metrics': {
                 'model1': {'accuracy': 0, 'precision': 0, 'recall': 0, 'f1': 0, 'loss': 0},
                 'model2': {'accuracy': 0, 'precision': 0, 'recall': 0, 'f1': 0, 'loss': 0}
             }
         }
-        
+
         true_positives1 = true_positives2 = 0
         false_positives1 = false_positives2 = 0
         false_negatives1 = false_negatives2 = 0
         correct1 = correct2 = 0
         total = 0
         test_loss1 = test_loss2 = 0
+        sum_prob_diff = 0
+        max_prob_diff = -float('inf')
+        min_prob_diff = float('inf')
         
-        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(self.device))
+        criterion = nn.BCEWithLogitsLoss(pos_weight=self._pos_weight.to(self.device))
         
         model1.eval()
         model2.eval()
         
         with torch.inference_mode():
-            for batch_idx, (data, target) in enumerate(test_loader):
+            for batch_idx, (data, target) in enumerate(self._test_loader):
                 data, target = data.to(self.device), target.to(self.device).float()
                 
-                output1 = model1(data)
-                output2 = model2(data)
+                logits1 = model1(data)
+                logits2 = model2(data)
                 
-                test_loss1 += criterion(output1, target.unsqueeze(1)).item()
-                test_loss2 += criterion(output2, target.unsqueeze(1)).item()
+                test_loss1 += criterion(logits1, target.unsqueeze(1)).item()
+                test_loss2 += criterion(logits2, target.unsqueeze(1)).item()
                 
-                pred1 = torch.sigmoid(output1).round()
-                pred2 = torch.sigmoid(output2).round()
+                prob1 = torch.sigmoid(logits1)
+                prob2 = torch.sigmoid(logits2)
+                pred1 = prob1.round()
+                pred2 = prob2.round()
                 
                 for i in range(len(target)):
                     total += 1
                     t = target[i].item()
-                    p1 = pred1[i].item()
-                    p2 = pred2[i].item()
+                    pb1 = prob1[i].item()
+                    pb2 = prob2[i].item()
+                    pd1 = pred1[i].item()
+                    pd2 = pred2[i].item()
                     
-                    if p1 != p2:
+                    prob_diff = abs(pb1 - pb2)
+                    sum_prob_diff += prob_diff
+                    max_prob_diff = max(max_prob_diff, prob_diff)
+                    min_prob_diff = min(min_prob_diff, prob_diff)
+                    
+                    prob_entry = {
+                        'target': t,
+                        'model1_prob': pb1,
+                        'model2_prob': pb2,
+                        'model1_pred': pd1,
+                        'model2_pred': pd2,
+                        'prob_diff': prob_diff
+                    }
+                    results['prob_analysis']['all_probs'].append(prob_entry)
+                    
+                    if pd1 != pd2:
                         results['disagreements'] += 1
+                        results['prob_analysis']['disagreement_probs'].append(prob_entry)
+                        
+
+                        if prob_diff >= 0.25:
+                            results['examples']['high_disagreement'].append(prob_entry)
                     
-                    if p1 == t:
+                    if pd1 == t:
                         correct1 += 1
                         if t == 1:
                             true_positives1 += 1
                     else:
-                        if p1 == 1:
+                        if pd1 == 1:
                             false_positives1 += 1
                         else:
                             false_negatives1 += 1
                     
-                    if p2 == t:
+                    if pd2 == t:
                         correct2 += 1
                         if t == 1:
                             true_positives2 += 1
                     else:
-                        if p2 == 1:
+                        if pd2 == 1:
                             false_positives2 += 1
                         else:
                             false_negatives2 += 1
                     
-                    if p1 == t and p2 != t:
-                        results['examples']['model1_correct_model2_wrong'].append({
-                            'data': data[i].cpu().numpy(),
-                            'target': t,
-                            'model1_pred': p1,
-                            'model2_pred': p2
-                        })
-                    elif p2 == t and p1 != t:
-                        results['examples']['model2_correct_model1_wrong'].append({
-                            'data': data[i].cpu().numpy(),
-                            'target': t,
-                            'model1_pred': p1,
-                            'model2_pred': p2
-                        })
-                    elif p1 != t and p2 != t:
-                        results['examples']['both_wrong'].append({
-                            'data': data[i].cpu().numpy(),
-                            'target': t,
-                            'model1_pred': p1,
-                            'model2_pred': p2
-                        })
+                    case_entry = {
+                        'data': data[i].cpu().numpy(),
+                        'target': t,
+                        'model1_prob': pb1,
+                        'model2_prob': pb2,
+                        'model1_pred': pd1,
+                        'model2_pred': pd2,
+                        'prob_diff': prob_diff
+                    }
+                    
+                    if pd1 == t and pd2 != t:
+                        results['examples']['model1_correct_model2_wrong'].append(case_entry)
+                    elif pd2 == t and pd1 != t:
+                        results['examples']['model2_correct_model1_wrong'].append(case_entry)
+                    elif pd1 != t and pd2 != t:
+                        results['examples']['both_wrong'].append(case_entry)
                     else:
-                        results['examples']['both_correct'].append({
-                            'data': data[i].cpu().numpy(),
-                            'target': t,
-                            'model1_pred': p1,
-                            'model2_pred': p2
-                        })
+                        results['examples']['both_correct'].append(case_entry)
         
-        test_loss1 /= len(test_loader)
-        test_loss2 /= len(test_loader)
+        test_loss1 /= len(self._test_loader)
+        test_loss2 /= len(self._test_loader)
+        
+        results['prob_analysis']['average_prob_diff'] = sum_prob_diff / total
+        results['prob_analysis']['max_prob_diff'] = max_prob_diff
+        results['prob_analysis']['min_prob_diff'] = min_prob_diff
+        
+        all_diffs = [x['prob_diff'] for x in results['prob_analysis']['all_probs']]
+        results['prob_analysis']['prob_deviation_stats'] = {
+            'mean': np.mean(all_diffs),
+            'median': np.median(all_diffs),
+            'std': np.std(all_diffs),
+            'q1': np.percentile(all_diffs, 25),
+            'q3': np.percentile(all_diffs, 75)
+        }
         
         precision1 = true_positives1 / (true_positives1 + false_positives1) if (true_positives1 + false_positives1) > 0 else 0
         recall1 = true_positives1 / (true_positives1 + false_negatives1) if (true_positives1 + false_negatives1) > 0 else 0
@@ -331,6 +384,14 @@ class QKernel_GridSearch(GridSearch):
         print(f"Model 2: {results['model2']}")
         print(f"\nDisagreements: {results['disagreements']} ({results['disagreement_percentage']:.2f}%)")
         
+        print("\nProbability Analysis:")
+        print(f"Average probablility difference: {results['prob_analysis']['average_prob_diff']:.4f}")
+        print(f"Max probability difference: {results['prob_analysis']['max_prob_diff']:.4f}")
+        print(f"Min probability difference: {results['prob_analysis']['min_prob_diff']:.4f}")
+        print("\nProbability Deviation Statistics:")
+        for stat, value in results['prob_analysis']['prob_deviation_stats'].items():
+            print(f"{stat}: {value:.4f}")
+        
         print("\nPerformance Metrics:")
         print(f"{'Metric':<10} {'Model 1':<10} {'Model 2':<10}")
         for metric in ['accuracy', 'precision', 'recall', 'f1', 'loss']:
@@ -341,6 +402,7 @@ class QKernel_GridSearch(GridSearch):
         print(f"Model 2 correct & Model 1 wrong: {len(results['examples']['model2_correct_model1_wrong'])}")
         print(f"Both wrong: {len(results['examples']['both_wrong'])}")
         print(f"Both correct: {len(results['examples']['both_correct'])}")
+        print(f"High disagreement cases: {len(results['examples']['high_disagreement'])}")
         
         return results
 
@@ -350,9 +412,6 @@ class QKernel_GridSearch(GridSearch):
     def plot_qkernel_3d(self, metric='train_loss', figsize=(14, 10), 
                         color_map='viridis', marker_size=50, alpha=0.7,
                         elev=25, azim=45):
-        """
-        Improved version with equidistant kernel spacing in log space
-        """
         if self.grid is None:
             raise ValueError("Grid is empty. Compute the grid first.")
         
@@ -674,7 +733,7 @@ class QKernel_GridSearch(GridSearch):
         
         fig.canvas.mpl_connect("motion_notify_event", hover)
         
-        plt.tight_layout()
+        #plt.tight_layout()
         plt.show()
 
 
@@ -1096,13 +1155,12 @@ class QKernel_GridSearch(GridSearch):
 
     def indidual_box_plot():
         ...
-    
 
     def __get_kernels(self) -> list[int]:
         if self.signal == Signal.EMG.SUBMENTAL:
             k = [1, 2, 4, 5, 6, 8, 10]
         else:
-            k = [1, 5, 20, 50, 100, 500]
+            k = [5, 50, 500] # TODO: finicky stuff
 
         return k
 
