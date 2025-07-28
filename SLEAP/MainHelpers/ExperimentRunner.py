@@ -29,11 +29,11 @@ def _run_every_possible_experiment():
         model_folder_path = None
 
     for config in configs:
-        Sleepstage.current_sleepstage = config[0]
+        Classes.current_class = config[0]
         Signal.current_signal = config[1]
 
         print("\n" + "="*68)
-        print(f"🚀 Starting experiment for {Sleepstage.current_sleepstage} stage with {Signal.current_signal} signal")
+        print(f"🚀 Starting experiment for {Classes.current_class} stage with {Signal.current_signal} signal")
         print("="*68)
 
         optimizer = _create_optimizer()
@@ -43,17 +43,17 @@ def _generate_all_configs():
     configs = []
 
     for signal_type in Signal.ALL_SIGNALS:
-        for sleep_type in Sleepstage.ALL_STAGES:
+        for sleep_type in Classes.All_CLASSES:
             configs.append( (sleep_type, signal_type) )
 
     return configs
 
 def _create_optimizer():
     """Create the evolutionary optimizer with given configuration"""
-    print(f"\n🔧 Creating optimizer for {Sleepstage.current_sleepstage} stage with {Signal.current_signal} signal...")
+    print(f"\n🔧 Creating optimizer for {Classes.current_class} stage with {Signal.current_signal} signal...")
     
     optimizer = KernelSizeEvolutionaryOptimizer(
-        sleepstage=Sleepstage.current_sleepstage,
+        classification_class=Classes.current_class,
         signal_type=Signal.current_signal,
     )
 

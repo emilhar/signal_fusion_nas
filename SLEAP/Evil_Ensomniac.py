@@ -1,7 +1,7 @@
 from ModelController.EnSomniaC.EnSomniaC_Controller import superMain
 from ModelController.TrainedModelMaker import TrainedModelMaker
-from EAController.SleepDataLoader import SleepDataLoader
-from Globals import Sleepstage, Signal, ModelManager, LoggingTemplate
+from EAController.SDataLoader import SDataLoader
+from Globals import Classes, Signal, ModelManager, LoggingTemplate
 import random
 import os
 import torch
@@ -21,28 +21,34 @@ def main():
     get_good_indis()
     superMain(given_folder="SavedModels/GoodModels")
 
-def save_model(tmm, signal_type, sleepstage, prefix):
+def save_model(tmm, signal_type, classification_class, prefix):
     os.makedirs(f"SavedModels/{prefix}Models", exist_ok=True)
     
-    model_path = f"SavedModels/{prefix}Models/{sleepstage}_{signal_type}_model.pt"
+    model_path = f"SavedModels/{prefix}Models/{classification_class}_{signal_type}_model.pt"
     torch.save({
         'state_dict': tmm.model_performance[LoggingTemplate.state_dict],
         'model_args': tmm.model_args
     }, model_path)
 
-def model_exists(sleepstage, signal_type, prefix):
-    model_path = f"SavedModels/{prefix}Models/{sleepstage}_{signal_type}_model.pt"
-    return os.path.exists(model_path)
+def model_exists(classification_class, signal_type, prefix):
+
+    data_dir = f"SavedModels/{prefix}Models"
+    all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.pt')])
+    for file_name in all_files:
+        if classification_class in file_name and signal_type in file_name:
+            return True
+        
+    return False
 
 def get_random_indis():
     for sig in Signal.ALL_SIGNALS:
-        for st in Sleepstage.ALL_STAGES:
+        for st in Classes.All_CLASSES:
             if model_exists(st, sig, "Evil"):
                 print(f"Model for {st} in {sig} already exists in EvilModels. Skipping...")
                 continue
                 
             print("\nTRAINING", st, "IN", sig)
-            sdl = SleepDataLoader(sig, st)
+            sdl = SDataLoader(sig, st)
             indi = []
             for _ in range(random.randint(*ModelManager.NUMBER_OF_BRANCHES_RANGE)):
                 indi.append([random.randint(0, 750) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
@@ -58,13 +64,13 @@ def get_random_indis():
 
 def get_good_indis():
     for sig in Signal.ALL_SIGNALS:
-        for st in Sleepstage.ALL_STAGES:
+        for st in Classes.All_CLASSES:
             if model_exists(st, sig, "Good"):
                 print(f"Model for {st} in {sig} already exists in GoodModels. Skipping...")
                 continue
                 
             print("TRAINING", st, "IN", sig)
-            sdl = SleepDataLoader(sig, st)
+            sdl = SDataLoader(sig, st)
             m = TrainedModelMaker(
                 branches=[[400,22,22]],
                 N_SAMPLES=30 if sig==Signal.EMG.SUBMENTAL else 3000,

@@ -1,9 +1,9 @@
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from ModelController.EnSomniaC.EnSomniaC_DataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
-from ModelController.EnSomniaC.EnSomniaC_Maker import EnsembleModel
-from ModelController.EnSomniaC.EnSomniaC_Trainer import train_model
-from ModelController.EnSomniaC.EnSomniaC_Plotter import analyze_predictions
-from Globals import Sleepstage, Signal, LoggingSettings, device
+from ModelController.DaBest.DaBest_DataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
+from ModelController.DaBest.DaBest_Maker import EnsembleModel
+from ModelController.DaBest.DaBest_Trainer import train_model
+from ModelController.DaBest.DaBest_Plotter import analyze_predictions
+from Globals import Classes, Signal, LoggingSettings, device
 from sklearn.metrics import classification_report
 from Logs.LogManager import LogManager
 
@@ -107,7 +107,7 @@ def plot(model):
     print(classification_report(
         all_true,
         all_preds,
-        target_names=Sleepstage.ALL_STAGES,
+        target_names=Classes.All_CLASSES,
         digits=4,
         zero_division=0
     ))

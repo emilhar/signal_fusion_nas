@@ -4,15 +4,19 @@ import os
 from random import sample, shuffle
 
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from EAController.SleepEDF20LazyDataset import SleepEDF20LazyDataset
-from Globals import Sleepstage, ModelManager, EvolutionManager, DataManager
+from EAController.LazyDataset import LazyDataset
+from Globals import Classes, ModelManager, EvolutionManager, DataManager
 
 
-class SleepDataLoader:
-    def __init__(self, signal_type, sleepstage):
-        self.sleepstage = sleepstage
+class SDataLoader:
+    def __init__(self, signal_type, classification_class, stage_map=None):
+        self.classification_class = classification_class
         self.signal_type = signal_type
-        self.stage_map = self._get_stage_map()
+        
+        if not stage_map:
+            self.stage_map = self._get_stage_map()
+        else:
+            self.stage_map = stage_map
 
         self.batch_size = ModelManager.BATCH_SIZE
 
@@ -21,11 +25,11 @@ class SleepDataLoader:
 
     def _get_stage_map(self):
         STAGE_MAP = {
-            CNN_BinaryClassifier.WAKE: 1 if self.sleepstage == Sleepstage.WAKE else 0,
-            CNN_BinaryClassifier.N1: 1 if self.sleepstage == Sleepstage.N1 else 0,
-            CNN_BinaryClassifier.N2: 1 if self.sleepstage == Sleepstage.N2 else 0,
-            CNN_BinaryClassifier.N3: 1 if self.sleepstage == Sleepstage.N3 else 0,
-            CNN_BinaryClassifier.REM: 1 if self.sleepstage == Sleepstage.REM else 0
+            CNN_BinaryClassifier.WAKE: 1 if self.classification_class == Classes.WAKE else 0,
+            CNN_BinaryClassifier.N1: 1 if self.classification_class == Classes.N1 else 0,
+            CNN_BinaryClassifier.N2: 1 if self.classification_class == Classes.N2 else 0,
+            CNN_BinaryClassifier.N3: 1 if self.classification_class == Classes.N3 else 0,
+            CNN_BinaryClassifier.REM: 1 if self.classification_class == Classes.REM else 0
         }
 
         return STAGE_MAP
@@ -46,8 +50,8 @@ class SleepDataLoader:
 
         stage_map = self._get_stage_map()
 
-        train_dataset = SleepEDF20LazyDataset(train_files, data_dir, stage_map)
-        test_dataset = SleepEDF20LazyDataset(test_files, data_dir, stage_map)
+        train_dataset = LazyDataset(train_files, data_dir, stage_map)
+        test_dataset = LazyDataset(test_files, data_dir, stage_map)
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)

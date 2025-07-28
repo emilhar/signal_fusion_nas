@@ -3,20 +3,19 @@ import random
 import torch
 import numpy as np
 from deap import base, creator, tools
-from EAController.SleepDataLoader import SleepDataLoader
+from EAController.SDataLoader import SDataLoader
 
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from Globals import Signal, ModelManager, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions, DataManager
-#from GridSearch.KRNL import KRNL_GridSearch
 
 from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
 
-    def __init__(self, sleepstage: str, signal_type: str):
+    def __init__(self, classification_class: str, signal_type: str):
 
-        self.sleepstage = sleepstage
+        self.classification_class = classification_class
         self.signal_type = signal_type
 
         if ModelManager.MAX_KERNEL_SIZE == None:
@@ -24,16 +23,16 @@ class KernelSizeEvolutionaryOptimizer:
 
             if EvolutionManager.VERBOSE: print(f"Max kernel size set at {ModelManager.MAX_KERNEL_SIZE}")
         
-        self.SDL = SleepDataLoader(
+        self.SDL = SDataLoader(
             signal_type=self.signal_type, 
-            sleepstage=self.sleepstage)
+            classification_class=self.classification_class)
 
         if LoggingSettings.LOGGING:
             self.LogManager = LogManager()
         else:
             self.LogManager = None
 
-        #self.KRNL = KRNL_GridSearch(self.signal_type, self.sleepstage)
+        #self.KRNL = KRNL_GridSearch(self.signal_type, self.classification_class)
 
         self.setup_deap()
     
@@ -290,7 +289,7 @@ class KernelSizeEvolutionaryOptimizer:
             return f"{i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}"
 
         self.LogManager.log_experiment(
-            sleepstage= self.sleepstage,
+            classification_class= self.classification_class,
             signal_type= self.signal_type,
             max_kernel_size= ModelManager.MAX_KERNEL_SIZE,
             best= get_hall_of_fame_format(0),
@@ -305,7 +304,7 @@ class KernelSizeEvolutionaryOptimizer:
                 "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
                 "model_args": best_individual.model_args,
             },
-            os.path.join(logging_folder_for_omega_runs, f"{DataManager.DATASET}_{self.sleepstage}_{self.signal_type}_classifier.pt"))
+            os.path.join(logging_folder_for_omega_runs, f"{DataManager.DATASET}_{self.classification_class}_{self.signal_type}_classifier.pt"))
 
     def print_results(self):
         """Print evolution results in a dynamically sized table"""

@@ -75,19 +75,19 @@ class LogManager:
         
         raise FileNotFoundError(f"Could not find file: {not_found}")
 
-    def log_experiment(self, sleepstage, signal_type, max_kernel_size, best, second_best, third_best):
+    def log_experiment(self, classification_class, signal_type, max_kernel_size, best, second_best, third_best):
         """Log the experiment configuration using template names"""
         lt = LoggingTemplate
 
         if "--batch-size" not in LoggingSettings.experiment_name:
-            LoggingSettings.experiment_name += f" --batch-size {ModelManager.BATCH_SIZE} --min-ks {ModelManager.MIN_KERNEL_SIZE} --max-ks {ModelManager.MAX_KERNEL_SIZE} --pop-size {EvolutionManager.POPULATION_SIZE} --generations {EvolutionManager.GENERATIONS} --st-size {EvolutionManager.SELECTION_TOURNAMENT_SIZE} --hof-size {EvolutionManager.HALL_OF_FAME_MEMBERS} --cx-prob {EvolutionManager.CX_PROB} --mut-prob {EvolutionManager.MUTATION_PROB} --sleep-stage {sleepstage} --signal {signal_type} --dataset {DataManager.DATASET} --max-mem {DataManager.MAX_MEMORY} --log-id {LoggingSettings.LOGGER_ID} {"--log-all" if LoggingSettings.LOG_ALL_INDIVIDUALS else ""}"
+            LoggingSettings.experiment_name += f" --batch-size {ModelManager.BATCH_SIZE} --min-ks {ModelManager.MIN_KERNEL_SIZE} --max-ks {ModelManager.MAX_KERNEL_SIZE} --pop-size {EvolutionManager.POPULATION_SIZE} --generations {EvolutionManager.GENERATIONS} --st-size {EvolutionManager.SELECTION_TOURNAMENT_SIZE} --hof-size {EvolutionManager.HALL_OF_FAME_MEMBERS} --cx-prob {EvolutionManager.CX_PROB} --mut-prob {EvolutionManager.MUTATION_PROB} --sleep-stage {classification_class} --signal {signal_type} --dataset {DataManager.DATASET} --max-mem {DataManager.MAX_MEMORY} --log-id {LoggingSettings.LOGGER_ID} {"--log-all" if LoggingSettings.LOG_ALL_INDIVIDUALS else ""}"
         
         config = {
             lt.experiment_id: self.Experiment_ID,
             "name": LoggingSettings.experiment_name,
             "start_time": self.start_time,
             "end_time": datetime.now(),
-            lt.sleepstage: sleepstage,
+            lt.classification_class: classification_class,
             lt.signal_type: signal_type,
 
             lt.population_size: EvolutionManager.POPULATION_SIZE,

@@ -10,8 +10,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.proj3d as proj3d
 
-from Globals import Signal, Sleepstage, DataManager, ModelManager
-from EAController.SleepDataLoader import SleepDataLoader
+from Globals import Signal, Classes, DataManager, ModelManager
+from EAController.SDataLoader import SDataLoader
 from ModelController.ModelMaker import CNN_BinaryClassifier
 from ModelController._Trainer import train_model
 from ModelController.BranchSettings import get_branch_configs
@@ -28,7 +28,7 @@ class GridSearch:
         any = "any"
 
 
-    def __init__(self, signal: Signal, sleep_stage: Sleepstage, dataset: DataManager.DatasetNames, runtype: RunType, dataset_percentage, epochs, n_samples=3000):
+    def __init__(self, signal: Signal, sleep_stage: Classes, dataset: DataManager.DatasetNames, runtype: RunType, dataset_percentage, epochs, n_samples=3000):
         DataManager.MAX_MEMORY = 2048
         DataManager.DATASET = dataset
         DataManager.dataset_percentage = dataset_percentage
@@ -40,7 +40,7 @@ class GridSearch:
         self.n_samples = n_samples
         self.epochs = epochs
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.loader = SleepDataLoader(self.signal, self.sleep_stage)
+        self.loader = SDataLoader(self.signal, self.sleep_stage)
 
         self._train_loader, self._test_loader, n_samples, self._pos_weight = self.loader.get_random_subset()
 
@@ -104,7 +104,7 @@ class GridSearch:
 
 
 class QKernel_GridSearch(GridSearch):
-    def __init__(self, signal: Signal, sleep_stage: Sleepstage, dataset: DataManager.DatasetNames, runtype: GridSearch.RunType, dataset_percentage, epochs, n_samples=3000):
+    def __init__(self, signal: Signal, sleep_stage: Classes, dataset: DataManager.DatasetNames, runtype: GridSearch.RunType, dataset_percentage, epochs, n_samples=3000):
         super().__init__(signal, sleep_stage, dataset, runtype, dataset_percentage, epochs, n_samples)
         self.primordial_kernel = 1000 if signal != Signal.EMG.SUBMENTAL else 15
         self.kernels = self.__get_kernels()

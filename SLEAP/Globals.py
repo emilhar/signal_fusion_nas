@@ -7,15 +7,15 @@ import sympy
 import torch
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-class Sleepstage:
+class Classes:
     WAKE = "wake"
     N3 = "N3"
     N2 = "N2"
     N1 = "N1"
     REM = "REM"
 
-    ALL_STAGES = [WAKE, N1, N2, N3, REM]
-    current_sleepstage = None
+    All_CLASSES = [WAKE, N1, N2, N3, REM]
+    current_class = None
 
 class Signal:
 
@@ -260,7 +260,7 @@ class LoggingTemplate:
     second_best = "second_best"
     selection_tournament_size = "selection_tournament_size"
     signal_type = "signal_type"
-    sleepstage = "sleepstage"
+    classification_class = "classification_class"
     start_time = "start_time"
     state_dict = "state_dict"
     test_loss = "test_loss"

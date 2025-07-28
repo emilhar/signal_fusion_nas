@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
-from Globals import device, Signal, Sleepstage, LoggingSettings
+from Globals import device, Signal, Classes, LoggingSettings
 from Logs.LogManager import LogManager
 
 def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=None, pred_label=None):
@@ -45,7 +45,7 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
 def analyze_predictions(model, X, y, good_bad=None):
     all_true = []
     all_preds = []
-    class_names = Sleepstage.ALL_STAGES
+    class_names = Classes.All_CLASSES
 
     model.eval()
     with torch.inference_mode():
@@ -112,29 +112,3 @@ def analyze_predictions(model, X, y, good_bad=None):
         # True Negatives (TN): Not this class and not predicted as that class
         tn_indices = np.where((all_true != class_idx) & (all_preds == all_true))[0]
         print(f"True Negatives: {len(tn_indices)} samples")
-
-        # if len(tp_indices) > 0:
-        #     print("\nExample True Positive:")
-        #     plot_sample_predictions(model, X, y, tp_indices[np.random.choice(len(tp_indices))], class_names)
-        # else:
-        #     print("Your model sux, NO TRUE POSITIVES")
-
-        # if len(fp_indices) > 0:
-        #     print("\nExample False Positive:")
-        #     plot_sample_predictions(model, X, y, fp_indices[np.random.choice(len(fp_indices))], class_names)
-        # else:
-        #     print("Wow, good model... maybe too good, NO FALSE POSITIVES")
-
-        # if len(fn_indices) > 0:
-        #     print("\nExample False Negative:")
-        #     plot_sample_predictions(model, X, y, fn_indices[np.random.choice(len(fn_indices))], class_names)
-        # else:
-        #     print("hm... NO FALSE NEGATIVES?")
-
-
-        # if len(tn_indices) > 0:
-        #     print("\nExample True Negative:")
-        #     plot_sample_predictions(model, X, y, tn_indices[np.random.choice(len(tn_indices))], class_names)
-
-        # else:
-        #     print("no true negatives? Bro get out")
