@@ -1,30 +1,36 @@
-from Globals import SLEAPyException
-from MainHelpers import ArgParser, ExperimentRunner, InputHandler
-from ModelController.DaBest.DaBest_Controller import superMain
+from Globals import *
+from utils import InputHandler, arg_parse
 
-def main():
-    """Main entry point"""
-    try:
-        # Get and apply args
-        args = ArgParser.parse_arguments()
-        
-        # Get inputs (if needed)
-        InputHandler.get_user_configuration(args)
+from grid_search_controller.grid_search_controller import QKernel_GridSearch
+from ea_controller.ea_controller import EA_Controller
+from ensemble_controller.ensemble_controller import EnsembleController
 
-        # Run experiment
-        if args.polyarithmos:
-            ExperimentRunner.run_experiment(polyarithmos=True)
-            superMain()
+class Main:
+    def __init__(self):
+  #      self.grid_search = QKernel_GridSearch()
+        self.ea_controller = EA_Controller()
+        self.ensemble_controller = EnsembleController()
 
-        else:
-            ExperimentRunner.run_experiment(polyarithmos=False)
+    def run(self):
+ #       print("Running grid search for each signal and class.\n\n")
+#        QKernel_GridSearch.compute_grid()
 
-    except SLEAPyException as e:
-        print("Exception occured during run.")
-        print(e)
-    except Exception as e:
-        raise SLEAPyException()
+        print("Running evolution for each signal and class.\n\n")
+        self.ea_controller.run_ea()
+
+        print("Creating ensemble with the best performing binary models.\n\n")
+        self.ensemble_controller.create_ensemble()
+
+
+    def __debug(self, t):
+        if t == "grid":
+            raise NotImplementedError(":)")
+        if t == "ea":
+            self.ea_controller.__single_ea(Signal.EEG.Fpz_Cz, Classes.WAKE)
+        if t == "ensemble":
+            self.ensemble_controller.create_ensemble()
 
 
 if __name__ == "__main__":
-    superMain()
+    main = Main()
+    main.run()

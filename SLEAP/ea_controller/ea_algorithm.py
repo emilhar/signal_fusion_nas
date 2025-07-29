@@ -4,7 +4,7 @@ import time
 from Globals import EvolutionManager, LoggingSettings, LoggingTemplate, Clr
 
 
-class SLeaMuPlusLambda:
+class EA_Algorithm:
 
     def __init__(self, population, toolbox, halloffame, LogManager):
         self.population = population
@@ -202,4 +202,5 @@ class SLeaMuPlusLambda:
             f"{time_str} │ "
             f"Elapsed: {elapsed_str} │ "
             f"Last generation duration: {gen_time_str}",
-            end="\r")
+            end="\r"
+        )

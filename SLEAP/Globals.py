@@ -37,7 +37,6 @@ class ModelManager:
     # Base
     NUMBER_OF_BRANCHES_RANGE = (1, 3)
     NUMBER_OF_KERNELS_RANGE = (2, 4)
-    BATCH_SIZE = 32
     TRAINING_EPOCHS_PER_INDIVIDUAL = 1
     LEARNING_RATE = 5e-4
 

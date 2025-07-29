@@ -3,20 +3,21 @@ import random
 import torch
 import numpy as np
 from deap import base, creator, tools
-from EAController.SDataLoader import SDataLoader
+from data.data_loader import SDataLoader
+from ea_controller.ea_algorithm import EA_Algorithm
 
-from ModelController.TrainedModelMaker import TrainedModelMaker
+from ea_controller.trained_model_maker import TrainedModelMaker
 from Globals import Signal, ModelManager, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions, DataManager
 
-from EAController.SLeaMuPlusLambda import SLeaMuPlusLambda
 from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
 
-    def __init__(self, classification_class: str, signal_type: str):
+    def __init__(self, classification_class: str, signal_type: str, batch_size):
 
         self.classification_class = classification_class
         self.signal_type = signal_type
+        self.batch_size = batch_size
 
         if ModelManager.MAX_KERNEL_SIZE == None:
             ModelManager.MAX_KERNEL_SIZE = Signal.SIGNAL_COUNT // 2
@@ -25,7 +26,9 @@ class KernelSizeEvolutionaryOptimizer:
         
         self.SDL = SDataLoader(
             signal_type=self.signal_type, 
-            classification_class=self.classification_class)
+            classification_class=self.classification_class,
+            batch_size=self.batch_size,
+        )
 
         if LoggingSettings.LOGGING:
             self.LogManager = LogManager()
@@ -138,7 +141,8 @@ class KernelSizeEvolutionaryOptimizer:
             N_SAMPLES=n_samples,
             pos_weight=pos_weight,
             train_loader=individual_training_set,
-            test_loader=individual_test_set
+            test_loader=individual_test_set,
+            batch_size=self.batch_size,
         )
 
         return new_model
@@ -266,14 +270,14 @@ class KernelSizeEvolutionaryOptimizer:
         population = self.get_grid_individuals()
         
         # Run evolution
-        evolver = SLeaMuPlusLambda(
+        algorithm = EA_Algorithm(
             population=population,
             toolbox=self.toolbox,
             halloffame= self.hall_of_fame,
             LogManager= self.LogManager,
         )
         
-        evolver.eaMuPlusLambda(
+        algorithm.eaMuPlusLambda(
             stats= self.stats,
         )
 

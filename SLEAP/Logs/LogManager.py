@@ -78,9 +78,6 @@ class LogManager:
     def log_experiment(self, classification_class, signal_type, max_kernel_size, best, second_best, third_best):
         """Log the experiment configuration using template names"""
         lt = LoggingTemplate
-
-        if "--batch-size" not in LoggingSettings.experiment_name:
-            LoggingSettings.experiment_name += f" --batch-size {ModelManager.BATCH_SIZE} --min-ks {ModelManager.MIN_KERNEL_SIZE} --max-ks {ModelManager.MAX_KERNEL_SIZE} --pop-size {EvolutionManager.POPULATION_SIZE} --generations {EvolutionManager.GENERATIONS} --st-size {EvolutionManager.SELECTION_TOURNAMENT_SIZE} --hof-size {EvolutionManager.HALL_OF_FAME_MEMBERS} --cx-prob {EvolutionManager.CX_PROB} --mut-prob {EvolutionManager.MUTATION_PROB} --sleep-stage {classification_class} --signal {signal_type} --dataset {DataManager.DATASET} --max-mem {DataManager.MAX_MEMORY} --log-id {LoggingSettings.LOGGER_ID} {"--log-all" if LoggingSettings.LOG_ALL_INDIVIDUALS else ""}"
         
         config = {
             lt.experiment_id: self.Experiment_ID,
@@ -101,14 +98,11 @@ class LogManager:
             lt.data_split_training: EvolutionManager.DATA_SPLIT_TRAINING,
             lt.data_split_testing: EvolutionManager.DATA_SPLIT_TESTING,
 
-            lt.base_batch_size: ModelManager.BATCH_SIZE,
-            lt.learning_rate: ModelManager.LEARNING_RATE,
             lt.epoch: ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL,
             lt.min_kernel_size: ModelManager.MIN_KERNEL_SIZE,
             lt.max_kernel_size: max_kernel_size,
             lt.number_of_branches_range: ModelManager.NUMBER_OF_BRANCHES_RANGE,
             lt.number_of_kernels_range: ModelManager.NUMBER_OF_KERNELS_RANGE,
-            lt.learning_rate: ModelManager.LEARNING_RATE,
 
             lt.dataset_name: DataManager.DATASET,
             lt.max_memory: DataManager.MAX_MEMORY,

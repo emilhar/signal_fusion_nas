@@ -6,8 +6,6 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='SLEAPy - Sleep Labeling using Evolutionary Algorithms and PyTorch')
     
     # ModelManager options
-    parser.add_argument('--batch-size', type=int, help=f'Batch size (default: {ModelManager.BATCH_SIZE})')
-    parser.add_argument('--lr', type=float, help=f'Learning rate (default: {ModelManager.LEARNING_RATE})')
     parser.add_argument('--min-ks', type=int, help=f'Minimum kernel size (default: {ModelManager.MIN_KERNEL_SIZE})')
     parser.add_argument('--max-ks', type=int, help=f'Maximum kernel size (default: {ModelManager.MAX_KERNEL_SIZE})')
     
@@ -16,8 +14,6 @@ def parse_arguments():
     parser.add_argument('--generations', type=int, help=f'Number of generations (default: {EvolutionManager.GENERATIONS})')
     parser.add_argument('--st-size', type=int, help=f'Selection tournament size (default: {EvolutionManager.SELECTION_TOURNAMENT_SIZE})')
     parser.add_argument('--hof-size', type=int, help=f'Hall of fame size (default: {EvolutionManager.HALL_OF_FAME_MEMBERS})')
-    parser.add_argument('--cx-prob', type=float, help=f'Crossover probability (default: {EvolutionManager.CX_PROB})')
-    parser.add_argument('--mut-prob', type=float, help=f'Mutation probability (default: {EvolutionManager.MUTATION_PROB})')
     parser.add_argument('--verbose', action='store_true', help=f'Verbose output (default: {EvolutionManager.VERBOSE})')
     parser.add_argument('--v-verbose', action='store_true', help=f'Prints individual training sessions, (default {EvolutionManager.VERY_VERBOSE})' )
 
@@ -32,12 +28,6 @@ def parse_arguments():
     parser.add_argument('--log-all', action='store_true', help=f'Log all individuals (default: {LoggingSettings.LOG_ALL_INDIVIDUALS})')
     parser.add_argument('--exp-name', type=str, help=f'Experiment name (default: {LoggingSettings.experiment_name})')
     
-    parser.add_argument('--sleep-stage', type=str, choices=[s for s in Classes.All_CLASSES],
-                       help='Sleep stage to analyze (wake, N1, N2, N3, REM)')
-    parser.add_argument('--signal', type=str, 
-                       choices=['EEG_Fpz-Cz', 'EEG_Pz-Oz', 'EOG_horizontal', 'EMG_submental'],
-                       help='Signal type to use')
-
     parser.add_argument('--polyarithmos', action='store_true', help='Run all possible configurations (ultimate test mode)')
 
     args = parser.parse_args()
@@ -48,10 +38,6 @@ def parse_arguments():
 def apply_arguments(args):
     """Apply parsed arguments to global settings"""
     # ModelManager settings
-    if args.batch_size:
-        ModelManager.BATCH_SIZE = args.batch_size
-    if args.lr:
-        ModelManager.LEARNING_RATE = args.learning_rate
     if args.min_ks:
         ModelManager.MIN_KERNEL_SIZE = args.min_ks
     if args.max_ks:
@@ -68,10 +54,6 @@ def apply_arguments(args):
         EvolutionManager.SELECTION_TOURNAMENT_SIZE = args.st_size
     if args.hof_size:
         EvolutionManager.HALL_OF_FAME_MEMBERS = args.hof_size
-    if args.cx_prob:
-        EvolutionManager.CX_PROB = args.cx_prob
-    if args.mut_prob:
-        EvolutionManager.MUTATION_PROB = args.mut_prob
     if args.verbose:
         EvolutionManager.VERBOSE = True
     if args.v_verbose:

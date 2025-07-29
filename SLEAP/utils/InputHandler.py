@@ -102,8 +102,6 @@ def _print_experiment_settings(user_check = True):
     print(f"{'Mutation prob:':30} {EvolutionManager.MUTATION_PROB}")
 
     print("\n📦 Model Manager")
-    print(f"{'Base batch size:':30} {ModelManager.BATCH_SIZE}")
-    print(f"{'Learning rate:':30} {ModelManager.LEARNING_RATE}")
     print(f"{'Min kernel size:':30} {ModelManager.MIN_KERNEL_SIZE}")
     print(f"{'Max kernel size:':30} {ModelManager.MAX_KERNEL_SIZE}")
     print(f"{'Branch count range:':30} {ModelManager.NUMBER_OF_BRANCHES_RANGE}")

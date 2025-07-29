@@ -11,10 +11,8 @@ import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.proj3d as proj3d
 
 from Globals import Signal, Classes, DataManager, ModelManager
-from EAController.SDataLoader import SDataLoader
-from ModelController.ModelMaker import CNN_BinaryClassifier
-from ModelController._Trainer import train_model
-from ModelController.BranchSettings import get_branch_configs
+from data.data_loader import SDataLoader
+from models.cnn_binary_classifier import CNN_BinaryClassifier
 
 
 class GridSearch:
@@ -166,7 +164,7 @@ class QKernel_GridSearch(GridSearch):
         model_args["batch_size"] = 128
         model = CNN_BinaryClassifier(**model_args).to(self.device)
         
-        model_performance = train_model(
+        model_performance = CNN_BinaryClassifier.train(
             model,
             train_loader,
             test_loader,
@@ -192,7 +190,7 @@ class QKernel_GridSearch(GridSearch):
             model_args["batch_size"] = 128
             model = CNN_BinaryClassifier(**model_args).to(self.device)
             
-            model_performance = train_model(
+            model_performance = CNN_BinaryClassifier.train(
                 model,
                 self._train_loader,
                 self._test_loader,

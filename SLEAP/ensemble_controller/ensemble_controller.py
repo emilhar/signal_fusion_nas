@@ -1,8 +1,7 @@
-from ModelController.ModelMaker import CNN_BinaryClassifier
-from ModelController.DaBest.DaBest_DataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
-from ModelController.DaBest.DaBest_Maker import EnsembleModel
-from ModelController.DaBest.DaBest_Trainer import train_model
-from ModelController.DaBest.DaBest_Plotter import analyze_predictions
+from models.cnn_binary_classifier import CNN_BinaryClassifier
+from data.multimodal_dataset import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
+from models.ensemble_model import EnsembleModel
+from ensemble_controller.ensemble_plotter import analyze_predictions
 from Globals import Classes, Signal, LoggingSettings, device
 from sklearn.metrics import classification_report
 from Logs.LogManager import LogManager
@@ -12,6 +11,13 @@ import torch
 import numpy as np
 
 LoggingSettings.LOGGER_ID = "O"
+
+class EnsembleController:
+    def __init__(self):
+        pass
+
+    def create_ensemble(): ...
+
 def superMain(given_folder=None):
     print("📦 Loading Data...")
     train_loader, test_loader = get_dataloaders_with_multimodal_datasets()
@@ -63,7 +69,7 @@ def load_model(model_path):
 def ensomnia(models_dict, train_loader, test_loader):
     model = EnsembleModel(models_dict).to(device)
 
-    trained_state = train_model(
+    trained_state = EnsembleModel.train_model(
         model=model,
         train_loader=train_loader,
         test_loader=test_loader,

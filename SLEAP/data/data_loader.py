@@ -3,13 +3,12 @@ import torch
 import os
 from random import sample, shuffle
 
-from ModelController.ModelMaker import CNN_BinaryClassifier
-from EAController.LazyDataset import LazyDataset
+from data.lazy_dataset import LazyDataset
 from Globals import Classes, ModelManager, EvolutionManager, DataManager
 
 
 class SDataLoader:
-    def __init__(self, signal_type, classification_class, stage_map=None):
+    def __init__(self, signal_type, classification_class, batch_size, stage_map=None):
         self.classification_class = classification_class
         self.signal_type = signal_type
         
@@ -18,25 +17,25 @@ class SDataLoader:
         else:
             self.stage_map = stage_map
 
-        self.batch_size = ModelManager.BATCH_SIZE
+        self.batch_size = batch_size
 
         if EvolutionManager.VERBOSE: print("Loading Data")
         self.train_loader, self.test_loader, self.n_samples, self.pos_weight = self.prepare_data()
 
     def _get_stage_map(self):
         STAGE_MAP = {
-            CNN_BinaryClassifier.WAKE: 1 if self.classification_class == Classes.WAKE else 0,
-            CNN_BinaryClassifier.N1: 1 if self.classification_class == Classes.N1 else 0,
-            CNN_BinaryClassifier.N2: 1 if self.classification_class == Classes.N2 else 0,
-            CNN_BinaryClassifier.N3: 1 if self.classification_class == Classes.N3 else 0,
-            CNN_BinaryClassifier.REM: 1 if self.classification_class == Classes.REM else 0
+            0: 1 if self.classification_class == Classes.WAKE else 0,
+            1: 1 if self.classification_class == Classes.N1 else 0,
+            2: 1 if self.classification_class == Classes.N2 else 0,
+            3: 1 if self.classification_class == Classes.N3 else 0,
+            4: 1 if self.classification_class == Classes.REM else 0
         }
 
         return STAGE_MAP
     
     def prepare_data(self):
 
-        data_dir = f"Data/{DataManager.DATASET}/{self.signal_type}"
+        data_dir = f"data/{DataManager.DATASET}/{self.signal_type}"
         all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
         subject_ids = sorted(set(f[:5] for f in all_files))
         shuffle(subject_ids)
@@ -100,8 +99,8 @@ class SDataLoader:
             self.see_dataset_breakdown(test_dataset)
         
         return (
-            DataLoader(train_subset, batch_size=ModelManager.BATCH_SIZE, shuffle=True),
-            DataLoader(test_subset, batch_size=ModelManager.BATCH_SIZE, shuffle=False),
+            DataLoader(train_subset, batch_size=self.batch_size, shuffle=True),
+            DataLoader(test_subset, batch_size=self.batch_size, shuffle=False),
             self.n_samples,
             self.pos_weight
         )

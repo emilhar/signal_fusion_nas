@@ -1,6 +1,6 @@
 from ModelController.EnSomniaC.EnSomniaC_Controller import superMain
-from ModelController.TrainedModelMaker import TrainedModelMaker
-from EAController.SDataLoader import SDataLoader
+from ea_controller.trained_model_maker import TrainedModelMaker
+from EAController.data_loader import SDataLoader
 from Globals import Classes, Signal, ModelManager, LoggingTemplate
 import random
 import os
