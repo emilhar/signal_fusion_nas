@@ -26,7 +26,6 @@ def parse_arguments():
 
 def apply_arguments(args):
     """Apply parsed arguments to global settings"""
-    # ModelManager settings
     if args.min_ks:
         KernelSizeEvolutionaryOptimizer.MIN_KERNEL_SIZE = args.min_ks
     if args.max_ks:
