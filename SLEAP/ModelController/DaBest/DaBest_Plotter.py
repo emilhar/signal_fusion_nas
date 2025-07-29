@@ -42,29 +42,8 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
 
     return true_label, pred_label
 
-def analyze_predictions(model, X, y, good_bad=None):
-    all_true = []
-    all_preds = []
+def analyze_predictions(all_true, all_preds, model_marker=None):
     class_names = Classes.All_CLASSES
-
-    model.eval()
-    with torch.inference_mode():
-        for i in range(len(y)):
-            input_dict = {}
-            for ch in Signal.ALL_SIGNALS:
-                signal = X[ch][i]
-                input_dict[ch] = signal.clone().detach().float().transpose(0, 1).unsqueeze(0).to(device)
-
-            true_label = y[i]
-
-            output = model(input_dict)
-            pred_label = torch.argmax(output, dim=1).item()
-
-            all_true.append(true_label)
-            all_preds.append(pred_label)
-
-    all_true = np.array(all_true)
-    all_preds = np.array(all_preds)
 
     cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize="all")
 
@@ -88,8 +67,8 @@ def analyze_predictions(model, X, y, good_bad=None):
     plt.title("Confusion Matrix")
 
     id_helper = LogManager()
-    if good_bad:
-        plt.savefig(f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{good_bad}_{id_helper.Experiment_ID-20}")
+    if model_marker:
+        plt.savefig(f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{model_marker}_{id_helper.Experiment_ID-20}")
     else:
         plt.savefig(f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{id_helper.Experiment_ID-20}")
     plt.show()

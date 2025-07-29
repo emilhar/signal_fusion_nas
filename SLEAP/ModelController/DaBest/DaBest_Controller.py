@@ -1,9 +1,10 @@
 from ModelController.ModelMaker import CNN_BinaryClassifier
-from ModelController.DaBest.DaBest_DataLoader import get_dataloaders_with_multimodal_datasets, make_training_and_testing_data
+from ModelController.DaBest.DaBest_DataLoader import get_dataloaders_with_multimodal_datasets
 from ModelController.DaBest.DaBest_Maker import EnsembleModel
 from ModelController.DaBest.DaBest_Trainer import train_model
 from ModelController.DaBest.DaBest_Plotter import analyze_predictions
 from Globals import Classes, Signal, LoggingSettings, device
+from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from Logs.LogManager import LogManager
 
@@ -12,7 +13,7 @@ import torch
 import numpy as np
 
 LoggingSettings.LOGGER_ID = "O"
-def superMain(given_folder=None):
+def superMain(given_folder=None, model_marker=None):
     print("📦 Loading Data...")
     train_loader, test_loader = get_dataloaders_with_multimodal_datasets()
 
@@ -22,11 +23,11 @@ def superMain(given_folder=None):
     print("🚀 Training Model...")
     model = EnsembleModel(models_dict)
     trained_state = ensomnia(models_dict, train_loader, test_loader)
+    assert device.type == "cuda", "Device is not CUDA"
     model.to(device).load_state_dict(trained_state)
 
     print("📊 Plotting Results...")
-    plot(model)
-
+    plot(model, test_loader, model_marker)
 
 def load_each_model(given_folder):
         id_helper = LogManager()
@@ -75,29 +76,23 @@ def ensomnia(models_dict, train_loader, test_loader):
     return trained_state
 
 
-
-def plot(model):
-    _, _, x_test,y_test = make_training_and_testing_data()
-
+def plot(model: torch.nn.Module, test_loader: DataLoader, model_marker):
     all_true = []
     all_preds = []
 
     model.eval()
+    model.to(device)  # Ensure model is on the right device
 
     with torch.inference_mode():
-        for i in range(len(y_test)):
-            input_dict = {}
-            for ch in Signal.ALL_SIGNALS:
-                signal = x_test[ch][i]
-                input_dict[ch] = signal.clone().detach().float().transpose(0, 1).unsqueeze(0).to(device)
-
-
-            true_label = y_test[i]
-            output = model(input_dict)
-            pred_label = torch.argmax(output, dim=1).item()
-
-            all_true.append(true_label)
-            all_preds.append(pred_label)
+        for (datas, labels) in test_loader:
+            # Move data to the same device as model
+            datas = {k: v.to(device) for k, v in datas.items()}
+            labels = labels.to(device)
+            
+            output = model(datas)
+            pred_label = torch.argmax(output, dim=1).cpu()
+            all_true.extend(labels.cpu().numpy())
+            all_preds.extend(pred_label)
 
     all_true = np.array(all_true)
     all_preds = np.array(all_preds)
@@ -113,11 +108,4 @@ def plot(model):
 
     print("\n\n\n\n")
 
-    analyze_predictions(
-        model=model, 
-        X=x_test, 
-        y=y_test
-    )
-
-if __name__ =="__main__":
-    superMain()
+    analyze_predictions(all_true, all_preds, model_marker)

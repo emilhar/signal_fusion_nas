@@ -1,11 +1,11 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import os
-from Globals import Signal, DataManager
+from Globals import Signal, DataManager, device
 from EAController.LazyDataset import LazyDataset
 
 TRAIN_SPLIT = 0.8
-MAX_MEMORY = 512
+MAX_MEMORY = 1024
 
 class MultimodalLazyDataset(Dataset):
     def __init__(self):
@@ -32,8 +32,10 @@ class MultimodalLazyDataset(Dataset):
     def __getitem__(self, idx):
         output_dict =  {}
         labels = set()
+
         for signal, lazy_data_loader in self.data_dict.items():
             x, y = lazy_data_loader[idx]
+
             output_dict[signal] = x
             labels.add(y.item())
 
