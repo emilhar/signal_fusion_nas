@@ -10,7 +10,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.proj3d as proj3d
 
-from Globals import Signal, Classes, DataManager, ModelManager
+from Globals import Signal, Classes, DataManager
 from data.data_loader import SDataLoader
 from models.cnn_binary_classifier import CNN_BinaryClassifier
 
@@ -30,7 +30,6 @@ class GridSearch:
         DataManager.MAX_MEMORY = 2048
         DataManager.DATASET = dataset
         DataManager.dataset_percentage = dataset_percentage
-        ModelManager.BATCH_SIZE = 128
 
         self.runtype = runtype
         self.signal = signal

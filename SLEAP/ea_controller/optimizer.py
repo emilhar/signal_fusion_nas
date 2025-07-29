@@ -7,22 +7,40 @@ from data.data_loader import SDataLoader
 from ea_controller.ea_algorithm import EA_Algorithm
 
 from ea_controller.trained_model_maker import TrainedModelMaker
-from Globals import Signal, ModelManager, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions, DataManager
+from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions, DataManager
 
 from Logs.LogManager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
+    MIN_KERNEL_SIZE = 2
+    MAX_KERNEL_SIZE = None
 
-    def __init__(self, classification_class: str, signal_type: str, batch_size):
+    MIN_BRANCHES = 1
+    MAX_BRANCHES = 3
+
+    MIN_KERNELS = 2
+    MAX_KERNELS = 4
+
+    EPOCHS_PER_INDIVIDUAL = 1
+    LEARNING_RATE = 5e-4
+
+    def __init__(self, classification_class: str, signal_type: str, batch_size, n_samples):
 
         self.classification_class = classification_class
         self.signal_type = signal_type
         self.batch_size = batch_size
+        self.n_samples = n_samples
+        
+        self.min_kernel_size, self.max_kernel_size = self.MIN_KERNEL_SIZE, self.MAX_KERNEL_SIZE
+        self.min_branches, self.max_branches = self.MIN_BRANCHES, self.MAX_BRANCHES
+        self.min_kernels, self.max_kernels = self.MIN_KERNELS, self.MAX_KERNELS
+        
+        self.epochs_per_individual = self.EPOCHS_PER_INDIVIDUAL
+        self.learning_rate = self.LEARNING_RATE
 
-        if ModelManager.MAX_KERNEL_SIZE == None:
-            ModelManager.MAX_KERNEL_SIZE = Signal.SIGNAL_COUNT // 2
-
-            if EvolutionManager.VERBOSE: print(f"Max kernel size set at {ModelManager.MAX_KERNEL_SIZE}")
+        if self.max_kernel_size is None:
+            self.max_kernel_size = Signal.SIGNAL_COUNT // 2
+            if EvolutionManager.VERBOSE: print(f"Max kernel size set at {self.max_kernel_size}")
         
         self.SDL = SDataLoader(
             signal_type=self.signal_type, 
@@ -80,8 +98,13 @@ class KernelSizeEvolutionaryOptimizer:
     def generate_individual(self):
         new_indi = []
 
-        for _ in range(random.randint(*ModelManager.NUMBER_OF_BRANCHES_RANGE)):
-            new_indi.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+        for _ in range(random.randint(self.min_branches, self.max_branches)):
+            new_indi.append(
+                [
+                    random.randint(self.min_kernel_size, self.max_kernel_size)
+                    for _ in range(random.randint(self.min_kernels, self.max_kernels))
+                ]
+            )
             #new_indi.append(self.KRNL.theta())
 
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
@@ -143,6 +166,8 @@ class KernelSizeEvolutionaryOptimizer:
             train_loader=individual_training_set,
             test_loader=individual_test_set,
             batch_size=self.batch_size,
+            epochs=self.epochs_per_individual,
+            learning_rate=self.learning_rate,
         )
 
         return new_model
@@ -160,7 +185,11 @@ class KernelSizeEvolutionaryOptimizer:
         elitism = EvolutionManager.ELITISM
 
         if elitism > 0:
-            sorted_pop = sorted(population, key=lambda x: x.fitness.values[0], reverse=not FitnessFunctions.MINIMIZE_FITNESS)
+            sorted_pop = sorted(
+                population, 
+                key=lambda x: x.fitness.values[0], 
+                reverse=not FitnessFunctions.MINIMIZE_FITNESS
+            )
             elites = sorted_pop[:elitism]
             chosen_for_next_generation.extend(elites)
             
@@ -196,32 +225,53 @@ class KernelSizeEvolutionaryOptimizer:
 
         for _ in range(number_of_mutations):
             mutation_type = self._mutation_choice()
+            kernel_size_range = (self.min_kernel_size, self.max_kernel_size)
         
             if mutation_type == "remove_branch":
-                if len(mutant) > ModelManager.NUMBER_OF_BRANCHES_RANGE[0]:
+                if len(mutant) > self.min_branches:
                     mutant.pop(random.randrange(len(mutant)))
             
             elif mutation_type == "add_branch":
-                if len(mutant) < ModelManager.NUMBER_OF_BRANCHES_RANGE[1]:
+                if len(mutant) < self.max_branches:
                     
                     if random.random() < 0.5:
-                        mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+                        mutant.append(
+                            [
+                                random.randint(*kernel_size_range) 
+                                for _ in range(random.randint(self.min_kernels, self.max_kernels))
+                            ]
+                        )
                         #mutant.append(self.KRNL.theta())
                     else:
-                        mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+                        mutant.append(
+                            [
+                                random.randint(*kernel_size_range)
+                                for _ in range(random.randint(self.min_kernels, self.max_kernels))
+                            ]
+                        )
 
             elif mutation_type == "change_branch":
                 # Remove
-                if len(mutant) > ModelManager.NUMBER_OF_BRANCHES_RANGE[0]:
+                if len(mutant) > self.min_branches:
                     mutant.pop(random.randrange(len(mutant)))
             
-                # Then add
-                if len(mutant) < ModelManager.NUMBER_OF_BRANCHES_RANGE[1]:
+                # Then add (or add an extra branch for single branched individuals)
+                if len(mutant) < self.max_branches:
                     if random.random() < 0.5:
-                        mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+                        mutant.append(
+                            [
+                                random.randint(*kernel_size_range)
+                                for _ in range(random.randint(self.min_kernels, self.max_kernels))
+                            ]
+                        )
                         #mutant.append(self.KRNL.theta())
                     else:
-                        mutant.append([random.randint(ModelManager.MIN_KERNEL_SIZE, ModelManager.MAX_KERNEL_SIZE) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+                        mutant.append(
+                            [
+                                random.randint(*kernel_size_range)
+                                for _ in range(random.randint(self.min_kernels, self.max_kernels))
+                            ]
+                        )
 
             elif mutation_type == "change_kernel":
 
@@ -238,7 +288,7 @@ class KernelSizeEvolutionaryOptimizer:
                 new_value = current_value + (current_value * percentage_change)
                 
                 new_value = round(new_value)
-                new_value = min(max(new_value, ModelManager.MIN_KERNEL_SIZE), ModelManager.MAX_KERNEL_SIZE)
+                new_value = min(max(new_value, self.min_kernel_size), self.max_kernel_size)
                 
                 # Apply mutation
                 mutant[branch_idx][kernel_idx] = new_value
@@ -264,7 +314,10 @@ class KernelSizeEvolutionaryOptimizer:
         """Run the evolutionary algorithm"""
 
         if EvolutionManager.VERBOSE:
-            print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE} individuals for {EvolutionManager.GENERATIONS} generations")
+            print(
+                f"Starting evolution with {EvolutionManager.POPULATION_SIZE}" 
+                "individuals for {EvolutionManager.GENERATIONS} generations"
+            )
 
         # Create initial population
         population = self.get_grid_individuals()
@@ -295,7 +348,7 @@ class KernelSizeEvolutionaryOptimizer:
         self.LogManager.log_experiment(
             classification_class= self.classification_class,
             signal_type= self.signal_type,
-            max_kernel_size= ModelManager.MAX_KERNEL_SIZE,
+            max_kernel_size= self.max_kernel_size,
             best= get_hall_of_fame_format(0),
             second_best= get_hall_of_fame_format(1),
             third_best= get_hall_of_fame_format(2),
@@ -304,11 +357,14 @@ class KernelSizeEvolutionaryOptimizer:
         if logging_folder_for_omega_runs:
             best_individual = self.hall_of_fame[0]
             torch.save(
-            {
-                "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
-                "model_args": best_individual.model_args,
-            },
-            os.path.join(logging_folder_for_omega_runs, f"{DataManager.DATASET}_{self.classification_class}_{self.signal_type}_classifier.pt"))
+                {
+                    "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
+                    "model_args": best_individual.model_args,
+                },
+                os.path.join(
+                    logging_folder_for_omega_runs, 
+                    f"{DataManager.DATASET}_{self.classification_class}_{self.signal_type}_classifier.pt")
+            )
 
     def print_results(self):
         """Print evolution results in a dynamically sized table"""

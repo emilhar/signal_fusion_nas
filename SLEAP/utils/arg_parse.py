@@ -1,34 +1,23 @@
 from Globals import *
+from ea_controller.ea_controller import KernelSizeEvolutionaryOptimizer
 import argparse
 
 def parse_arguments():
     """Parse command line arguments to override global settings"""
-    parser = argparse.ArgumentParser(description='SLEAPy - Sleep Labeling using Evolutionary Algorithms and PyTorch')
+    parser = argparse.ArgumentParser(description='')
     
-    # ModelManager options
-    parser.add_argument('--min-ks', type=int, help=f'Minimum kernel size (default: {ModelManager.MIN_KERNEL_SIZE})')
-    parser.add_argument('--max-ks', type=int, help=f'Maximum kernel size (default: {ModelManager.MAX_KERNEL_SIZE})')
+    parser.add_argument('--min-ks', type=int, help=f'Minimum kernel size (default: {KernelSizeEvolutionaryOptimizer.MIN_KERNEL_SIZE})')
+    parser.add_argument('--max-ks', type=int, help=f'Maximum kernel size (default: {KernelSizeEvolutionaryOptimizer.MAX_KERNEL_SIZE})')
     
-    # EvolutionManager options
     parser.add_argument('--pop-size', type=int, help=f'Population size (default: {EvolutionManager.POPULATION_SIZE})')
     parser.add_argument('--generations', type=int, help=f'Number of generations (default: {EvolutionManager.GENERATIONS})')
-    parser.add_argument('--st-size', type=int, help=f'Selection tournament size (default: {EvolutionManager.SELECTION_TOURNAMENT_SIZE})')
-    parser.add_argument('--hof-size', type=int, help=f'Hall of fame size (default: {EvolutionManager.HALL_OF_FAME_MEMBERS})')
     parser.add_argument('--verbose', action='store_true', help=f'Verbose output (default: {EvolutionManager.VERBOSE})')
     parser.add_argument('--v-verbose', action='store_true', help=f'Prints individual training sessions, (default {EvolutionManager.VERY_VERBOSE})' )
 
-    # DataManager options
     parser.add_argument('--dataset', choices=['sleep-EDF-20', 'sleep-EDF-78', 'sleep-EDFx'], help=f'Dataset to use (default: {DataManager.DATASET})')
     parser.add_argument('--max-mem', type=int, help=f'Maximum memory for lazyloader cache (default: {DataManager.MAX_MEMORY})')
     
-    # LoggingSettings options
-    parser.add_argument('--no-logging', action='store_true', help='Disable logging')
-    parser.add_argument('--log', action='store_true', help='Enabme logging')
-    parser.add_argument('--log-id', choices=LoggingSettings.LOG_IDS, help=f'Logger ID (default: {LoggingSettings.LOGGER_ID})')
-    parser.add_argument('--log-all', action='store_true', help=f'Log all individuals (default: {LoggingSettings.LOG_ALL_INDIVIDUALS})')
-    parser.add_argument('--exp-name', type=str, help=f'Experiment name (default: {LoggingSettings.experiment_name})')
-    
-    parser.add_argument('--polyarithmos', action='store_true', help='Run all possible configurations (ultimate test mode)')
+    parser.add_argument('--no-logging', action='store_true', help='Disable logging')    
 
     args = parser.parse_args()
     apply_arguments(args)
@@ -39,9 +28,9 @@ def apply_arguments(args):
     """Apply parsed arguments to global settings"""
     # ModelManager settings
     if args.min_ks:
-        ModelManager.MIN_KERNEL_SIZE = args.min_ks
+        KernelSizeEvolutionaryOptimizer.MIN_KERNEL_SIZE = args.min_ks
     if args.max_ks:
-        ModelManager.MAX_KERNEL_SIZE = args.max_ks
+        KernelSizeEvolutionaryOptimizer.MAX_KERNEL_SIZE = args.max_ks
     
     # EvolutionManager settings
     if args.pop_size:
