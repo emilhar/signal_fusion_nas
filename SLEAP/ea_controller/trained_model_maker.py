@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 
 # Model and Training imports
 from models.cnn_binary_classifier import CNN_BinaryClassifier
-from Globals import EvolutionManager, ModelManager, LoggingSettings, device
+from Globals import EvolutionManager, LoggingSettings, device
 
 class TrainedModelMaker:
 
@@ -15,6 +15,8 @@ class TrainedModelMaker:
             pos_weight: torch.FloatTensor, 
             train_loader: DataLoader, 
             test_loader: DataLoader,
+            epochs,
+            learning_rate,
             batch_size,
 
             epochs = ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL
@@ -35,8 +37,8 @@ class TrainedModelMaker:
             test_loader, 
             pos_weight, 
             verbose=EvolutionManager.VERY_VERBOSE, 
-            lr=ModelManager.LEARNING_RATE, 
-            epochs=epochs
+            lr=learning_rate, 
+            epochs=epochs,
         )
 
     def get_branch_configs(self, branches:list[list[int]], sample_count:int):

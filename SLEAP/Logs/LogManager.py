@@ -1,7 +1,8 @@
 import os
 import pandas as pd
 from datetime import datetime
-from Globals import ModelManager, EvolutionManager, DataManager, LoggingSettings, FitnessFunctions, LoggingTemplate
+from Globals import EvolutionManager, LoggingSettings, FitnessFunctions, LoggingTemplate, DataManager
+from ea_controller.ea_controller import KernelSizeEvolutionaryOptimizer
 
 class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
@@ -98,11 +99,11 @@ class LogManager:
             lt.data_split_training: EvolutionManager.DATA_SPLIT_TRAINING,
             lt.data_split_testing: EvolutionManager.DATA_SPLIT_TESTING,
 
-            lt.epoch: ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL,
-            lt.min_kernel_size: ModelManager.MIN_KERNEL_SIZE,
+            lt.epoch: KernelSizeEvolutionaryOptimizer.TRAINING_EPOCHS_PER_INDIVIDUAL,
+            lt.min_kernel_size: KernelSizeEvolutionaryOptimizer.MIN_KERNEL_SIZE,
             lt.max_kernel_size: max_kernel_size,
-            lt.number_of_branches_range: ModelManager.NUMBER_OF_BRANCHES_RANGE,
-            lt.number_of_kernels_range: ModelManager.NUMBER_OF_KERNELS_RANGE,
+            lt.number_of_branches_range: KernelSizeEvolutionaryOptimizer.NUMBER_OF_BRANCHES_RANGE,
+            lt.number_of_kernels_range: KernelSizeEvolutionaryOptimizer.NUMBER_OF_KERNELS_RANGE,
 
             lt.dataset_name: DataManager.DATASET,
             lt.max_memory: DataManager.MAX_MEMORY,
