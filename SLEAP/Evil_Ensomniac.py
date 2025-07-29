@@ -1,15 +1,17 @@
 from ensemble_controller.ensemble_controller import superMain
 from ea_controller.trained_model_maker import TrainedModelMaker
 from data.data_loader import SDataLoader
-from Globals import Classes, Signal, ModelManager, LoggingTemplate
+from Globals import Classes, Signal, ModelManager, LoggingTemplate, EvolutionManager
 import random
 import os
 import torch
 
 training_epochs_for_models = 1
-model_batch_size = 128
+model_batch_size = 32
+lr = 5e-5
 
-
+EvolutionManager.VERY_VERBOSE = True
+EvolutionManager.VERBOSE = True
 def main():
     # 👿 Evil Models Section 👿
     print("🔥🔥 MUHAHAH EVIL MODELS 🔥🔥")
@@ -65,7 +67,8 @@ def get_random_indis():
                 train_loader=sdl.train_loader,
                 test_loader=sdl.test_loader,
                 epochs=training_epochs_for_models,
-                batch_size=model_batch_size
+                batch_size=model_batch_size,
+                learning_rate=lr
             )
             save_model(m, sig, st, "Evil")
 
@@ -89,7 +92,8 @@ def get_good_indis():
                 train_loader=sdl.train_loader,
                 test_loader=sdl.test_loader,
                 epochs=training_epochs_for_models,
-                batch_size=model_batch_size
+                batch_size=model_batch_size,
+                learning_rate=lr
             )
             save_model(m, sig, st, "Good")
 

@@ -18,8 +18,6 @@ class TrainedModelMaker:
             epochs,
             learning_rate,
             batch_size,
-
-            epochs = ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL
         ):
 
         assert device.type == "cuda", f"WHAT: {device.type}"
