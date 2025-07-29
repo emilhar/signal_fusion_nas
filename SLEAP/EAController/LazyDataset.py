@@ -7,11 +7,11 @@ from bisect import bisect_right
 from Globals import DataManager
 
 class LazyDataset(Dataset):
-    def __init__(self, files, data_dir, stage_map):
+    def __init__(self, files, data_dir, stage_map, max_memory=DataManager.MAX_MEMORY):
         self.files = files
         self.data_dir = data_dir
         self.stage_map = stage_map
-        self.max_mb = DataManager.MAX_MEMORY
+        self.max_mb = max_memory
         self.total_len = 0
         
         # Cache management

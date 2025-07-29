@@ -71,7 +71,6 @@ def ensomnia(models_dict, train_loader, test_loader):
         lr=5e-5,
         wd=1e-4,
     )
-
     
     return trained_state
 

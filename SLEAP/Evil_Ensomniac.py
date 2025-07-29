@@ -1,4 +1,4 @@
-from ModelController.EnSomniaC.EnSomniaC_Controller import superMain
+from ModelController.DaBest.DaBest_Controller import superMain
 from ModelController.TrainedModelMaker import TrainedModelMaker
 from EAController.SDataLoader import SDataLoader
 from Globals import Classes, Signal, ModelManager, LoggingTemplate
@@ -71,8 +71,12 @@ def get_good_indis():
                 
             print("TRAINING", st, "IN", sig)
             sdl = SDataLoader(sig, st)
+            if sig == Signal.EMG.SUBMENTAL:
+                branch = [[20, 8, 8]]
+            else:
+                branch = [[400, 22, 22]]
             m = TrainedModelMaker(
-                branches=[[400,22,22]],
+                branches=branch,
                 N_SAMPLES=30 if sig==Signal.EMG.SUBMENTAL else 3000,
                 pos_weight=sdl.pos_weight,
                 train_loader=sdl.train_loader,
