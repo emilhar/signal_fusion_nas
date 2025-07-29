@@ -4,11 +4,13 @@ def get_user_configuration(args):
     """Get configuration from user input"""
     skip_sleep_stage = args.sleep_stage is not None
     skip_signal = args.signal is not None
-    polyarithmos = args.polyarithmos is not None
+    polyarithmos = args.polyarithmos
     no_logging = args.no_logging
     
+    print(polyarithmos)
     if skip_sleep_stage:
         Classes.current_class = args.sleep_stage
+
 
     elif not polyarithmos:
         print("\n📊 Available Sleep Stages:")
@@ -52,7 +54,7 @@ def get_user_configuration(args):
 
     else:
         print("\n📝 Logging")
-        if not hasattr(args, "log"):
+        if not args.log:
             LoggingSettings.LOGGING = input("Do you want to be logging (y/*)?: ").lower().startswith('y')
 
         if LoggingSettings.LOGGING:
