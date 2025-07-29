@@ -1,8 +1,4 @@
-import numpy as np
+from datetime import datetime
 
-with np.load("Data/sleep-EDF-78/EEG_Fpz-Cz/SC4001E0.npz", allow_pickle=True) as f:
-    a = []
-    for key_ in f.files:
-        a.append(str(f[key_][0]))
-
-    print(", ".join(a))
+a = str(datetime.now().replace(microsecond=0)).replace(" ", "_")
+print(f"{a}")

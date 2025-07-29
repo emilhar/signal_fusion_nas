@@ -105,7 +105,6 @@ def plot(model: torch.nn.Module, test_loader: DataLoader, model_marker):
         digits=4,
         zero_division=0
     ))
-
-    print("\n\n\n\n")
+    print()
 
     analyze_predictions(all_true, all_preds, model_marker)

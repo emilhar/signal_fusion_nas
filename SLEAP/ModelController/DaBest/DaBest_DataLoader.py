@@ -67,8 +67,8 @@ def make_training_and_testing_data():
         subject_ids = sorted(set(f[:5] for f in all_files))
 
         split_idx = int(len(subject_ids) * TRAIN_SPLIT)
-        train_subjects = subject_ids[:split_idx]
-        test_subjects = subject_ids[split_idx:]
+        train_subjects = subject_ids[:split_idx][0]
+        test_subjects = subject_ids[split_idx:][0]
 
         train_files = [f for f in all_files if f[:5] in train_subjects]
         test_files = [f for f in all_files if f[:5] in test_subjects]

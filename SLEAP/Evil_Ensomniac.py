@@ -11,7 +11,7 @@ def main():
     print("🔥🔥 MUHAHAH EVIL MODELS 🔥🔥")
     print("👹 Summoning the dark forces... 👹")
     get_random_indis()
-    superMain(given_folder="SavedModels/EvilModels")
+    superMain(given_folder="SavedModels/EvilModels", model_marker="Evil")
     
     print("\n")
     
@@ -19,7 +19,7 @@ def main():
     print("✨✨ GOOD MODELS ✨✨")
     print("🕊️ Calling upon the righteous... 🕊️")
     get_good_indis()
-    superMain(given_folder="SavedModels/GoodModels")
+    superMain(given_folder="SavedModels/GoodModels", model_marker="Good")
 
 def save_model(tmm, signal_type, classification_class, prefix):
     os.makedirs(f"SavedModels/{prefix}Models", exist_ok=True)
@@ -33,10 +33,11 @@ def save_model(tmm, signal_type, classification_class, prefix):
 def model_exists(classification_class, signal_type, prefix):
 
     data_dir = f"SavedModels/{prefix}Models"
-    all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.pt')])
-    for file_name in all_files:
-        if classification_class in file_name and signal_type in file_name:
-            return True
+    if os.path.exists(data_dir):
+        all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.pt')])
+        for file_name in all_files:
+            if classification_class in file_name and signal_type in file_name:
+                return True
         
     return False
 
@@ -51,7 +52,7 @@ def get_random_indis():
             sdl = SDataLoader(sig, st)
             indi = []
             for _ in range(random.randint(*ModelManager.NUMBER_OF_BRANCHES_RANGE)):
-                indi.append([random.randint(0, 750) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+                indi.append([random.randint(1, 750) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
             print("Branches: ", indi)
             m = TrainedModelMaker(
                 branches=indi,
