@@ -5,6 +5,7 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
 from Globals import device, Signal, Classes, LoggingSettings
 from Logs.LogManager import LogManager
+from datetime import datetime
 
 def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=None, pred_label=None):
     signals = {}
@@ -42,31 +43,10 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
 
     return true_label, pred_label
 
-def analyze_predictions(model, X, y, good_bad=None):
-    all_true = []
-    all_preds = []
+def analyze_predictions(all_true, all_preds, model_marker=None):
     class_names = Classes.All_CLASSES
 
-    model.eval()
-    with torch.inference_mode():
-        for i in range(len(y)):
-            input_dict = {}
-            for ch in Signal.ALL_SIGNALS:
-                signal = X[ch][i]
-                input_dict[ch] = signal.clone().detach().float().transpose(0, 1).unsqueeze(0).to(device)
-
-            true_label = y[i]
-
-            output = model(input_dict)
-            pred_label = torch.argmax(output, dim=1).item()
-
-            all_true.append(true_label)
-            all_preds.append(pred_label)
-
-    all_true = np.array(all_true)
-    all_preds = np.array(all_preds)
-
-    cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize="all")
+    cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize="true")
 
     plt.figure(figsize=(10, 8))
 
@@ -75,24 +55,21 @@ def analyze_predictions(model, X, y, good_bad=None):
         display_labels=class_names
     )
     disp.plot(cmap="Blues", values_format=".2f")
-    sns.heatmap(
-        cm,
-        annot=True,
-        fmt=".2f",
-        cmap="Blues",
-        xticklabels=class_names,
-        yticklabels=class_names,
-    )
+
     plt.xlabel("Predicted")
     plt.ylabel("True")
     plt.title("Confusion Matrix")
 
-    id_helper = LogManager()
-    if good_bad:
-        plt.savefig(f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{good_bad}_{id_helper.Experiment_ID-20}")
+    if model_marker:
+        a = str(datetime.now().replace(microsecond=0)).replace(" ", "_").replace(":", "-")
+        fig_path =f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{model_marker}_{a}.png"
+        plt.savefig(fig_path)
+        print(f"Ensemble model plot saved at: {fig_path}")
     else:
-        plt.savefig(f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{id_helper.Experiment_ID-20}")
-    plt.show()
+        id_helper = LogManager()
+        fig_path =f"Logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{id_helper.Experiment_ID-20}.png"
+        plt.savefig(fig_path)
+        print(f"Ensemble model plot saved at: {fig_path}")
 
     for class_idx, class_name in enumerate(class_names):
         print(f"\n===== {class_name} Analysis =====")
