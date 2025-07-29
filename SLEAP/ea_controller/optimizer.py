@@ -260,7 +260,7 @@ class KernelSizeEvolutionaryOptimizer:
         else:                    # 40%: Change kernel
             return "change_kernel"
 
-    def run_evolution(self, logging_folder_for_omega_runs=None):
+    def run_evolution(self, part_of_bigger_run=False):
         """Run the evolutionary algorithm"""
 
         if EvolutionManager.VERBOSE:
@@ -281,12 +281,10 @@ class KernelSizeEvolutionaryOptimizer:
             stats= self.stats,
         )
 
-        if LoggingSettings.LOGGING:
-            self.log_results(logging_folder_for_omega_runs)
-
+        self.log_results(part_of_bigger_run)
         self.print_results()
 
-    def log_results(self, logging_folder_for_omega_runs):
+    def log_results(self, part_of_bigger_run):
         
         def get_hall_of_fame_format(i):
             individual = self.hall_of_fame[i]
@@ -301,14 +299,14 @@ class KernelSizeEvolutionaryOptimizer:
             third_best= get_hall_of_fame_format(2),
         )
 
-        if logging_folder_for_omega_runs:
+        if part_of_bigger_run:
             best_individual = self.hall_of_fame[0]
             torch.save(
             {
                 "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
                 "model_args": best_individual.model_args,
             },
-            os.path.join(logging_folder_for_omega_runs, f"{DataManager.DATASET}_{self.classification_class}_{self.signal_type}_classifier.pt"))
+            os.path.join("ea_controller/saved_model", f"{DataManager.DATASET}_{self.classification_class}_{self.signal_type}_classifier.pt"))
 
     def print_results(self):
         """Print evolution results in a dynamically sized table"""

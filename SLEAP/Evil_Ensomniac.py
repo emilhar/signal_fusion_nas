@@ -1,17 +1,21 @@
-from ModelController.EnSomniaC.EnSomniaC_Controller import superMain
+from ensemble_controller.ensemble_controller import superMain
 from ea_controller.trained_model_maker import TrainedModelMaker
-from EAController.data_loader import SDataLoader
+from data.data_loader import SDataLoader
 from Globals import Classes, Signal, ModelManager, LoggingTemplate
 import random
 import os
 import torch
+
+training_epochs_for_models = 1
+model_batch_size = 128
+
 
 def main():
     # 👿 Evil Models Section 👿
     print("🔥🔥 MUHAHAH EVIL MODELS 🔥🔥")
     print("👹 Summoning the dark forces... 👹")
     get_random_indis()
-    superMain(given_folder="SavedModels/EvilModels", model_marker="Evil")
+    superMain(given_folder="EvilEnsomniacModels/EvilModels", model_marker="Evil")
     
     print("\n")
     
@@ -19,12 +23,12 @@ def main():
     print("✨✨ GOOD MODELS ✨✨")
     print("🕊️ Calling upon the righteous... 🕊️")
     get_good_indis()
-    superMain(given_folder="SavedModels/GoodModels", model_marker="Good")
+    superMain(given_folder="EvilEnsomniacModels/GoodModels", model_marker="Good")
 
 def save_model(tmm, signal_type, classification_class, prefix):
-    os.makedirs(f"SavedModels/{prefix}Models", exist_ok=True)
+    os.makedirs(f"EvilEnsomniacModels/{prefix}Models", exist_ok=True)
     
-    model_path = f"SavedModels/{prefix}Models/{classification_class}_{signal_type}_model.pt"
+    model_path = f"EvilEnsomniacModels/{prefix}Models/{classification_class}_{signal_type}_model.pt"
     torch.save({
         'state_dict': tmm.model_performance[LoggingTemplate.state_dict],
         'model_args': tmm.model_args
@@ -32,7 +36,7 @@ def save_model(tmm, signal_type, classification_class, prefix):
 
 def model_exists(classification_class, signal_type, prefix):
 
-    data_dir = f"SavedModels/{prefix}Models"
+    data_dir = f"EvilEnsomniacModels/{prefix}Models"
     if os.path.exists(data_dir):
         all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.pt')])
         for file_name in all_files:
@@ -49,7 +53,7 @@ def get_random_indis():
                 continue
                 
             print("\nTRAINING", st, "IN", sig)
-            sdl = SDataLoader(sig, st)
+            sdl = SDataLoader(sig, st, batch_size=model_batch_size)
             indi = []
             for _ in range(random.randint(*ModelManager.NUMBER_OF_BRANCHES_RANGE)):
                 indi.append([random.randint(1, 750) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
@@ -60,6 +64,8 @@ def get_random_indis():
                 pos_weight=sdl.pos_weight,
                 train_loader=sdl.train_loader,
                 test_loader=sdl.test_loader,
+                epochs=training_epochs_for_models,
+                batch_size=model_batch_size
             )
             save_model(m, sig, st, "Evil")
 
@@ -71,7 +77,7 @@ def get_good_indis():
                 continue
                 
             print("TRAINING", st, "IN", sig)
-            sdl = SDataLoader(sig, st)
+            sdl = SDataLoader(sig, st, batch_size=model_batch_size)
             if sig == Signal.EMG.SUBMENTAL:
                 branch = [[20, 8, 8]]
             else:
@@ -82,6 +88,8 @@ def get_good_indis():
                 pos_weight=sdl.pos_weight,
                 train_loader=sdl.train_loader,
                 test_loader=sdl.test_loader,
+                epochs=training_epochs_for_models,
+                batch_size=model_batch_size
             )
             save_model(m, sig, st, "Good")
 

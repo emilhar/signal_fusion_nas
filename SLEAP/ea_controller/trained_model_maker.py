@@ -16,6 +16,8 @@ class TrainedModelMaker:
             train_loader: DataLoader, 
             test_loader: DataLoader,
             batch_size,
+
+            epochs = ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL
         ):
 
         assert device.type == "cuda", f"WHAT: {device.type}"
@@ -34,7 +36,7 @@ class TrainedModelMaker:
             pos_weight, 
             verbose=EvolutionManager.VERY_VERBOSE, 
             lr=ModelManager.LEARNING_RATE, 
-            epochs=ModelManager.TRAINING_EPOCHS_PER_INDIVIDUAL
+            epochs=epochs
         )
 
     def get_branch_configs(self, branches:list[list[int]], sample_count:int):

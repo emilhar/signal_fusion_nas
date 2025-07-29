@@ -2,8 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import os
 from Globals import Signal, DataManager, device
-from EAController.LazyDataset import LazyDataset
-
+from data.lazy_dataset import LazyDataset
 TRAIN_SPLIT = 0.8
 MAX_MEMORY = 1024
 
@@ -67,8 +66,8 @@ def make_training_and_testing_data():
         subject_ids = sorted(set(f[:5] for f in all_files))
 
         split_idx = int(len(subject_ids) * TRAIN_SPLIT)
-        train_subjects = subject_ids[:split_idx][0]
-        test_subjects = subject_ids[split_idx:][0]
+        train_subjects = subject_ids[:split_idx]
+        test_subjects = subject_ids[split_idx:]
 
         train_files = [f for f in all_files if f[:5] in train_subjects]
         test_files = [f for f in all_files if f[:5] in test_subjects]

@@ -9,6 +9,7 @@ from Logs.LogManager import LogManager
 
 import os
 import torch
+import warnings
 import numpy as np
 
 LoggingSettings.LOGGER_ID = "O"
@@ -19,7 +20,7 @@ class EnsembleController:
 
     def create_ensemble(): ...
 
-def superMain(given_folder=None):
+def superMain(given_folder=None, model_marker=False):
     print("📦 Loading Data...")
     train_loader, test_loader = get_dataloaders_with_multimodal_datasets()
 
@@ -51,7 +52,6 @@ def load_each_model(given_folder):
         return models_dict
 
 def load_model(model_path):
-    import warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
         checkpoint = torch.load(model_path, map_location=device)

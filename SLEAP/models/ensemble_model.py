@@ -74,6 +74,7 @@ class EnsembleModel(nn.Module):
 
     @staticmethod
     def train_model(model, train_loader, test_loader, epochs=5, lr=1e-4, wd=1e-4, class_names=None):
+
         print(f"Running for {epochs} epochs...")
         model = model.to(device)
         criterion = nn.CrossEntropyLoss()
@@ -94,8 +95,6 @@ class EnsembleModel(nn.Module):
             for batch in train_loader:
                 x_dict, labels = batch
                 x_dict = {key: val.to(device) for key, val in x_dict.items()}
-                print(labels)
-                quit()
                 labels = labels.to(device)
 
                 optimizer.zero_grad()

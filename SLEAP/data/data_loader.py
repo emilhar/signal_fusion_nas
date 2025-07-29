@@ -92,11 +92,11 @@ class SDataLoader:
         train_subset = Subset(train_dataset, sample(range(len(train_dataset)), train_size))
         test_subset = Subset(test_dataset, sample(range(len(test_dataset)), test_size))
 
-        if EvolutionManager.VERY_VERBOSE:
-            print("\nTraining Dataset")
-            self.see_dataset_breakdown(train_dataset)
-            print("\nTesting Dataset")
-            self.see_dataset_breakdown(test_dataset)
+        # if EvolutionManager.VERY_VERBOSE:
+        #     print("\nTraining Dataset")
+        #     self.see_dataset_breakdown(train_dataset)
+        #     print("\nTesting Dataset")
+        #     self.see_dataset_breakdown(test_dataset)
         
         return (
             DataLoader(train_subset, batch_size=self.batch_size, shuffle=True),
