@@ -61,7 +61,7 @@ def make_training_and_testing_data():
     for signal in Signal.ALL_SIGNALS:
         
         # Find and split data
-        data_directory = f"Data/{DataManager.DATASET}/{signal}"
+        data_directory = f"data/{DataManager.DATASET}/{signal}"
         all_files = sorted([f for f in os.listdir(data_directory) if f.endswith('.npz')])
         subject_ids = sorted(set(f[:5] for f in all_files))
 

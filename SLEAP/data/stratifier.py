@@ -3,8 +3,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 def main():
-    SC = pd.read_excel("./Data/SC-subjects.xls")
-    ST = pd.read_excel("./Data/ST-subjects.xls")
+    SC = pd.read_excel("./data/SC-subjects.xls")
+    ST = pd.read_excel("./data/ST-subjects.xls")
     combined = pd.concat([ST, SC], ignore_index=True)
     print(len(combined.drop_duplicates("subject")))
     

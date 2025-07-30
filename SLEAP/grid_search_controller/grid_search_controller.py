@@ -48,7 +48,7 @@ class GridSearch:
         try:
             print("Loading grid from data...")
             print()
-            self.grid = np.load(f"./Data/grids/{self.runtype}/{self.signal}/{self.sleep_stage}.npy", allow_pickle=True)
+            self.grid = np.load(f"./data/grids/{self.runtype}/{self.signal}/{self.sleep_stage}.npy", allow_pickle=True)
             print("Loaded grid.")
         except FileNotFoundError as e:
             print(e)
@@ -56,7 +56,7 @@ class GridSearch:
             self.grid = None
 
     def save_grid(self):
-        path = f"./Data/grids/{self.runtype}/{self.signal}/{self.sleep_stage}"
+        path = f"./data/grids/{self.runtype}/{self.signal}/{self.sleep_stage}"
         print(f"Saving grid to {path}")
         np.save(path, self.grid)
         print("Grid has been saved.")
