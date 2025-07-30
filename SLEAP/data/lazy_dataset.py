@@ -18,6 +18,9 @@ class LazyDataset(Dataset):
         self.cache = {}
         self.usage_order = []
         self.current_memory = 0  # bytes
+
+        self.i = 0
+        self.fit = False
         
         self._index_files()
 
@@ -45,6 +48,14 @@ class LazyDataset(Dataset):
         file_idx = bisect_right(self.cumulative_lengths, idx) - 1
         file = self.index_map[file_idx]
         local_idx = idx - self.cumulative_lengths[file_idx]
+        if self.fit:
+            data_dict = self.cache[file]
+            x: torch.Tensor = data_dict['x'][local_idx].astype(np.float32)
+            x = x.transpose()
+            y = data_dict['y'][local_idx]
+            y = self.stage_map.get(y, 0) if self.stage_map else y
+            
+            return torch.tensor(x), torch.tensor(y)
         
         # Update cache if needed
         if file not in self.cache:
@@ -57,6 +68,9 @@ class LazyDataset(Dataset):
             self.cache[file] = {'x': x, 'y': y}
             self.current_memory += x.nbytes + y.nbytes
             self._evict_to_fit()
+            if len(self.cache) == len(self.files):
+                self.fit = True
+
         
         # Update usage order (move to end)
         if file in self.usage_order:

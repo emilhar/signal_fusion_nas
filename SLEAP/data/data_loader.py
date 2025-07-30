@@ -4,7 +4,7 @@ import os
 from random import sample, shuffle
 
 from data.lazy_dataset import LazyDataset
-from Globals import Classes, ModelManager, EvolutionManager, DataManager
+from Globals import Classes, EvolutionManager, DataManager
 
 
 class SDataLoader:
@@ -49,8 +49,8 @@ class SDataLoader:
 
         stage_map = self._get_stage_map()
 
-        train_dataset = LazyDataset(train_files, data_dir, stage_map)
-        test_dataset = LazyDataset(test_files, data_dir, stage_map)
+        train_dataset = LazyDataset(train_files, data_dir, stage_map, max_memory=2048*2)
+        test_dataset = LazyDataset(test_files, data_dir, stage_map, max_memory=2048*2)
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)

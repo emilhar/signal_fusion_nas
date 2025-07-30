@@ -74,7 +74,7 @@ def ensomnia(models_dict, train_loader, test_loader):
         model=model,
         train_loader=train_loader,
         test_loader=test_loader,
-        epochs=1,
+        epochs=5,
         lr=5e-5,
         wd=1e-4,
     )
