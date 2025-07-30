@@ -1,3 +1,5 @@
+import datetime
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -74,11 +76,14 @@ class EnsembleModel(nn.Module):
 
     @staticmethod
     def train_model(model, train_loader, test_loader, epochs=5, lr=1e-4, wd=1e-4, class_names=None):
+        training_time_start = datetime.datetime.now()
 
         print(f"Running for {epochs} epochs...")
         model = model.to(device)
+        if device.type == "cpu":
+            raise ValueError("Training with CPU")
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
+        optimizer = optim.AdamW(model.parameters())
 
         best_test_f1 = 0.0
         best_model_state = model.state_dict()
@@ -148,6 +153,9 @@ class EnsembleModel(nn.Module):
                 best_test_f1 = test_f1
                 best_model_state = model.state_dict()
 
+
+            elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
+
             print(f"Epoch {epoch+1}/{epochs}")
             print(f"  Train: Loss={train_loss:.4f}, Acc={train_acc:.4f}, "
                 f"Precision={train_precision:.4f}, Recall={train_recall:.4f}, F1={train_f1:.4f}")
@@ -162,5 +170,7 @@ class EnsembleModel(nn.Module):
                 digits=4,
                 zero_division=0
                 ))
+            
+            print(f"\nCumulative run time: {elapsed:.4f} seconds")
 
         return best_model_state

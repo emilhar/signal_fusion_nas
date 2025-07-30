@@ -1,9 +1,7 @@
 import random
 import time
-import math
 
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 import matplotlib as mpl
@@ -16,16 +14,6 @@ from models.cnn_binary_classifier import CNN_BinaryClassifier
 
 
 class GridSearch:
-    class RunType:
-        k1000_approx = "k0-1000_approx_train"
-        k1000_full = "k0-1000_full_train"
-        no_k0 = "no_k0"
-        no_k0_full = "no_k0_full_train"
-        no_k0_1_filter = "no_k0_1_filter"
-        no_k0_1_filter_full = "no_k0_1_filter_full"
-        any = "any"
-
-
     def __init__(self, signal: Signal, sleep_stage: Classes, dataset: DataManager.DatasetNames, runtype: RunType, dataset_percentage, epochs, n_samples=3000):
         DataManager.MAX_MEMORY = 2048
         DataManager.DATASET = dataset

@@ -1,23 +1,25 @@
-from ensemble_controller.ensemble_controller import superMain
+from ensemble_controller.ensemble_controller import EnsembleController
 from ea_controller.trained_model_maker import TrainedModelMaker
 from data.data_loader import SDataLoader
-from Globals import Classes, Signal, ModelManager, LoggingTemplate, EvolutionManager
+from Globals import Classes, Signal, LoggingTemplate, EvolutionManager, DataManager
 import random
 import os
 import torch
 
-training_epochs_for_models = 1
-model_batch_size = 32
+training_epochs_for_models = 20
+model_batch_size = 128
 lr = 5e-5
 
 EvolutionManager.VERY_VERBOSE = True
 EvolutionManager.VERBOSE = True
+DataManager.DATASET = DataManager.DatasetNames.EDF_78
 def main():
+    fog = EnsembleController()
+
     # 👿 Evil Models Section 👿
     print("🔥🔥 MUHAHAH EVIL MODELS 🔥🔥")
     print("👹 Summoning the dark forces... 👹")
     get_random_indis()
-    superMain(given_folder="EvilEnsomniacModels/EvilModels", model_marker="Evil")
     
     print("\n")
     
@@ -25,7 +27,8 @@ def main():
     print("✨✨ GOOD MODELS ✨✨")
     print("🕊️ Calling upon the righteous... 🕊️")
     get_good_indis()
-    superMain(given_folder="EvilEnsomniacModels/GoodModels", model_marker="Good")
+    fog.create_ensemble(given_folder="EvilEnsomniacModels/EvilModels", model_marker="Evil")
+    fog.create_ensemble(given_folder="EvilEnsomniacModels/GoodModels", model_marker="Good")
 
 def save_model(tmm, signal_type, classification_class, prefix):
     os.makedirs(f"EvilEnsomniacModels/{prefix}Models", exist_ok=True)
@@ -57,8 +60,11 @@ def get_random_indis():
             print("\nTRAINING", st, "IN", sig)
             sdl = SDataLoader(sig, st, batch_size=model_batch_size)
             indi = []
-            for _ in range(random.randint(*ModelManager.NUMBER_OF_BRANCHES_RANGE)):
-                indi.append([random.randint(1, 750) for _ in range(random.randint(*ModelManager.NUMBER_OF_KERNELS_RANGE))])
+            for _ in range(random.randint(1, 3)):
+                indi.append([random.randint(2, 750) for _ in range(random.randint(2, 3))])
+            for x in indi:
+                x = [x//(i*4) for i, x in enumerate(x, start=1)]
+                x = [max(1, y) for y in x]
             print("Branches: ", indi)
             m = TrainedModelMaker(
                 branches=indi,

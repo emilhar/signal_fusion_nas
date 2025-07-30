@@ -142,7 +142,7 @@ class CNN_BinaryClassifier(nn.Module):
             raise ("WARNING: Using CPU as device. This may take a while...")
 
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(device))
-        optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
+        optimizer = optim.AdamW(model.parameters())
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=p, factor=f)
         best_f1, best_auc = 0.0, 0.0
 

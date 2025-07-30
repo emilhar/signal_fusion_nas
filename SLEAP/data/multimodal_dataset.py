@@ -1,12 +1,13 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import os
-from Globals import Signal, DataManager, device
+from Globals import Signal, DataManager
 from data.lazy_dataset import LazyDataset
 TRAIN_SPLIT = 0.8
-MAX_MEMORY = 1024
+MAX_MEMORY = 2048*4
 
 class MultimodalLazyDataset(Dataset):
+    MAX_MEMORY = 8192
     def __init__(self):
         self.data_dict = {}
 
@@ -25,7 +26,7 @@ class MultimodalLazyDataset(Dataset):
             files, 
             data_directory, 
             stage_map=None, 
-            max_memory = MAX_MEMORY // len(Signal.ALL_SIGNALS)
+            max_memory = self.MAX_MEMORY // len(Signal.ALL_SIGNALS),
         )
 
     def __getitem__(self, idx):
@@ -66,8 +67,8 @@ def make_training_and_testing_data():
         subject_ids = sorted(set(f[:5] for f in all_files))
 
         split_idx = int(len(subject_ids) * TRAIN_SPLIT)
-        train_subjects = subject_ids[:split_idx][0]
-        test_subjects = subject_ids[split_idx:][0]
+        train_subjects = subject_ids[:split_idx]
+        test_subjects = subject_ids[split_idx:]
 
         train_files = [f for f in all_files if f[:5] in train_subjects]
         test_files = [f for f in all_files if f[:5] in test_subjects]
@@ -82,16 +83,16 @@ def create_dataloaders(train_dataset, test_dataset):
     # Create data loaders
     train_loader = DataLoader(
         train_dataset,
-        batch_size=32,
+        batch_size=128,
         shuffle=True,
-        pin_memory=True if torch.cuda.is_available() else False
+        pin_memory=True if torch.cuda.is_available() else False,
     )
 
     test_loader = DataLoader(
         test_dataset,
-        batch_size=32,
+        batch_size=128,
         shuffle=False,
-        pin_memory=True if torch.cuda.is_available() else False
+        pin_memory=True if torch.cuda.is_available() else False,
     )
 
     return train_loader, test_loader

@@ -29,16 +29,6 @@ class Signal:
     ALL_SIGNALS = [EEG.Fpz_Cz, EEG.Pz_Oz, EOG.HORIZONTAL, EMG.SUBMENTAL]
     current_signal = None
 
-class ModelManager:
-    # Base
-    NUMBER_OF_BRANCHES_RANGE = (1, 3)
-    NUMBER_OF_KERNELS_RANGE = (2, 4)
-    TRAINING_EPOCHS_PER_INDIVIDUAL = 1
-    LEARNING_RATE = 5e-4
-
-    # Kernel size constraints
-    MIN_KERNEL_SIZE = 1
-    MAX_KERNEL_SIZE = None
 
 class EvolutionManager:
 
@@ -73,7 +63,7 @@ class DataManager:
     _datasets = [DatasetNames.EDF_20, DatasetNames.EDF_78]
 
     DATASET = _datasets[0]
-    MAX_MEMORY = 512
+    MAX_MEMORY = 2048*2
 
     # SleepDataLoader
     dataset_percentage = 0.3
