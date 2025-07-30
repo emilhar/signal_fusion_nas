@@ -83,7 +83,7 @@ class EnsembleModel(nn.Module):
         if device.type == "cpu":
             raise ValueError("Training with CPU")
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
+        optimizer = optim.AdamW(model.parameters())
 
         best_test_f1 = 0.0
         best_model_state = model.state_dict()

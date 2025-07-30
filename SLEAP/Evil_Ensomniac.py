@@ -1,4 +1,4 @@
-from ensemble_controller.ensemble_controller import superMain
+from ensemble_controller.ensemble_controller import EnsembleController
 from ea_controller.trained_model_maker import TrainedModelMaker
 from data.data_loader import SDataLoader
 from Globals import Classes, Signal, LoggingTemplate, EvolutionManager, DataManager
@@ -14,6 +14,8 @@ EvolutionManager.VERY_VERBOSE = True
 EvolutionManager.VERBOSE = True
 DataManager.DATASET = DataManager.DatasetNames.EDF_78
 def main():
+    fog = EnsembleController()
+
     # 👿 Evil Models Section 👿
     print("🔥🔥 MUHAHAH EVIL MODELS 🔥🔥")
     print("👹 Summoning the dark forces... 👹")
@@ -25,8 +27,8 @@ def main():
     print("✨✨ GOOD MODELS ✨✨")
     print("🕊️ Calling upon the righteous... 🕊️")
     get_good_indis()
-    superMain(given_folder="EvilEnsomniacModels/EvilModels", model_marker="Evil")
-    superMain(given_folder="EvilEnsomniacModels/GoodModels", model_marker="Good")
+    fog.create_ensemble(given_folder="EvilEnsomniacModels/EvilModels", model_marker="Evil")
+    fog.create_ensemble(given_folder="EvilEnsomniacModels/GoodModels", model_marker="Good")
 
 def save_model(tmm, signal_type, classification_class, prefix):
     os.makedirs(f"EvilEnsomniacModels/{prefix}Models", exist_ok=True)
