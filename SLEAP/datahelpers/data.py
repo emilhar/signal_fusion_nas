@@ -29,12 +29,11 @@ class Data:
 
         # Helpful function to work through the data folder with
         def __datafilter(filename:str):
-            if filename.endswith(".txt"):
-                return False
             if filename in ["label_map.txt", "__pychache__"]:
                 return False
             return True
 
+        # List of everything inside the data folder, except for the label map and pycache
         dataset = [filename for filename in os.listdir("data") if __datafilter(filename)]
         if not dataset:
             raise FileNotFoundError("Could not find dataset, please see README")
