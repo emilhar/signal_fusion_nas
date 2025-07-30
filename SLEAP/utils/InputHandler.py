@@ -9,13 +9,13 @@ def get_user_configuration(args):
     
     print(polyarithmos)
     if skip_sleep_stage:
-        Classes.current_class = args.sleep_stage
+        Targets.current_class = args.sleep_stage
 
 
     elif not polyarithmos:
         print("\n📊 Available Sleep Stages:")
 
-        sleep_options = [(stage, str(stage)) for stage in Classes.All_CLASSES]
+        sleep_options = [(stage, str(stage)) for stage in Targets.All_CLASSES]
         for i, (_, name) in enumerate(sleep_options):
             print(f"  {i}. {name}")
         
@@ -23,7 +23,7 @@ def get_user_configuration(args):
             try:
                 choice = int(input(f"\nSelect sleep stage (0-{len(sleep_options)-1}): "))
                 if 0 <= choice <= len(sleep_options)-1:
-                    Classes.current_class = sleep_options[choice][0]
+                    Targets.current_class = sleep_options[choice][0]
                     break
                 print(f"❌ Please enter a number between 0 - {len(sleep_options)-1}")
             except ValueError:
@@ -86,7 +86,7 @@ def _print_experiment_settings(user_check = True):
     print("=" * 40)
 
     # Basic experiment info
-    print(f"{'Sleep stage:':30} {Classes.current_class}")
+    print(f"{'Sleep stage:':30} {Targets.current_class}")
     print(f"{'Signal type:':30} {Signal.current_signal}")
     print(f"{'Verbose:':30} {EvolutionManager.VERBOSE}")
     print(f"{'Very Verbose:':30} {EvolutionManager.VERY_VERBOSE}")

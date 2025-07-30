@@ -8,13 +8,13 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.proj3d as proj3d
 
-from Globals import Signal, Classes, DataManager
+from Globals import Signal, Targets, DataManager
 from data.data_loader import SDataLoader
 from models.cnn_binary_classifier import CNN_BinaryClassifier
 
 
 class GridSearch:
-    def __init__(self, signal: Signal, sleep_stage: Classes, dataset: DataManager.DatasetNames, runtype: RunType, dataset_percentage, epochs, n_samples=3000):
+    def __init__(self, signal: Signal, sleep_stage: Targets, dataset: DataManager.DatasetNames, runtype: RunType, dataset_percentage, epochs, n_samples=3000):
         DataManager.MAX_MEMORY = 2048
         DataManager.DATASET = dataset
         DataManager.dataset_percentage = dataset_percentage
@@ -89,7 +89,7 @@ class GridSearch:
 
 
 class QKernel_GridSearch(GridSearch):
-    def __init__(self, signal: Signal, sleep_stage: Classes, dataset: DataManager.DatasetNames, runtype: GridSearch.RunType, dataset_percentage, epochs, n_samples=3000):
+    def __init__(self, signal: Signal, sleep_stage: Targets, dataset: DataManager.DatasetNames, runtype: GridSearch.RunType, dataset_percentage, epochs, n_samples=3000):
         super().__init__(signal, sleep_stage, dataset, runtype, dataset_percentage, epochs, n_samples)
         self.primordial_kernel = 1000 if signal != Signal.EMG.SUBMENTAL else 15
         self.kernels = self.__get_kernels()

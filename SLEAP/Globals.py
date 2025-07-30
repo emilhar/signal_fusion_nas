@@ -3,7 +3,7 @@ import sympy
 import torch
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-class Classes:
+class Targets:
     WAKE = "wake"
     N3 = "N3"
     N2 = "N2"
@@ -28,7 +28,6 @@ class Signal:
     SIGNAL_COUNT = 3000
     ALL_SIGNALS = [EEG.Fpz_Cz, EEG.Pz_Oz, EOG.HORIZONTAL, EMG.SUBMENTAL]
     current_signal = None
-
 
 class EvolutionManager:
 

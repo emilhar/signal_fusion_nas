@@ -3,8 +3,8 @@ import torch
 import os
 from random import sample, shuffle
 
-from data.lazy_dataset import LazyDataset
-from Globals import Classes, EvolutionManager, DataManager
+from datahelpers.lazy_dataset import LazyDataset
+from Globals import Targets, EvolutionManager, DataManager
 
 
 class SDataLoader:
@@ -24,11 +24,11 @@ class SDataLoader:
 
     def _get_stage_map(self):
         STAGE_MAP = {
-            0: 1 if self.classification_class == Classes.WAKE else 0,
-            1: 1 if self.classification_class == Classes.N1 else 0,
-            2: 1 if self.classification_class == Classes.N2 else 0,
-            3: 1 if self.classification_class == Classes.N3 else 0,
-            4: 1 if self.classification_class == Classes.REM else 0
+            0: 1 if self.classification_class == Targets.WAKE else 0,
+            1: 1 if self.classification_class == Targets.N1 else 0,
+            2: 1 if self.classification_class == Targets.N2 else 0,
+            3: 1 if self.classification_class == Targets.N3 else 0,
+            4: 1 if self.classification_class == Targets.REM else 0
         }
 
         return STAGE_MAP

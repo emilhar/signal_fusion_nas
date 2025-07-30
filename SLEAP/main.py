@@ -26,7 +26,7 @@ class Main:
         if t == "grid":
             raise NotImplementedError(":)")
         if t == "ea":
-            self.ea_controller.__single_ea(Signal.EEG.Fpz_Cz, Classes.WAKE)
+            self.ea_controller.__single_ea(Signal.EEG.Fpz_Cz, Targets.WAKE)
         if t == "ensemble":
             self.ensemble_controller.create_ensemble()
 

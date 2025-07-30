@@ -1,7 +1,7 @@
 from ensemble_controller.ensemble_controller import EnsembleController
 from ea_controller.trained_model_maker import TrainedModelMaker
 from data.data_loader import SDataLoader
-from Globals import Classes, Signal, LoggingTemplate, EvolutionManager, DataManager
+from Globals import Targets, Signal, LoggingTemplate, EvolutionManager, DataManager
 import random
 import os
 import torch
@@ -52,7 +52,7 @@ def model_exists(classification_class, signal_type, prefix):
 
 def get_random_indis():
     for sig in Signal.ALL_SIGNALS:
-        for st in Classes.All_CLASSES:
+        for st in Targets.All_CLASSES:
             if model_exists(st, sig, "Evil"):
                 print(f"Model for {st} in {sig} already exists in EvilModels. Skipping...")
                 continue
@@ -80,7 +80,7 @@ def get_random_indis():
 
 def get_good_indis():
     for sig in Signal.ALL_SIGNALS:
-        for st in Classes.All_CLASSES:
+        for st in Targets.All_CLASSES:
             if model_exists(st, sig, "Good"):
                 print(f"Model for {st} in {sig} already exists in GoodModels. Skipping...")
                 continue
