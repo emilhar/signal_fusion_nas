@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
 from Globals import device, Signal, Classes, LoggingSettings
-from log_managerlog_manager import LogManager
+from log_manager.log_manager import LogManager
 from datetime import datetime
 
 def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=None, pred_label=None):

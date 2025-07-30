@@ -1,7 +1,3 @@
-"""
-These names are used by many classes, good idea to keep them global
-"""
-
 import inspect
 import sympy
 import torch
