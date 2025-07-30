@@ -69,7 +69,7 @@ def get_user_configuration(args):
                         print("❌ Please enter valid ID\n")
 
             if not args.log_all:
-                LoggingSettings.LOG_ALL_INDIVIDUALS = input("Log all individuals (y/*)?: ").lower().startswith('y')
+                LoggingSettings.LOG_ALL_INDIVIDUALS = input("log all individuals (y/*)?: ").lower().startswith('y')
             if not args.exp_name:
                 LoggingSettings.experiment_name = input("Name for Experiment: ").strip()
 

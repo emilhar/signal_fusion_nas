@@ -7,13 +7,13 @@ from data.data_loader import SDataLoader
 from ea_controller.ea_algorithm import EA_Algorithm
 
 from ea_controller.trained_model_maker import TrainedModelMaker
-from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions, DataManager
+from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
 
-from Logs.LogManager import LogManager
+from logs.log_manager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2
-    MAX_KERNEL_SIZE = None
+    MAX_KERNEL_SIZE = 5
 
     MIN_BRANCHES = 1
     MAX_BRANCHES = 3
@@ -49,9 +49,9 @@ class KernelSizeEvolutionaryOptimizer:
         )
 
         if LoggingSettings.LOGGING:
-            self.LogManager = LogManager()
+            self.log_manager = LogManager()
         else:
-            self.LogManager = None
+            self.log_manager = None
 
         #self.KRNL = KRNL_GridSearch(self.signal_type, self.classification_class)
 
@@ -327,7 +327,7 @@ class KernelSizeEvolutionaryOptimizer:
             population=population,
             toolbox=self.toolbox,
             halloffame= self.hall_of_fame,
-            LogManager= self.LogManager,
+            log_manager= self.log_manager,
         )
         
         algorithm.eaMuPlusLambda(
@@ -343,23 +343,29 @@ class KernelSizeEvolutionaryOptimizer:
             individual = self.hall_of_fame[i]
             return f"{i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}"
 
-        self.LogManager.log_experiment(
+        self.log_manager.log_experiment(
             classification_class= self.classification_class,
             signal_type= self.signal_type,
             max_kernel_size= self.max_kernel_size,
             best= get_hall_of_fame_format(0),
-            second_best= get_hall_of_fame_format(1),
-            third_best= get_hall_of_fame_format(2),
+            second_best= get_hall_of_fame_format(0),
+            third_best= get_hall_of_fame_format(0),
         )
 
         if part_of_bigger_run:
+            
+            save_dir = os.path.join(f"ea_controller/saved_models/")
+            os.makedirs(save_dir, exist_ok=True)
+
             best_individual = self.hall_of_fame[0]
             torch.save(
-            {
-                "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
-                "model_args": best_individual.model_args,
-            },
-            os.path.join("ea_controller/saved_model", f"{DataManager.DATASET}_{self.classification_class}_{self.signal_type}_classifier.pt"))
+                {
+                    "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
+                    "model_args": best_individual.model_args,
+                },
+                os.path.join(save_dir, f"{self.signal_type}_{self.classification_class}_classifier.pt")
+            )
+
 
     def print_results(self):
         """Print evolution results in a dynamically sized table"""

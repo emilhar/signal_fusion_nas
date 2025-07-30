@@ -9,7 +9,7 @@ class LogManager:
     def __init__(self):
         self.lt = LoggingTemplate
         self.start_time = datetime.now()
-        self.Experiment_ID = self._get_id_by("Experiment")
+        self.experiment_id = self._get_id_by("Experiment")
     
     def _get_id_by(self, filetype="Experiment"):
         """Get the next experiment ID based on the CSV log.
@@ -50,11 +50,11 @@ class LogManager:
     def _get_filepath(self, filetype):
 
         if filetype == "Experiment":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/ExperimentStatsLog.csv"
+            inner_path = "_misc/data_from_logs/ExperimentStatsLog.csv"
         elif filetype == "Generation":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/GenerationStatsLog.csv"
+            inner_path = f"_misc/data_from_logs/GenerationStatsLog.csv"
         elif filetype == "Individual":
-            inner_path = f"Logs/{LoggingSettings.LOGGER_ID}Logs/IndividualLog.csv"
+            inner_path = f"_misc/data_from_logs/IndividualLog.csv"
         else:
             raise ValueError(f"Unknown filetype: {filetype}")
         
@@ -76,11 +76,11 @@ class LogManager:
         raise FileNotFoundError(f"Could not find file: {not_found}")
 
     def log_experiment(self, classification_class, signal_type, max_kernel_size, best, second_best, third_best):
-        """Log the experiment configuration using template names"""
+        """log the experiment configuration using template names"""
         lt = LoggingTemplate
         
         config = {
-            lt.experiment_id: self.Experiment_ID,
+            lt.experiment_id: self.experiment_id,
             "name": LoggingSettings.experiment_name,
             "start_time": self.start_time,
             "end_time": datetime.now(),
@@ -146,7 +146,7 @@ class LogManager:
                 self._write_with_config(filetype="Individual", config=indi_config)
 
         generation_configs = {
-            self.lt.experiment_id: self.Experiment_ID,
+            self.lt.experiment_id: self.experiment_id,
             self.lt.generation: LoggingSettings.current_generation_id,
             "number_of_trained_individuals": number_of_trained_individual,
             "fitness_mean": round(fit_mean, self.lt.rounding_number),
@@ -167,7 +167,7 @@ class LogManager:
         """Fill in the individual template with provided values"""
         
         individual_template = {
-            self.lt.experiment_id: self.Experiment_ID,
+            self.lt.experiment_id: self.experiment_id,
             self.lt.generation: generation,
             self.lt.indi_id: ind_id,
             "model_performance": {

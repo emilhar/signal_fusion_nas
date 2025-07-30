@@ -37,7 +37,7 @@ class Signal:
 class EvolutionManager:
 
     # Overview Manager
-    POPULATION_SIZE: int = 20
+    POPULATION_SIZE: int = 1
     GENERATIONS: int = 2
     SELECTION_TOURNAMENT_SIZE = max(3, int(POPULATION_SIZE * 0.2))
     ELITISM = 1
@@ -55,8 +55,8 @@ class EvolutionManager:
     MUTATION_PROB: float = 0.5
 
     # Misc
-    VERBOSE = False
-    VERY_VERBOSE = False # Shows Individual Training sessions
+    VERBOSE = True
+    VERY_VERBOSE = True # Shows Individual Training sessions
 
 class DataManager:
     class DatasetNames:
