@@ -11,8 +11,9 @@ class EA_Controller:
         self.batch_size = 32 # TODO: base off of how much data is present?
 
     def run_ea(self):
+        
         for signal in Signal.ALL_SIGNALS:
-            signal = ___Signal___(30 if signal==Signal.EMG.SUBMENTAL else 3000)
+            # signal = ___Signal___(30 if signal==Signal.EMG.SUBMENTAL else 3000)
             for cls in Classes.All_CLASSES:
                 self.__single_ea(signal, cls, part_of_bigger_ea=True)
 
@@ -21,7 +22,7 @@ class EA_Controller:
             signal_type=signal, 
             classification_class=cls, 
             batch_size=self.batch_size,
-            n_samples=signal.n_samples,
+            n_samples=30 if signal == Signal.EMG.SUBMENTAL else 3000,
         )
         optimizer.run_evolution(part_of_bigger_ea)
 

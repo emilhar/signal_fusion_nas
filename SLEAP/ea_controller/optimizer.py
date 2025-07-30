@@ -13,7 +13,7 @@ from logs.log_manager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2
-    MAX_KERNEL_SIZE = None
+    MAX_KERNEL_SIZE = 5
 
     MIN_BRANCHES = 1
     MAX_BRANCHES = 3
@@ -348,18 +348,24 @@ class KernelSizeEvolutionaryOptimizer:
             signal_type= self.signal_type,
             max_kernel_size= self.max_kernel_size,
             best= get_hall_of_fame_format(0),
-            second_best= get_hall_of_fame_format(1),
-            third_best= get_hall_of_fame_format(2),
+            second_best= get_hall_of_fame_format(0),
+            third_best= get_hall_of_fame_format(0),
         )
 
         if part_of_bigger_run:
+            
+            save_dir = os.path.join(f"ea_controller/saved_models/")
+            os.makedirs(save_dir, exist_ok=True)
+
             best_individual = self.hall_of_fame[0]
             torch.save(
-            {
-                "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
-                "model_args": best_individual.model_args,
-            },
-            os.path.join(f"ea_controller/saved_models/Experiment_{self.log_manager.experiment_id}", f"{self.classification_class}_{self.signal_type}_classifier.pt"))
+                {
+                    "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
+                    "model_args": best_individual.model_args,
+                },
+                os.path.join(save_dir, f"{self.signal_type}_{self.classification_class}_classifier.pt")
+            )
+
 
     def print_results(self):
         """Print evolution results in a dynamically sized table"""
