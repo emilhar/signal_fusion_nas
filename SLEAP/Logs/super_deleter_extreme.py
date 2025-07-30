@@ -41,9 +41,9 @@ def main():
     
     # Define the files to process
     files = [
-        f"Logs/{user_id}Logs/ExperimentStatsLog.csv",
-        f"Logs/{user_id}Logs/GenerationStatsLog.csv",
-        f"Logs/{user_id}Logs/IndividualLog.csv"
+        f"logs/{user_id}Logs/ExperimentStatsLog.csv",
+        f"logs/{user_id}Logs/GenerationStatsLog.csv",
+        f"logs/{user_id}Logs/IndividualLog.csv"
     ]
     
     # Process each file

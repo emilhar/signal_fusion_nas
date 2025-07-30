@@ -6,13 +6,13 @@ from Globals import EvolutionManager, LoggingSettings, LoggingTemplate, Clr
 
 class EA_Algorithm:
 
-    def __init__(self, population, toolbox, halloffame, LogManager):
+    def __init__(self, population, toolbox, halloffame, log_manager):
         self.population = population
         self.toolbox = toolbox
         self.mu = EvolutionManager.POPULATION_SIZE
         self.lambda_ = EvolutionManager.POPULATION_SIZE // 2
         self.halloffame = halloffame
-        self.LogManager = LogManager 
+        self.log_manager = log_manager 
 
     def eaMuPlusLambda(self, stats=None):
         r"""
@@ -141,7 +141,7 @@ class EA_Algorithm:
 
         # Log the generation
         if LoggingSettings.LOGGING:
-            self.LogManager.log_generation_stats(self.population, len(invalid_ind), 
+            self.log_manager.log_generation_stats(self.population, len(invalid_ind), 
                                                  record['avg'], record['std'], record['med'], record['min'], record['max'],
                                                  l_mean, l_std, l_med, l_min, l_max)
     

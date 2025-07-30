@@ -9,7 +9,7 @@ from ea_controller.ea_algorithm import EA_Algorithm
 from ea_controller.trained_model_maker import TrainedModelMaker
 from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions, DataManager
 
-from Logs.LogManager import LogManager
+from Logs.log_manager import log_manager
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2
@@ -49,9 +49,9 @@ class KernelSizeEvolutionaryOptimizer:
         )
 
         if LoggingSettings.LOGGING:
-            self.LogManager = LogManager()
+            self.log_manager = log_manager()
         else:
-            self.LogManager = None
+            self.log_manager = None
 
         #self.KRNL = KRNL_GridSearch(self.signal_type, self.classification_class)
 
@@ -327,7 +327,7 @@ class KernelSizeEvolutionaryOptimizer:
             population=population,
             toolbox=self.toolbox,
             halloffame= self.hall_of_fame,
-            LogManager= self.LogManager,
+            log_manager= self.log_manager,
         )
         
         algorithm.eaMuPlusLambda(
@@ -343,7 +343,7 @@ class KernelSizeEvolutionaryOptimizer:
             individual = self.hall_of_fame[i]
             return f"{i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}"
 
-        self.LogManager.log_experiment(
+        self.log_manager.log_experiment(
             classification_class= self.classification_class,
             signal_type= self.signal_type,
             max_kernel_size= self.max_kernel_size,
@@ -359,7 +359,7 @@ class KernelSizeEvolutionaryOptimizer:
                 "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
                 "model_args": best_individual.model_args,
             },
-            os.path.join("ea_controller/saved_model", f"{DataManager.DATASET}_{self.classification_class}_{self.signal_type}_classifier.pt"))
+            os.path.join(f"ea_controller/saved_models/Experiment_{self.log_manager.experiment_id}", f"{self.classification_class}_{self.signal_type}_classifier.pt"))
 
     def print_results(self):
         """Print evolution results in a dynamically sized table"""
