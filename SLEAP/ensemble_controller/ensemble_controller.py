@@ -5,7 +5,7 @@ from ensemble_controller.ensemble_plotter import analyze_predictions
 from Globals import Classes, Signal, LoggingSettings, device
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
-from Logs.log_manager import log_manager
+from logs.log_manager import LogManager
 
 import os
 import torch
@@ -37,7 +37,7 @@ def superMain(given_folder=None, model_marker=False):
     plot(model, test_loader, model_marker)
 
 def load_each_model(given_folder):
-        id_helper = log_manager()
+        id_helper = LogManager()
 
         if given_folder:
             data_dir = given_folder

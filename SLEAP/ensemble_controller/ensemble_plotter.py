@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
 from Globals import device, Signal, Classes, LoggingSettings
-from Logs.log_manager import log_manager
+from logs.log_manager import LogManager
 from datetime import datetime
 
 def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=None, pred_label=None):
@@ -66,9 +66,8 @@ def analyze_predictions(all_true, all_preds, model_marker=None):
         plt.savefig(fig_path)
         print(f"Ensemble model plot saved at: {fig_path}")
     else:
-        id_helper = log_manager()
-        fig_path = f"_misc/"
-        fig_path =f"logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{id_helper.experiment_id-20}.png"
+        id_helper = LogManager()
+        fig_path = f"_misc/confusion_matrices/Experiment_{id_helper.experiment_id-20}.png"
         plt.savefig(fig_path)
         print(f"Ensemble model plot saved at: {fig_path}")
 

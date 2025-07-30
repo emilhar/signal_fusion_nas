@@ -7,9 +7,9 @@ from data.data_loader import SDataLoader
 from ea_controller.ea_algorithm import EA_Algorithm
 
 from ea_controller.trained_model_maker import TrainedModelMaker
-from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions, DataManager
+from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
 
-from Logs.log_manager import log_manager
+from logs.log_manager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2
@@ -49,7 +49,7 @@ class KernelSizeEvolutionaryOptimizer:
         )
 
         if LoggingSettings.LOGGING:
-            self.log_manager = log_manager()
+            self.log_manager = LogManager()
         else:
             self.log_manager = None
 

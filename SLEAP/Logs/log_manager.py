@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from Globals import EvolutionManager, LoggingSettings, FitnessFunctions, LoggingTemplate, DataManager
 
-class log_manager:
+class LogManager:
     """Comprehensive logging system for evolutionary algorithms"""
     
     def __init__(self):
