@@ -1,5 +1,5 @@
 from Globals import *
-from logs.log_manager import LogManager
+from log_managerlog_manager import LogManager
 from ea_controller.optimizer import KernelSizeEvolutionaryOptimizer
 
 class ___Signal___:

@@ -5,7 +5,7 @@ from ensemble_controller.ensemble_plotter import analyze_predictions
 from Globals import Classes, Signal, LoggingSettings, device
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
-from logs.log_manager import LogManager
+from log_managerlog_manager import LogManager
 
 import os
 import torch
