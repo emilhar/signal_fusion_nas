@@ -3,7 +3,7 @@ import torch
 import os
 from random import sample, shuffle
 
-from datahelpers.lazy_dataset import LazyDataset
+from dataloaders.lazy_dataset import LazyDataset
 from Globals import Targets, EvolutionManager, DataManager
 
 

@@ -1,6 +1,7 @@
 from Globals import *
 from utils import InputHandler
 from utils.arg_parse import parse_arguments
+from datahelpers.datahelper import make_data
 
 from grid_search_controller.grid_search_controller import QKernel_GridSearch
 from ea_controller.ea_controller import EA_Controller
@@ -8,6 +9,7 @@ from ensemble_controller.ensemble_controller import EnsembleController
 
 class Main:
     def __init__(self):
+        
         # self.grid_search = QKernel_GridSearch()
         self.ea_controller = EA_Controller()
         self.ensemble_controller = EnsembleController()

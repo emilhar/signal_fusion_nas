@@ -1,6 +1,6 @@
 import os
-from signal import Signal
-from target import Target
+from datahelpers.signal import Signal
+from datahelpers.target import Target
 
 class Data:
     __ALL_SIGNAL_NAMES = None

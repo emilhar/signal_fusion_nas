@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from data import Data
+from datahelpers.data import Data
 
 class InconsistentDataException(Exception):
     pass

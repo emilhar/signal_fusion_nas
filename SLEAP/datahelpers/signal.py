@@ -5,7 +5,7 @@ class Signal:
     def __init__(self, name: str, signal_directory:str):
         self.name = name
 
-        example_file_from_signal = os.listdir(signal_directory)[0] #TODO: Change to 0, this is 1 because of gitignore
+        example_file_from_signal = os.listdir(signal_directory)[1] #TODO: Change to 0, this is 1 because of gitignore
         full_file_path = f"{signal_directory}/{example_file_from_signal}"
         
         with np.load(full_file_path, allow_pickle=True) as data:
