@@ -17,6 +17,7 @@ LoggingSettings.LOGGER_ID = "O"
 
 class EnsembleController:
     NUM___FILTERS = 0 # Temporary for test TODO:
+
     def __init__(self, targets, signals):
         self.targets = targets
         self.signals = signals
@@ -118,7 +119,7 @@ class EnsembleController:
         ))
         print()
 
-        analyze_predictions(all_true, all_preds, model_marker, EnsembleController.NUM___FILTERS)
+        analyze_predictions(all_true, all_preds, self.targets, model_marker, EnsembleController.NUM___FILTERS)
 
 
     def save_ensemble(ensemble_model, path):

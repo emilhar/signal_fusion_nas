@@ -1,6 +1,6 @@
 import os
-from datahelpers._signal import Signal
-from datahelpers._target import Target
+from datahelpers.signal import Signal
+from datahelpers.target import Target
 import Globals
 
 class Data:

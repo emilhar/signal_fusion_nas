@@ -34,6 +34,6 @@ class Main:
 
 
 if __name__ == "__main__":
-    parse_arguments()
+    #parse_arguments()
     main = Main()
     main.run()

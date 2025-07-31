@@ -73,7 +73,6 @@ class TrainedModelMaker:
     def __clamp_num(self, num):
         return max(1, num//2)
 
-
     def __kernel_to_pad(self, numbers: list[int]):
         """Takes a kernel_sizes list and returns a corresponding paddings list"""
         new_list = []

@@ -2,9 +2,11 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from Globals import device, Signal, Targets
+from Globals import device
 from log_manager.log_manager import LogManager
 from datetime import datetime
+from datahelpers.signal import Signal
+from datahelpers.target import Target
 
 def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=None, pred_label=None):
     signals = {}
@@ -42,8 +44,8 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
 
     return true_label, pred_label
 
-def analyze_predictions(all_true, all_preds, model_marker=None, filters=None): # TODO: remove filters=None
-    class_names = Targets.All_CLASSES
+def analyze_predictions(all_true, all_preds, targets:list[Target], model_marker=None, filters=None): # TODO: remove filters=None
+    class_names = [target.given_name for target in targets]
 
     cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize="true")
 
