@@ -7,7 +7,7 @@ from dataloaders.data_loader import SDataLoader
 from ea_controller.ea_algorithm import EA_Algorithm
 
 from utils.trained_model_maker import TrainedModelMaker
-from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
+from Globals import EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
 
 from log_manager.log_manager import LogManager
 
@@ -39,7 +39,7 @@ class KernelSizeEvolutionaryOptimizer:
         self.learning_rate = self.LEARNING_RATE
 
         if self.max_kernel_size is None:
-            self.max_kernel_size = Signal.SIGNAL_COUNT // 2
+            self.max_kernel_size = n_samples // 2
             if EvolutionManager.VERBOSE: print(f"Max kernel size set at {self.max_kernel_size}")
         
         self.SDL = SDataLoader(

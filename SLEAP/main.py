@@ -3,7 +3,7 @@ from utils import InputHandler
 from utils.arg_parse import parse_arguments
 from datahelpers.datahelper import prepare_data
 
-from grid_search_controller.grid_search_controller import QKernel_GridSearch
+#from grid_search_controller.grid_search_controller import QKernel_GridSearch
 from ea_controller.ea_controller import EA_Controller
 from ensemble_controller.ensemble_controller import EnsembleController
 

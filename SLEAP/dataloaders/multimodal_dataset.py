@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import os
-from Globals import Signal, DataManager
+from Globals import DataManager
 from dataloaders.lazy_dataset import LazyDataset
 TRAIN_SPLIT = 0.8
 MAX_MEMORY = 2048*4
@@ -18,7 +18,7 @@ class MultimodalLazyDataset(Dataset):
         first_key = list(self.data_dict.keys())[0]
         return len(self.data_dict[first_key])
 
-    def add_data(self, files, signal, data_directory):
+    def add_data(self, files, signal, data_directory, number_of_signals):
         if signal in self.data_dict:
             print(f"WARNING: Data from {signal} already in data dictionary")
 
@@ -26,7 +26,7 @@ class MultimodalLazyDataset(Dataset):
             files, 
             data_directory, 
             stage_map=None, 
-            max_memory = self.MAX_MEMORY // len(Signal.ALL_SIGNALS),
+            max_memory = self.MAX_MEMORY // number_of_signals,
         )
 
     def __getitem__(self, idx):
@@ -44,22 +44,23 @@ class MultimodalLazyDataset(Dataset):
 
         return output_dict, labels.pop()
         
-def get_dataloaders_with_multimodal_datasets() -> tuple[DataLoader, DataLoader]:
+def get_dataloaders_with_multimodal_datasets(targets, signals) -> tuple[DataLoader, DataLoader]:
     # Load data
-    train_dataset, test_dataset = make_training_and_testing_data()
+    train_dataset, test_dataset = make_training_and_testing_data(signals)
 
     # Make dataloaders
     train_load, test_load = create_dataloaders(train_dataset, test_dataset)
 
     return train_load, test_load
 
-def make_training_and_testing_data():
+def make_training_and_testing_data(signals):
     
     # Initialize datasets to hold all signals
     train_dataset = MultimodalLazyDataset()
     test_dataset = MultimodalLazyDataset()
     
-    for signal in Signal.ALL_SIGNALS:
+    for signal in signals:
+        signal = signal.name
         
         # Find and split data
         data_directory = f"data/{DataManager.DATASET}/{signal}"
@@ -73,8 +74,8 @@ def make_training_and_testing_data():
         train_files = [f for f in all_files if f[:5] in train_subjects]
         test_files = [f for f in all_files if f[:5] in test_subjects]
 
-        train_dataset.add_data(train_files, signal, data_directory)
-        test_dataset.add_data(test_files, signal, data_directory)
+        train_dataset.add_data(train_files, signal, data_directory, len(signals))
+        test_dataset.add_data(test_files, signal, data_directory, len(signals))
 
     return train_dataset, test_dataset
 

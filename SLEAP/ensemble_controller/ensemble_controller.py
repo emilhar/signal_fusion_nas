@@ -23,7 +23,7 @@ class EnsembleController:
 
     def create_ensemble(self, given_folder=None, model_marker=False):
         print("📦 Loading Data...")
-        train_loader, test_loader = get_dataloaders_with_multimodal_datasets()
+        train_loader, test_loader = get_dataloaders_with_multimodal_datasets(self.targets, self.signals)
 
         print("🧠 Loading Models...")
         models_dict = self.load_each_model(given_folder)
