@@ -1,9 +1,7 @@
-import random
 import time
+import math
 
 import numpy as np
-import torch
-import torch.nn as nn
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.proj3d as proj3d
@@ -11,9 +9,9 @@ import mpl_toolkits.mplot3d.proj3d as proj3d
 from Globals import DataManager
 from datahelpers.signal import Signal
 from datahelpers.target import Target
-from datahelpers.data_loader import SDataLoader
-from utils.trained_model_maker import TrainedModelMaker
 from datahelpers.data import Data
+from dataloaders.data_loader import SDataLoader
+from utils.trained_model_maker import TrainedModelMaker
 
 
 class GridSearchTimeoutError(Exception):
@@ -23,28 +21,47 @@ class GridSearchTimeoutError(Exception):
 
 class GridSearchController:
     def __init__(self, signal: Signal, target: Target, dataset_percentage, epochs):
-        Data.set_dataset("sleep-EDF-78")
-        Data.set_data_percentage(dataset_percentage)
-
         self.signal = signal
         self.target = target
         self.n_samples = signal.n_samples
+        self.grid = None
         self.__epochs = epochs
-        self.__device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.__kernels = self.__get_kernels()
-        self.__loader = SDataLoader(self.signal, self.target)
+        self.__loader = SDataLoader(self.signal, self.target, 32)
 
-        self.__train_loader, self.__test_loader, _, self.__pos_weight = self.loader.get_random_subset()
+        self.__train_loader, self.__test_loader, _, self.__pos_weight = self.__loader.get_random_subset()
 
+        print(self.__kernels)
+        DataManager.dataset_percentage = dataset_percentage
     
     def __bool__(self):
         return self.grid is not None
 
 
     def __get_kernels(self) -> list[int]:
-        print("WARNING: USING ARBITRARY KERNELS")
-
-        return [500, 150, 50, 20, 5, 2]
+        def next_prime(num):
+            num = math.ceil(num)
+            if num <= 1:
+                return 2
+            
+            while True:
+                is_prime = True
+                for i in range(2, int(math.sqrt(num)) + 1):
+                    if num % i == 0:
+                        is_prime = False
+                        break
+                if is_prime:
+                    return num
+                num += 1
+    
+        divisors = [5, 10, 30, 90, 270, 810, 2430]
+        kernels = []
+        for div in divisors:
+            k = max(next_prime(self.signal.n_samples // div), 3)
+            if k not in kernels:
+                kernels.append(max(next_prime(self.signal.n_samples // div), 3))
+        
+        return kernels
     
 
     def load_grid(self) -> bool:
@@ -72,7 +89,7 @@ class GridSearchController:
     
     def compute_grid(self):
         start_time = time.time()
-        total_iterations = len(self.kernels) ** 3
+        total_iterations = len(self.__kernels) ** 3
         completed = 0
 
         self.load_grid()
@@ -131,7 +148,8 @@ class GridSearchController:
             self.__pos_weight,
             self.__train_loader,
             self.__test_loader,
-            self.__epochs
+            self.__epochs,
+            32,
         )
 
         model_performance = {
