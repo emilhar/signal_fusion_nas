@@ -1,13 +1,13 @@
 import os
 import numpy as np
-from datahelpers.data import Data
+from data import Data
 
 class InconsistentDataException(Exception):
     pass
 
 def split_npz_by_size_streaming(input_path, output_dir, max_size_mb=100):
 
-    max_size_bytes = max_size_mb * 1024 * 1024
+    max_size_bytes = int(max_size_mb * 1024 * 1024)
 
     with np.load(input_path) as huge_file:
         array_names = huge_file.files
@@ -43,9 +43,13 @@ def split_npz_by_size_streaming(input_path, output_dir, max_size_mb=100):
         end = min((i + 1) * items_per_file, total_items)
 
         chunk_data = {}
-        with np.load(input_path) as huge_file:
+        with np.load(input_path, allow_pickle=True) as huge_file:
             for column_name in array_names:
-                chunk_data[column_name] = huge_file[column_name][start:end]
+                arr = huge_file[column_name]
+                if hasattr(arr, 'shape') and len(arr.shape) > 0:
+                    chunk_data[column_name] = arr[start:end]
+                else:
+                    chunk_data[column_name] = arr
 
         output_path = os.path.join(output_dir, f"{base_name}_part{i+1}.npz")
         np.savez_compressed(output_path, **chunk_data)
@@ -55,9 +59,11 @@ da = Data()
 dataset_name = da.find_dataset()
 items_per_signal = set()
 
+print(dataset_name)
 for signal in da.get_all_signal_names():
-    data_file_name_within_signal = os.listdir(f"data/{dataset_name}/{signal}")[1] #TODO: Breyta í 0, 1 útaf gitignore
+    data_file_name_within_signal = os.listdir(f"data/{dataset_name}/{signal}")[0]
+    print(data_file_name_within_signal)
     input_path = f"data/{dataset_name}/{signal}/{data_file_name_within_signal}"
     output_dir = f"data/{dataset_name}/{signal}/split_files"
     
-    split_npz_by_size_streaming(input_path, output_dir, max_size_mb=100)
+    split_npz_by_size_streaming(input_path, output_dir, max_size_mb=0.5)
