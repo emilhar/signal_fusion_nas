@@ -1,13 +1,12 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import os
-from Globals import DataManager
 from dataloaders.lazy_dataset import LazyDataset
+from datahelpers.data import Data
+
 TRAIN_SPLIT = 0.8
-MAX_MEMORY = 2048*4
 
 class MultimodalLazyDataset(Dataset):
-    MAX_MEMORY = 8192
     def __init__(self):
         self.data_dict = {}
 
@@ -26,7 +25,7 @@ class MultimodalLazyDataset(Dataset):
             files, 
             data_directory, 
             stage_map=None, 
-            max_memory = self.MAX_MEMORY // number_of_signals,
+            max_memory = Data.max_memory // number_of_signals,
         )
 
     def __getitem__(self, idx):
@@ -63,7 +62,8 @@ def make_training_and_testing_data(signals):
         signal = signal.name
         
         # Find and split data
-        data_directory = f"data/{DataManager.DATASET}/{signal}"
+        d = Data()
+        data_directory = f"{d.DIRECTORY}/{d.dataset}/{signal}"
         all_files = sorted([f for f in os.listdir(data_directory) if f.endswith('.npz')])
         subject_ids = sorted(set(f[:5] for f in all_files))
 

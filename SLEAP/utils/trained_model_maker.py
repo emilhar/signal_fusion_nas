@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 
 # Model and Training imports
 from models.cnn_binary_classifier import CNN_BinaryClassifier
-from Globals import EvolutionManager, LoggingSettings, device
+from Globals import EvolutionManager, LoggingHelper, device
 
 class TrainedModelMaker:
 
@@ -27,7 +27,7 @@ class TrainedModelMaker:
         self.model = CNN_BinaryClassifier(**self.model_args).to( device )
 
         if EvolutionManager.VERY_VERBOSE:
-            print(f"\n\nTraining model: {branches=}, Generation: {LoggingSettings.current_generation_id}/{EvolutionManager.GENERATIONS}, Generation Completeness: {LoggingSettings.current_individual_id}/{LoggingSettings.population_size}")
+            print(f"\n\nTraining model: {branches=}, Generation: {LoggingHelper.current_generation_id}/{EvolutionManager.GENERATIONS}, Generation Completeness: {LoggingHelper.current_individual_id}/{LoggingHelper.population_size}")
 
         self.model_performance = CNN_BinaryClassifier.train_model(
             self.model, 

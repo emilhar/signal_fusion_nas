@@ -2,7 +2,7 @@ from models.cnn_binary_classifier import CNN_BinaryClassifier
 from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
 from models.ensemble_model import EnsembleModel
 from ensemble_controller.ensemble_plotter import analyze_predictions
-from Globals import LoggingSettings, device
+from Globals import LoggingHelper, device
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from log_manager.log_manager import LogManager
@@ -12,7 +12,6 @@ import torch
 import warnings
 import numpy as np
 
-LoggingSettings.LOGGER_ID = "O"
 
 
 class EnsembleController:
@@ -42,12 +41,11 @@ class EnsembleController:
         #self.save_ensemble(f"./_misc/ensemble_models/{???}")
 
     def load_each_model(self, given_folder):
-            id_helper = LogManager()
 
             if given_folder:
                 data_dir = given_folder
             else:
-                data_dir = f"logs/{LoggingSettings.LOGGER_ID}Logs/ModelStateDicts/{id_helper.experiment_id-20}"
+                data_dir = f"ea_controller/saved_models"
 
             all_model_files = [f for f in os.listdir(data_dir)]
             models_dict = {}

@@ -5,10 +5,11 @@ from random import sample, shuffle
 
 from dataloaders.lazy_dataset import LazyDataset
 from datahelpers.data import Data
-from Globals import EvolutionManager, DataManager
+from Globals import EvolutionManager
 
 
 class SDataLoader:
+    TRAINING_SPLIT = 0.7
     def __init__(self, signal_type, classification_class, batch_size):
         self.signal_type = signal_type
 
@@ -26,15 +27,15 @@ class SDataLoader:
         subject_ids = sorted(set(f[:5] for f in all_files))
         shuffle(subject_ids)
 
-        split_idx = int(len(subject_ids) * EvolutionManager.DATA_SPLIT_TRAINING)
+        split_idx = int(len(subject_ids) * SDataLoader.TRAINING_SPLIT)
         train_subjects = subject_ids[:split_idx]
         test_subjects = subject_ids[split_idx:]
 
         train_files = [f for f in all_files if f[:5] in train_subjects]
         test_files = [f for f in all_files if f[:5] in test_subjects]
 
-        train_dataset = LazyDataset(train_files, data_dir, self.stage_map, max_memory=2048*2)
-        test_dataset = LazyDataset(test_files, data_dir, self.stage_map, max_memory=2048*2)
+        train_dataset = LazyDataset(train_files, data_dir, self.stage_map, max_memory=Data.max_memory)
+        test_dataset = LazyDataset(test_files, data_dir, self.stage_map, max_memory=Data.max_memory)
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)
@@ -65,13 +66,13 @@ class SDataLoader:
             
         return torch.tensor([label_counts[0] / max(1, label_counts[1])])
 
-    def get_random_subset(self):
+    def get_random_subset(self, dataset_percentage):
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset
 
         # Calculate subset sizes
-        train_size = int(len(train_dataset) * DataManager.dataset_percentage * EvolutionManager.DATA_SPLIT_TRAINING)
-        test_size = int(len(test_dataset) * DataManager.dataset_percentage * EvolutionManager.DATA_SPLIT_TESTING)
+        train_size = int(len(train_dataset) * dataset_percentage * SDataLoader.TRAINING_SPLIT)
+        test_size = int(len(test_dataset) * dataset_percentage * (1 - SDataLoader.TRAINING_SPLIT))
         
         train_subset = Subset(train_dataset, sample(range(len(train_dataset)), train_size))
         test_subset = Subset(test_dataset, sample(range(len(test_dataset)), test_size))

@@ -1,7 +1,8 @@
 import numpy as np
 import random
 import time
-from Globals import EvolutionManager, LoggingSettings, LoggingTemplate, Clr
+from Globals import EvolutionManager, LoggingHelper
+from utils.clr import Clr
 
 
 class EA_Algorithm:
@@ -29,8 +30,8 @@ class EA_Algorithm:
         invalid_ind = [ind for ind in self.population if not ind.fitness.valid]
 
         # Save info to LoggingSettings to help verbosity
-        LoggingSettings.population_size = len(invalid_ind)
-        LoggingSettings.current_generation_id = 0
+        LoggingHelper.population_size = len(invalid_ind)
+        LoggingHelper.current_generation_id = 0
 
         # Evaluate the individuals with an invalid fitness
         fitnesses = self.toolbox.map(self.toolbox.evaluate, invalid_ind)
@@ -61,9 +62,9 @@ class EA_Algorithm:
                 self._loading_bar(gen, max_time_per_gen, elapsed_time)
 
             # Save info to LoggingSettings to help verbosity 
-            LoggingSettings.population_size = len(self.population)
-            LoggingSettings.current_generation_id = gen
-            LoggingSettings.current_individual_id = 0
+            LoggingHelper.population_size = len(self.population)
+            LoggingHelper.current_generation_id = gen
+            LoggingHelper.current_individual_id = 0
 
             # Vary the population
             offspring = self.varOr()
@@ -122,8 +123,7 @@ class EA_Algorithm:
         record = stats.compile(self.population) if stats is not None else {}
 
         # manually calc loss mean, std, med, min, max
-        lt = LoggingTemplate
-        losses = [indi.model_performance[lt.train_loss] for indi in self.population]
+        losses = [indi.model_performance["train_loss"] for indi in self.population]
 
         l_mean = np.mean(losses)
         l_std = np.std(losses)
@@ -140,7 +140,7 @@ class EA_Algorithm:
             print(" ".join(want_to_print))
 
         # Log the generation
-        if LoggingSettings.LOGGING:
+        if LoggingHelper.LOGGING:
             self.log_manager.log_generation_stats(self.population, len(invalid_ind), 
                                                  record['avg'], record['std'], record['med'], record['min'], record['max'],
                                                  l_mean, l_std, l_med, l_min, l_max)

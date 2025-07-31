@@ -29,7 +29,7 @@ class GridSearchController:
         self.__kernels = self.__get_kernels()
         self.__loader = SDataLoader(self.signal.name, self.target, 32)
 
-        self.__train_loader, self.__test_loader, _, self.__pos_weight = self.__loader.get_random_subset()
+        self.__train_loader, self.__test_loader, _, self.__pos_weight = self.__loader.get_random_subset(dataset_percentage=0.3)
 
         print(self.__kernels)
         DataManager.dataset_percentage = dataset_percentage
@@ -138,7 +138,6 @@ class GridSearchController:
 
     
     def __new_model(self, k1, k2, k3):
-        #train_loader, test_loader, n_samples, pos_weight = self.loader.get_random_subset() 
 
         branch = [k1, k2, k3]
 

@@ -7,7 +7,8 @@ from dataloaders.data_loader import SDataLoader
 from ea_controller.ea_algorithm import EA_Algorithm
 
 from utils.trained_model_maker import TrainedModelMaker
-from Globals import EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
+from Globals import EvolutionManager, LoggingHelper
+from ea_controller.fitness_functions import FitnessFunctions
 
 from log_manager.log_manager import LogManager
 
@@ -48,7 +49,7 @@ class KernelSizeEvolutionaryOptimizer:
             batch_size=self.batch_size,
         )
 
-        if LoggingSettings.LOGGING:
+        if LoggingHelper.LOGGING:
             self.log_manager = LogManager()
         else:
             self.log_manager = None
@@ -75,7 +76,7 @@ class KernelSizeEvolutionaryOptimizer:
         # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", self.select, tournsize=EvolutionManager.SELECTION_TOURNAMENT_SIZE)
+        self.toolbox.register("select", self.select)
         self.toolbox.register("evaluate", self.evaluate_individual)
         
         # Statistics and Hall of Fame
@@ -86,7 +87,8 @@ class KernelSizeEvolutionaryOptimizer:
         self.stats.register("min", np.min)
         self.stats.register("max", np.max)
         
-        self.hall_of_fame = tools.HallOfFame(EvolutionManager.HALL_OF_FAME_MEMBERS)
+        hall_of_fame_members = 3
+        self.hall_of_fame = tools.HallOfFame(hall_of_fame_members)
     
     def get_grid_individuals(self):
         """Only used to 'create' the first generation of individuals"""
@@ -116,8 +118,8 @@ class KernelSizeEvolutionaryOptimizer:
 
         if _debug:
             individual.model_performance = self._debug_model_performance(individual)
-            individual.individual_id = LoggingSettings.current_individual_id
-            LoggingSettings.current_individual_id += 1
+            individual.individual_id = LoggingHelper.current_individual_id
+            LoggingHelper.current_individual_id += 1
 
             return (FitnessFunctions.fitness_function(individual),)
 
@@ -127,35 +129,35 @@ class KernelSizeEvolutionaryOptimizer:
         individual.model_performance = model.model_performance
         individual.model_args = model.model_args
 
-        individual.individual_id = LoggingSettings.current_individual_id
-        LoggingSettings.current_individual_id += 1
+        individual.individual_id = LoggingHelper.current_individual_id
+        LoggingHelper.current_individual_id += 1
 
         return (fitness,)
     
     def _debug_model_performance(self, indi):
-        it = LoggingTemplate
         output = {
-            it.epoch: 0,
-            it.train_loss: 0,
-            it.test_loss: 0,
-            it.precision: 0,
-            it.recall: 0,
-            it.accuracy: 0,
-            it.lr: 0,
-            it.branches: indi,
-            it.best_f1: 0,
-            it.best_auc: 0,
-            it.best_true: 0,
-            it.best_scores: 0,
-            it.time: 0,
-            it.state_dict: 0
+            "epoch": 0,
+            "train_loss": 0,
+            "test_loss": 0,
+            "precision": 0,
+            "recall": 0,
+            "accuracy": 0,
+            "lr": 0,
+            "branches": indi,
+            "best_f1": 0,
+            "best_auc": 0,
+            "best_true": 0,
+            "best_scores": 0,
+            "time": 0,
+            "state_dict": 0
         }
+
         return output
     
     def create_trained_individual(self, individual):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
-        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset() 
+        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(dataset_percentage=0.3) 
 
         new_model = TrainedModelMaker(
             branches=individual,
@@ -170,7 +172,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         return new_model
     
-    def select(self, population, number_of_people_to_select, tournsize):
+    def select(self, population, number_of_people_to_select):
         """Tournament selection with elitism"""
         
         if number_of_people_to_select <= 0:
@@ -180,7 +182,7 @@ class KernelSizeEvolutionaryOptimizer:
         map(lambda x: FitnessFunctions.normalization_function(x, population), population)
 
         chosen_for_next_generation = []
-        elitism = EvolutionManager.ELITISM
+        elitism = 1
 
         if elitism > 0:
             sorted_pop = sorted(
@@ -197,6 +199,7 @@ class KernelSizeEvolutionaryOptimizer:
             remaining_to_select = number_of_people_to_select
     
         # Perform tournament selection for remaining individuals
+        tournsize = max(3, int(len(population) * 0.2))
         for _ in range(remaining_to_select):
             aspirants = [random.choice(population) for _ in range(tournsize)]
             best = max(aspirants, key= lambda x: x.fitness.values[0])
@@ -216,8 +219,9 @@ class KernelSizeEvolutionaryOptimizer:
     def mutate(self, mutant:list[list[int]]):
         """Mutate an individual by randomly modifying branches or kernel sizes."""
 
-        mutation_number_options = [i + 1 for i in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS)
-              for _ in range(EvolutionManager.MAX_NUMBER_OF_MUTATIONS - i)]
+        max_number_of_mutations = 3
+        mutation_number_options = [i + 1 for i in range(max_number_of_mutations)
+              for _ in range(max_number_of_mutations - i)]
         
         number_of_mutations = random.choice(mutation_number_options)
 
@@ -358,7 +362,7 @@ class KernelSizeEvolutionaryOptimizer:
             best_individual = self.hall_of_fame[0]
             torch.save(
                 {
-                    "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
+                    "state_dict": best_individual.model_performance["state_dict"],
                     "model_args": best_individual.model_args,
                 },
                 os.path.join(save_dir, f"{self.signal_type}_{self.classification_class.given_name}_classifier.pt")

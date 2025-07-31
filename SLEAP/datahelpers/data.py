@@ -6,6 +6,7 @@ class Data:
     __ALL_SIGNAL_NAMES = None
     __ALL_TARGET_NAMES = None
     DIRECTORY = "dataset"
+    max_memory = 8192
     
 
     def __init__(self):

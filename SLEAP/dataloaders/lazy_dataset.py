@@ -4,10 +4,8 @@ import torch
 from torch.utils.data import Dataset
 from bisect import bisect_right
 
-from Globals import DataManager
-
 class LazyDataset(Dataset):
-    def __init__(self, files, data_dir, stage_map, max_memory=DataManager.MAX_MEMORY):
+    def __init__(self, files, data_dir, stage_map, max_memory):
         self.files = files
         self.data_dir = data_dir
         self.stage_map = stage_map
