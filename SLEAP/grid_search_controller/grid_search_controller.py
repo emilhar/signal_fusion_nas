@@ -27,7 +27,7 @@ class GridSearchController:
         self.grid = None
         self.__epochs = epochs
         self.__kernels = self.__get_kernels()
-        self.__loader = SDataLoader(self.signal, self.target, 32)
+        self.__loader = SDataLoader(self.signal.name, self.target, 32)
 
         self.__train_loader, self.__test_loader, _, self.__pos_weight = self.__loader.get_random_subset()
 

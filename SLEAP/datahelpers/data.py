@@ -1,12 +1,12 @@
 import os
 from datahelpers.signal import Signal
 from datahelpers.target import Target
-import Globals
 
 class Data:
     __ALL_SIGNAL_NAMES = None
     __ALL_TARGET_NAMES = None
     DIRECTORY = "dataset"
+    
 
     def __init__(self):
         self.dataset = Data.find_dataset()
@@ -22,17 +22,23 @@ class Data:
         
         return signals
     
-    def __create_targets(self):
+    def __create_targets(self) -> list[Target]:
         targets = []
+
         with open(f'{Data.DIRECTORY}/label_map.txt', 'r') as file:
             for line in file:
                 given_name, data_label = line.strip().split()
                 given_name = given_name.removesuffix(":")
-                targets.append(Target(given_name, data_label))
-
-        Globals._target_objs = targets
+                targets.append(Target(given_name, int(data_label)))
 
         return targets
+    
+    def get_stage_map(self, classification_class:Target):
+        stage_map = {}
+        for target in self.target_objects:
+            stage_map[target.data_label] = 1 if classification_class.given_name == target.given_name else 0
+
+        return stage_map
 
     @staticmethod
     def get_all_signal_names():

@@ -4,19 +4,6 @@ import torch
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-_target_objs = None
-
-def get_stage_map(classification_class):
-    if not _target_objs:
-        print("No targets, failure")
-        quit()
-
-    stage_map = {}
-    for target in _target_objs:
-        stage_map[target.data_label] = 1 if classification_class.given_name == target.given_name else 0
-
-    return stage_map
-
 class EvolutionManager:
 
     # Overview Manager

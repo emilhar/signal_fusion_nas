@@ -5,15 +5,15 @@ from random import sample, shuffle
 
 from dataloaders.lazy_dataset import LazyDataset
 from datahelpers.data import Data
-from Globals import EvolutionManager, DataManager, get_stage_map
+from Globals import EvolutionManager, DataManager
 
 
 class SDataLoader:
     def __init__(self, signal_type, classification_class, batch_size):
         self.signal_type = signal_type
 
-        self.stage_map = get_stage_map(classification_class)
-
+        d = Data()
+        self.stage_map = d.get_stage_map(classification_class)
         self.batch_size = batch_size
 
         if EvolutionManager.VERBOSE: print("Loading Data")

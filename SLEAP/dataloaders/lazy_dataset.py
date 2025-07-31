@@ -7,10 +7,10 @@ from bisect import bisect_right
 from Globals import DataManager
 
 class LazyDataset(Dataset):
-    def __init__(self, files, data_dir, use_stage_map, max_memory=DataManager.MAX_MEMORY):
+    def __init__(self, files, data_dir, stage_map, max_memory=DataManager.MAX_MEMORY):
         self.files = files
         self.data_dir = data_dir
-        self.use_stage_map = use_stage_map
+        self.stage_map = stage_map
         self.max_mb = max_memory
         self.total_len = 0
         
@@ -53,7 +53,7 @@ class LazyDataset(Dataset):
             x: torch.Tensor = data_dict['x'][local_idx].astype(np.float32)
             x = x.transpose()
             y = data_dict['y'][local_idx]
-            y = self.use_stage_map.get(y, 0) if self.use_stage_map else y
+            y = self.stage_map.get(y, 0) if self.stage_map else y
             
             return torch.tensor(x), torch.tensor(y)
         
@@ -82,8 +82,8 @@ class LazyDataset(Dataset):
         x: torch.Tensor = data_dict['x'][local_idx].astype(np.float32)
         x = x.transpose()
         y = data_dict['y'][local_idx]
-        y = self.use_stage_map.get(y, 0) if self.use_stage_map else y
-        
+        y = self.stage_map.get(y, 0) if self.stage_map else y
+
         return torch.tensor(x), torch.tensor(y)
 
     def _evict_to_fit(self):
