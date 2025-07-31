@@ -9,6 +9,7 @@ from ensemble_controller.ensemble_controller import EnsembleController
 
 class Main:
     def __init__(self):
+        
         self.targets, self.signals = prepare_data(mb_per_part=0.5)
         # self.grid_search = QKernel_GridSearch()
         self.ea_controller = EA_Controller()

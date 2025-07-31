@@ -4,6 +4,7 @@ import os
 from random import sample, shuffle
 
 from dataloaders.lazy_dataset import LazyDataset
+from datahelpers.data import Data
 from Globals import EvolutionManager, DataManager, get_stage_map
 
 
@@ -20,7 +21,7 @@ class SDataLoader:
     
     def prepare_data(self):
 
-        data_dir = f"data/{DataManager.DATASET}/{self.signal_type}"
+        data_dir = f"{Data.DIRECTORY}/{Data.find_dataset()}/{self.signal_type}"
         all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
         subject_ids = sorted(set(f[:5] for f in all_files))
         shuffle(subject_ids)

@@ -67,7 +67,7 @@ class GridSearchController:
     def load_grid(self) -> bool:
         try:
             self.grid = np.load(
-                f"./data/grids/{self.signal.name}/{self.target.name}.npy",
+                f"./data/grids/{self.signal.name}/{self.target.given_name}.npy",
                 allow_pickle=True
             )
             return True

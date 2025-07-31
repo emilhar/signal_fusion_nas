@@ -6,6 +6,7 @@ import Globals
 class Data:
     __ALL_SIGNAL_NAMES = None
     __ALL_TARGET_NAMES = None
+    DIRECTORY = "dataset"
 
     def __init__(self):
         self.dataset = Data.find_dataset()
@@ -14,7 +15,7 @@ class Data:
 
     def __create_signals_from_dataset(self):
         signals = []
-        data_dir = f"data/{self.dataset}"
+        data_dir = f"{Data.DIRECTORY}/{self.dataset}"
         for signal_name in os.listdir(data_dir):
             new_signal = Signal(signal_name, f"{data_dir}/{signal_name}")
             signals.append(new_signal)
@@ -23,7 +24,7 @@ class Data:
     
     def __create_targets(self):
         targets = []
-        with open('data/label_map.txt', 'r') as file:
+        with open(f'{Data.DIRECTORY}/label_map.txt', 'r') as file:
             for line in file:
                 given_name, data_label = line.strip().split()
                 given_name = given_name.removesuffix(":")
@@ -37,7 +38,7 @@ class Data:
     def get_all_signal_names():
         if Data.__ALL_SIGNAL_NAMES is None:
             ds = Data.find_dataset()
-            Data.__ALL_SIGNAL_NAMES = os.listdir(f"./data/{ds}")
+            Data.__ALL_SIGNAL_NAMES = os.listdir(f"./{Data.DIRECTORY}/{ds}")
 
         return Data.__ALL_SIGNAL_NAMES
 
@@ -50,7 +51,7 @@ class Data:
             return name
         
         if Data.__ALL_TARGET_NAMES is None:
-            with open('data/label_map.txt', 'r') as file:
+            with open(f'{Data.DIRECTORY}/label_map.txt', 'r') as file:
                 Data.__ALL_TARGET_NAMES = [format_name(line) for line in file]
 
         return Data.__ALL_TARGET_NAMES
@@ -65,7 +66,7 @@ class Data:
             return True
 
         # List of everything inside the data folder, except for the label map and pycache
-        dataset = [filename for filename in os.listdir("data") if __datafilter(filename)]
+        dataset = [filename for filename in os.listdir(f"{Data.DIRECTORY}") if __datafilter(filename)]
         if not dataset:
             raise FileNotFoundError("Could not find dataset, please see README")
         
