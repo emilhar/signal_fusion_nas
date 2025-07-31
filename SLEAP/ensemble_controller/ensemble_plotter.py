@@ -2,8 +2,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-import seaborn as sns
-from Globals import device, Signal, Targets, LoggingSettings
+from Globals import device, Signal, Targets
 from log_manager.log_manager import LogManager
 from datetime import datetime
 
@@ -44,7 +43,7 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
     return true_label, pred_label
 
 def analyze_predictions(all_true, all_preds, model_marker=None, filters=None): # TODO: remove filters=None
-    class_names = Classes.All_CLASSES
+    class_names = Targets.All_CLASSES
 
     cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize="true")
 

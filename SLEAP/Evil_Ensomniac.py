@@ -1,6 +1,6 @@
 from ensemble_controller.ensemble_controller import EnsembleController
 from utils.trained_model_maker import TrainedModelMaker
-from data.data_loader import SDataLoader
+from datahelpers.data_loader import SDataLoader
 from Globals import Targets, Signal, LoggingTemplate, EvolutionManager, DataManager
 import random
 import os
@@ -15,7 +15,7 @@ EvolutionManager.VERBOSE = True
 DataManager.DATASET = DataManager.DatasetNames.EDF_78
 def main():
     fog = EnsembleController()
-    for x in [1, 2, 4, 8, 16, 32]:
+    for x in [1]:
         fog.NUM___FILTERS = x
         print(f"Creating models with {x} filters")
         # 👿 Evil Models Section 👿
@@ -29,8 +29,8 @@ def main():
         print("✨✨ GOOD MODELS ✨✨")
         print("🕊️ Calling upon the righteous... 🕊️")
         get_good_indis(x)
-        fog.create_ensemble(given_folder="EvilEnsomniacModels/EvilModels", model_marker="Evil")
-        fog.create_ensemble(given_folder="EvilEnsomniacModels/GoodModels", model_marker="Good")
+        fog.create_ensemble(given_folder="_misc/EvilModels", model_marker="Evil")
+        fog.create_ensemble(given_folder="_misc/GoodModels", model_marker="Good")
 
 
 
@@ -59,8 +59,9 @@ def get_random_indis(filters):
         for st in Targets.All_CLASSES:
             if model_exists(st, sig, "Evil"):
                 print(f"Model for {st} in {sig} already exists in EvilModels. Skipping...")
-                print("Just kidding")
-                
+                continue
+
+
             print("\nTRAINING", st, "IN", sig)
             sdl = SDataLoader(sig, st, batch_size=model_batch_size)
             indi = []
@@ -88,7 +89,7 @@ def get_good_indis(filters):
         for st in Targets.All_CLASSES:
             if model_exists(st, sig, "Good"):
                 print(f"Model for {st} in {sig} already exists in GoodModels. Skipping...")
-                print("Just kidding")
+                continue
                 
             print("TRAINING", st, "IN", sig)
             sdl = SDataLoader(sig, st, batch_size=model_batch_size)

@@ -9,10 +9,7 @@ from ea_controller.ea_algorithm import EA_Algorithm
 from utils.trained_model_maker import TrainedModelMaker
 from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
 
-<<<<<<< HEAD
-=======
 from log_manager.log_manager import LogManager
->>>>>>> refs/remotes/origin/refactor
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2
