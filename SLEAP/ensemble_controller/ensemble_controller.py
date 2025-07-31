@@ -1,5 +1,5 @@
 from models.cnn_binary_classifier import CNN_BinaryClassifier
-from datahelpers.multimodal_dataset import get_dataloaders_with_multimodal_datasets
+from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
 from models.ensemble_model import EnsembleModel
 from ensemble_controller.ensemble_plotter import analyze_predictions
 from Globals import Targets, Signal, LoggingSettings, device
