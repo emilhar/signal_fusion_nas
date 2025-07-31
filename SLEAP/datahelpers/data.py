@@ -1,6 +1,7 @@
 import os
-from datahelpers.signal import Signal
-from datahelpers.target import Target
+from datahelpers._signal import Signal
+from datahelpers._target import Target
+import Globals
 
 class Data:
     __ALL_SIGNAL_NAMES = None
@@ -24,9 +25,11 @@ class Data:
         targets = []
         with open('data/label_map.txt', 'r') as file:
             for line in file:
-                value, key = line.strip().split()
-                value = value.removesuffix(":")
-                targets.append(Target(value, key))
+                given_name, data_label = line.strip().split()
+                given_name = given_name.removesuffix(":")
+                targets.append(Target(given_name, data_label))
+
+        Globals._target_objs = targets
 
         return targets
 

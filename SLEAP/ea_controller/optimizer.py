@@ -24,7 +24,7 @@ class KernelSizeEvolutionaryOptimizer:
     EPOCHS_PER_INDIVIDUAL = 1
     LEARNING_RATE = 5e-4
 
-    def __init__(self, classification_class: str, signal_type: str, batch_size, n_samples):
+    def __init__(self, classification_class, signal_type: str, n_samples:int, batch_size):
 
         self.classification_class = classification_class
         self.signal_type = signal_type
@@ -52,8 +52,6 @@ class KernelSizeEvolutionaryOptimizer:
             self.log_manager = LogManager()
         else:
             self.log_manager = None
-
-        #self.KRNL = KRNL_GridSearch(self.signal_type, self.classification_class)
 
         self.setup_deap()
     
@@ -344,7 +342,7 @@ class KernelSizeEvolutionaryOptimizer:
             return f"{i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}"
 
         self.log_manager.log_experiment(
-            classification_class= self.classification_class,
+            classification_class= self.classification_class.given_name,
             signal_type= self.signal_type,
             max_kernel_size= self.max_kernel_size,
             best= get_hall_of_fame_format(0),
@@ -363,7 +361,7 @@ class KernelSizeEvolutionaryOptimizer:
                     "state_dict": best_individual.model_performance[LoggingTemplate.state_dict],
                     "model_args": best_individual.model_args,
                 },
-                os.path.join(save_dir, f"{self.signal_type}_{self.classification_class}_classifier.pt")
+                os.path.join(save_dir, f"{self.signal_type}_{self.classification_class.given_name}_classifier.pt")
             )
 
 

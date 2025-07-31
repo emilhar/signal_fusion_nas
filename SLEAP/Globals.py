@@ -1,33 +1,21 @@
 import inspect
 import sympy
 import torch
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-class Targets:
-    WAKE = "wake"
-    N3 = "N3"
-    N2 = "N2"
-    N1 = "N1"
-    REM = "REM"
+_target_objs = None
 
-    All_CLASSES = [WAKE, N1, N2, N3, REM]
-    current_class = None
+def get_stage_map(classification_class):
+    if not _target_objs:
+        print("No targets, failure")
+        quit()
 
-class Signal:
+    stage_map = {}
+    for target in _target_objs:
+        stage_map[target.data_label] = 1 if classification_class.given_name == target.given_name else 0
 
-    class EEG:
-        Fpz_Cz = "EEG_Fpz-Cz"
-        Pz_Oz = "EEG_Pz-Oz"
-
-    class EOG:
-        HORIZONTAL = "EOG_horizontal"
-
-    class EMG:
-        SUBMENTAL = "EMG_submental"
-
-    SIGNAL_COUNT = 3000
-    ALL_SIGNALS = [EEG.Fpz_Cz, EEG.Pz_Oz, EOG.HORIZONTAL, EMG.SUBMENTAL]
-    current_signal = None
+    return stage_map
 
 class EvolutionManager:
 
@@ -278,6 +266,3 @@ class SLEAPyException(Exception):
                     print(f"  Variable: {attr_name} = {repr(attr_value)}")
                 elif inspect.isclass(attr_value):
                     print(f"  Nested Class: {attr_name}")
-
-
-___SUPER__COUNTER__EXTREME__3000____ = 0

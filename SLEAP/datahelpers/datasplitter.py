@@ -5,14 +5,14 @@ from datahelpers.data import Data
 class InconsistentDataException(Exception):
     pass
 
-def split_npz_by_size_streaming(input_path, output_dir, max_size_mb=100):
+def split_npz_by_size_streaming(input_path, output_dir, items_per_signal, max_size_mb=100):
 
     max_size_bytes = int(max_size_mb * 1024 * 1024)
 
     with np.load(input_path) as huge_file:
         array_names = huge_file.files
         if not array_names:
-            raise FileExistsError(f"No array names within file data/{dataset_name}/{signal}/{data_file_name_within_signal}")
+            raise FileExistsError(f"No array names within file {input_path}")
         
         # Get shape/dtype info from first array
         sample_array = huge_file[array_names[0]]
@@ -55,15 +55,19 @@ def split_npz_by_size_streaming(input_path, output_dir, max_size_mb=100):
         np.savez_compressed(output_path, **chunk_data)
         print(f"Saved {output_path} ({end-start} items)")
 
-da = Data()
-dataset_name = da.find_dataset()
-items_per_signal = set()
+def split_data(mb_per_part):
+    da = Data()
+    items_per_signal = set()
 
-print(dataset_name)
-for signal in da.get_all_signal_names():
-    data_file_name_within_signal = os.listdir(f"data/{dataset_name}/{signal}")[0]
-    print(data_file_name_within_signal)
-    input_path = f"data/{dataset_name}/{signal}/{data_file_name_within_signal}"
-    output_dir = f"data/{dataset_name}/{signal}/split_files"
-    
-    split_npz_by_size_streaming(input_path, output_dir, max_size_mb=0.5)
+    dataset_name = da.find_dataset()
+    print(dataset_name)
+    if not input("Is this the name of your dataset?: (y/*)").strip().endswith("y"):
+        quit()
+
+    for signal in da.get_all_signal_names():
+        data_file_name_within_signal = os.listdir(f"data/{dataset_name}/{signal}")[0]
+        print(data_file_name_within_signal)
+        input_path = f"data/{dataset_name}/{signal}/{data_file_name_within_signal}"
+        output_dir = f"data/{dataset_name}/{signal}/split_files"
+        
+        split_npz_by_size_streaming(input_path, output_dir, items_per_signal, max_size_mb=mb_per_part)

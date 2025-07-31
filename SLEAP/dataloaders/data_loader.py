@@ -4,34 +4,19 @@ import os
 from random import sample, shuffle
 
 from dataloaders.lazy_dataset import LazyDataset
-from Globals import Targets, EvolutionManager, DataManager
+from Globals import EvolutionManager, DataManager, get_stage_map
 
 
 class SDataLoader:
-    def __init__(self, signal_type, classification_class, batch_size, stage_map=None):
-        self.classification_class = classification_class
+    def __init__(self, signal_type, classification_class, batch_size):
         self.signal_type = signal_type
-        
-        if not stage_map:
-            self.stage_map = self._get_stage_map()
-        else:
-            self.stage_map = stage_map
+
+        self.stage_map = get_stage_map(classification_class)
 
         self.batch_size = batch_size
 
         if EvolutionManager.VERBOSE: print("Loading Data")
         self.train_loader, self.test_loader, self.n_samples, self.pos_weight = self.prepare_data()
-
-    def _get_stage_map(self):
-        STAGE_MAP = {
-            0: 1 if self.classification_class == Targets.WAKE else 0,
-            1: 1 if self.classification_class == Targets.N1 else 0,
-            2: 1 if self.classification_class == Targets.N2 else 0,
-            3: 1 if self.classification_class == Targets.N3 else 0,
-            4: 1 if self.classification_class == Targets.REM else 0
-        }
-
-        return STAGE_MAP
     
     def prepare_data(self):
 
@@ -47,10 +32,8 @@ class SDataLoader:
         train_files = [f for f in all_files if f[:5] in train_subjects]
         test_files = [f for f in all_files if f[:5] in test_subjects]
 
-        stage_map = self._get_stage_map()
-
-        train_dataset = LazyDataset(train_files, data_dir, stage_map, max_memory=2048*2)
-        test_dataset = LazyDataset(test_files, data_dir, stage_map, max_memory=2048*2)
+        train_dataset = LazyDataset(train_files, data_dir, self.stage_map, max_memory=2048*2)
+        test_dataset = LazyDataset(test_files, data_dir, self.stage_map, max_memory=2048*2)
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True)

@@ -2,7 +2,7 @@ from models.cnn_binary_classifier import CNN_BinaryClassifier
 from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
 from models.ensemble_model import EnsembleModel
 from ensemble_controller.ensemble_plotter import analyze_predictions
-from Globals import Targets, Signal, LoggingSettings, device
+from Globals import LoggingSettings, device
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from log_manager.log_manager import LogManager
@@ -17,8 +17,9 @@ LoggingSettings.LOGGER_ID = "O"
 
 class EnsembleController:
     NUM___FILTERS = 0 # Temporary for test TODO:
-    def __init__(self):
-        pass
+    def __init__(self, targets, signals):
+        self.targets = targets
+        self.signals = signals
 
     def create_ensemble(self, given_folder=None, model_marker=False):
         print("📦 Loading Data...")
@@ -49,7 +50,8 @@ class EnsembleController:
 
             all_model_files = [f for f in os.listdir(data_dir)]
             models_dict = {}
-            for signal in Signal.ALL_SIGNALS:
+            for signal in self.signals:
+                signal = signal.name
                 models_dict[signal] =[self.load_model(os.path.join(data_dir, model_path)) for model_path in all_model_files if signal in model_path]
 
             return models_dict
@@ -110,7 +112,7 @@ class EnsembleController:
         print(classification_report(
             all_true,
             all_preds,
-            target_names=Targets.All_CLASSES,
+            target_names=[target.given_name for target in self.targets],
             digits=4,
             zero_division=0
         ))
