@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
-from Globals import device, Signal, Classes, LoggingSettings
+from Globals import device, Signal, Targets, LoggingSettings
 from log_manager.log_manager import LogManager
 from datetime import datetime
 

@@ -1,8 +1,8 @@
 from models.cnn_binary_classifier import CNN_BinaryClassifier
-from data.multimodal_dataset import get_dataloaders_with_multimodal_datasets
+from datahelpers.multimodal_dataset import get_dataloaders_with_multimodal_datasets
 from models.ensemble_model import EnsembleModel
 from ensemble_controller.ensemble_plotter import analyze_predictions
-from Globals import Classes, Signal, LoggingSettings, device
+from Globals import Targets, Signal, LoggingSettings, device
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from log_manager.log_manager import LogManager
@@ -110,7 +110,7 @@ class EnsembleController:
         print(classification_report(
             all_true,
             all_preds,
-            target_names=Classes.All_CLASSES,
+            target_names=Targets.All_CLASSES,
             digits=4,
             zero_division=0
         ))

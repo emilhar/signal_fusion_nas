@@ -1,4 +1,8 @@
-from datetime import datetime
+from datahelpers.data import Data
+from datahelpers.signal import Signal
 
-a = str(datetime.now().replace(microsecond=0)).replace(" ", "_")
-print(f"{a}")
+d = Data()
+
+signal_obj: Signal
+for signal_obj in d.signal_objects:
+    print(signal_obj.name, signal_obj.n_samples)

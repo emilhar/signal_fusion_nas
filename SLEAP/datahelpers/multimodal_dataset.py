@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import os
 from Globals import Signal, DataManager
-from data.lazy_dataset import LazyDataset
+from datahelpers.lazy_dataset import LazyDataset
 TRAIN_SPLIT = 0.8
 MAX_MEMORY = 2048*4
 

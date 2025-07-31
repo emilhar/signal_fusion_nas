@@ -1,5 +1,5 @@
 from Globals import *
-from logs.log_manager import LogManager
+from log_manager.log_manager import LogManager
 from ea_controller.optimizer import KernelSizeEvolutionaryOptimizer
 
 class ___Signal___:
@@ -14,7 +14,7 @@ class EA_Controller:
         
         for signal in Signal.ALL_SIGNALS:
             # signal = ___Signal___(30 if signal==Signal.EMG.SUBMENTAL else 3000)
-            for cls in Classes.All_CLASSES:
+            for cls in Targets.All_CLASSES:
                 self.__single_ea(signal, cls, part_of_bigger_ea=True)
 
     def __single_ea(self, signal, cls, part_of_bigger_ea=False):

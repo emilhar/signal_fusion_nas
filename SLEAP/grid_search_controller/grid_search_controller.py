@@ -8,6 +8,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.proj3d as proj3d
 
+<<<<<<< HEAD
 from Globals import DataManager
 from data.signal import Signal
 
@@ -15,11 +16,15 @@ class Target:
     def __init__(self):
         self.name = "N1"
 
+=======
+from Globals import Signal, Targets, DataManager
+>>>>>>> refs/remotes/origin/refactor
 from data.data_loader import SDataLoader
 from utils.trained_model_maker import TrainedModelMaker
 from data.data import Data
 
 
+<<<<<<< HEAD
 class GridSearchTimeoutError(Exception):
     def __init__(self, *args):
         super().__init__(*args)
@@ -29,6 +34,13 @@ class GridSearchController:
     def __init__(self, signal: Signal, target: Target, dataset_percentage, epochs):
         Data.set_dataset("sleep-EDF-78")
         Data.set_data_percentage(dataset_percentage)
+=======
+class GridSearch:
+    def __init__(self, signal: Signal, sleep_stage: Targets, dataset: DataManager.DatasetNames, runtype: RunType, dataset_percentage, epochs, n_samples=3000):
+        DataManager.MAX_MEMORY = 2048
+        DataManager.DATASET = dataset
+        DataManager.dataset_percentage = dataset_percentage
+>>>>>>> refs/remotes/origin/refactor
 
         self.signal = signal
         self.target = target
@@ -48,8 +60,17 @@ class GridSearchController:
     def __get_kernels(self) -> list[int]:
         print("WARNING: USING ARBITRARY KERNELS")
 
+<<<<<<< HEAD
         return [500, 150, 50, 20, 5, 2]
     
+=======
+class QKernel_GridSearch(GridSearch):
+    def __init__(self, signal: Signal, sleep_stage: Targets, dataset: DataManager.DatasetNames, runtype: GridSearch.RunType, dataset_percentage, epochs, n_samples=3000):
+        super().__init__(signal, sleep_stage, dataset, runtype, dataset_percentage, epochs, n_samples)
+        self.primordial_kernel = 1000 if signal != Signal.EMG.SUBMENTAL else 15
+        self.kernels = self.__get_kernels()
+        self.load_grid()
+>>>>>>> refs/remotes/origin/refactor
 
     def load_grid(self) -> bool:
         try:
