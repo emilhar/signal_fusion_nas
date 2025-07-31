@@ -173,4 +173,4 @@ class EnsembleModel(nn.Module):
             
             print(f"\nCumulative run time: {elapsed:.4f} seconds")
 
-        return best_model_state
+        return model.state_dict()

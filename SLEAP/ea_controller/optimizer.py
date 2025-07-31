@@ -6,10 +6,9 @@ from deap import base, creator, tools
 from data.data_loader import SDataLoader
 from ea_controller.ea_algorithm import EA_Algorithm
 
-from ea_controller.trained_model_maker import TrainedModelMaker
+from utils.trained_model_maker import TrainedModelMaker
 from Globals import Signal, EvolutionManager, LoggingSettings, LoggingTemplate, FitnessFunctions
 
-from logs.log_manager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2

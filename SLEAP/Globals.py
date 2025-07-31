@@ -283,3 +283,6 @@ class SLEAPyException(Exception):
                     print(f"  Variable: {attr_name} = {repr(attr_value)}")
                 elif inspect.isclass(attr_value):
                     print(f"  Nested Class: {attr_name}")
+
+
+___SUPER__COUNTER__EXTREME__3000____ = 0

@@ -16,13 +16,13 @@ class TrainedModelMaker:
             train_loader: DataLoader, 
             test_loader: DataLoader,
             epochs,
-            learning_rate,
             batch_size,
+            filters=32
         ):
 
         assert device.type == "cuda", f"WHAT: {device.type}"
 
-        self.model_args = self.get_branch_configs(branches, N_SAMPLES) # See ModelManager
+        self.model_args = self.get_branch_configs(branches, N_SAMPLES, filters) # See ModelManager
         self.model_args["batch_size"] = batch_size
         self.model = CNN_BinaryClassifier(**self.model_args).to( device )
 
@@ -35,11 +35,10 @@ class TrainedModelMaker:
             test_loader, 
             pos_weight, 
             verbose=EvolutionManager.VERY_VERBOSE, 
-            lr=learning_rate, 
             epochs=epochs,
         )
 
-    def get_branch_configs(self, branches:list[list[int]], sample_count:int):
+    def get_branch_configs(self, branches:list[list[int]], sample_count:int, filters):
         """ 
         Get full Manager for a model given
         left_kernel_size: A list of 3 numbers for the kernel sizes of the left branch. e.g. [1, 2, 3]
@@ -55,7 +54,7 @@ class TrainedModelMaker:
 
         for i, branch in enumerate(branches):
             branch_configs[f"branch_{i}"] = {
-                "num_kernels": self.__get_num_kernels(branch),
+                "num_kernels": self.get_num_kernels(filters, branch),
                 "kernel_sizes": branch,
                 "paddings": self.__kernel_to_pad(branch),
                 "strides": self.__get_strides(branch, sample_count),
@@ -95,8 +94,8 @@ class TrainedModelMaker:
 
         return conv_stride, pool_size, pool_strides
 
-    def __get_num_kernels(self, branch):
-        return [32] + [64]*(len(branch)-1)
+    def get_num_kernels(self, filters, branch):
+        return [filters] * len(branch)
 
     def __get_strides(self, branch, n_samples):
         conv_stride = max(n_samples // 30 // 16, 1)

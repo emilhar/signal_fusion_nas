@@ -127,7 +127,7 @@ class CNN_BinaryClassifier(nn.Module):
 
 
     @staticmethod
-    def train_model(model, train_loader, test_loader, pos_weight, verbose=False, lr=2.5e-5, wd=1e-4, p=5, f=0.5, epochs=50, output_period=1):
+    def train_model(model, train_loader, test_loader, pos_weight, verbose=False, p=5, f=0.5, epochs=50, output_period=1):
         def _get_kernel_sizes(branch):
             kernel_sizes = []
             for layer in branch.net:
@@ -143,7 +143,7 @@ class CNN_BinaryClassifier(nn.Module):
 
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(device))
         optimizer = optim.AdamW(model.parameters())
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=p, factor=f)
+        #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=p, factor=f)
         best_f1, best_auc = 0.0, 0.0
 
         train_losses_data, test_losses_data = [], []
@@ -195,7 +195,7 @@ class CNN_BinaryClassifier(nn.Module):
             )
             auc_score = roc_auc_score(all_targets_np, all_probs_np)
             accuracy = accuracy_score(all_targets_np, all_preds_np)
-            scheduler.step(auc_score)
+            #scheduler.step(auc_score)
             current_lr = optimizer.param_groups[0]['lr']
 
             kernel_sizes = []
@@ -242,7 +242,9 @@ class CNN_BinaryClassifier(nn.Module):
             it.best_true: best_true,
             it.best_scores: best_scores,
             it.time: elapsed,
-            it.state_dict: best_state_dict
+            it.state_dict: best_state_dict,
+            "train_loss_history": train_losses_data,
+            "test_loss_history": test_losses_data,
         }
         
         return output

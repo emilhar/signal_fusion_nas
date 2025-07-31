@@ -43,7 +43,7 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
 
     return true_label, pred_label
 
-def analyze_predictions(all_true, all_preds, model_marker=None):
+def analyze_predictions(all_true, all_preds, model_marker=None, filters=None): # TODO: remove filters=None
     class_names = Classes.All_CLASSES
 
     cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize="true")
@@ -61,8 +61,8 @@ def analyze_predictions(all_true, all_preds, model_marker=None):
     plt.title("Confusion Matrix")
 
     if model_marker:
-        a = str(datetime.now().replace(microsecond=0)).replace(" ", "_").replace(":", "-")
-        fig_path =f"logs/{LoggingSettings.LOGGER_ID}Logs/EnSomniaCPlots/{model_marker}_{a}.png"
+        a = str(datetime.now().replace(microsecond=0)).replace(" ", "_").replace(":", "-") + f"_{filters}-filters"
+        fig_path =f"_misc/confusion_matrices/{model_marker}_{a}.png"
         plt.savefig(fig_path)
         print(f"Ensemble model plot saved at: {fig_path}")
     else:

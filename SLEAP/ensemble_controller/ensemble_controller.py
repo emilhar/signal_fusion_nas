@@ -14,7 +14,9 @@ import numpy as np
 
 LoggingSettings.LOGGER_ID = "O"
 
+
 class EnsembleController:
+    NUM___FILTERS = 0 # Temporary for test TODO:
     def __init__(self):
         pass
 
@@ -33,6 +35,9 @@ class EnsembleController:
 
         print("📊 Plotting Results...")
         self.plot(model, test_loader, model_marker)
+        self.NUM___FILTERS += 1
+
+        #self.save_ensemble(f"./_misc/ensemble_models/{???}")
 
     def load_each_model(self, given_folder):
             id_helper = LogManager()
@@ -111,4 +116,26 @@ class EnsembleController:
         ))
         print()
 
-        analyze_predictions(all_true, all_preds, model_marker)
+        analyze_predictions(all_true, all_preds, model_marker, EnsembleController.NUM___FILTERS)
+
+
+    def save_ensemble(ensemble_model, path):
+        save_data = {
+            "mlp_state_dict": ensemble_model.mlp.state_dict(),
+            "binary_classifier_configs": {
+                signal: [model.model_args for model in ffe_list] 
+                for signal, ffe_list in ensemble_model.feature_extractors.items()
+            }
+        }
+        torch.save(save_data, path)
+
+    def load_ensemble(path, device="cuda"):
+        data = torch.load(path, map_location=device)
+        
+        models = {}
+        for signal, configs in data["binary_classifier_configs"].items():
+            models[signal] = [CNN_BinaryClassifier(**config) for config in configs]
+        
+        ensemble = EnsembleModel(models)
+        ensemble.mlp.load_state_dict(data["mlp_state_dict"])
+        return ensemble
