@@ -86,6 +86,8 @@ def create_dataloaders(train_dataset, test_dataset):
         batch_size=128,
         shuffle=True,
         pin_memory=True if torch.cuda.is_available() else False,
+        num_workers=1,
+        persistent_workers=True
     )
 
     test_loader = DataLoader(
