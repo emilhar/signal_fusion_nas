@@ -17,7 +17,7 @@ class EvolutionManager:
     VERY_VERBOSE = True # Shows Individual Training sessions
 
 class LoggingHelper:
-    LOGGING = True
+    LOGGING = False
 
     current_generation_id = 0
     current_individual_id = 0

@@ -1,3 +1,5 @@
+import gc
+
 from Globals import *
 from datahelpers.datahelper import prepare_data
 
@@ -25,8 +27,10 @@ class Main:
         while True:
             progress = False
             target_ranking = self.ensemble_controller.create_ensemble(use_temp=False)
+            gc.collect()
     
-            for target in target_ranking:
+            for x in target_ranking:
+                target, score = x
                 if target_run_count[target.given_name] >= patience:
                     continue
 
@@ -53,21 +57,27 @@ class Main:
                         other_change += (new_score - original_score) / original_score
 
                 if target_change >= 1 and other_change >= -1:
+                    print("TARGET IMPROVED")
                     progress = True
                     break
                 
+                print("TARGET NOT IMPROVED, MOVING TO NEXT")
                 target_run_count[target] += 1
 
             else:
+                print("UPDATING FILTERS...")
                 progress = self.update_filters()
+                
 
             # if no meaningful progress, terminate main loop.
             if not progress:
+                print("NO PROGRESS MADE, TERMINATING")
                 break
 
 
     def update_filters(self):
         if TrainedModelMaker.NUM_FILTERS * 2 > self.max_filters:
+            print("REACHED MAX FILTERS PER CONVOLUTION")
             return False
         
         TrainedModelMaker.NUM_FILTERS *= 2
@@ -75,6 +85,7 @@ class Main:
         self.ensemble_controller.update_filters_for_binary_models()
         quit()
         return True
+    
 
     def __debug(self, t):
         if t == "grid":

@@ -58,6 +58,12 @@ class EnsembleController:
             target_ranking.append(
                 (target, cm[i][i])
             )
+
+        train_loader.dataset.clear_all()
+        test_loader.dataset.clear_all()
+
+        torch.cuda.empty_cache()
+        
         
         return sorted(target_ranking, key=lambda x: x[1])
 

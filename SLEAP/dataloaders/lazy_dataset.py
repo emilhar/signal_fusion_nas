@@ -83,6 +83,7 @@ class LazyDataset(Dataset):
         y = self.stage_map.get(y, 0) if self.stage_map else y
 
         return torch.tensor(x), torch.tensor(y)
+    
 
     def _evict_to_fit(self):
         max_bytes = self.max_mb * 1024 * 1024
@@ -92,3 +93,14 @@ class LazyDataset(Dataset):
             data_dict = self.cache.pop(file_to_remove)
             freed = data_dict['x'].nbytes + data_dict['y'].nbytes
             self.current_memory -= freed
+
+    def clear_cache(self):
+        for file in list(self.cache.keys()):
+            data_dict = self.cache.pop(file)
+            if file in self.usage_order:
+                self.usage_order.remove(file)
+            del data_dict['x']
+            del data_dict['y']
+        self.current_memory = 0
+        self.fit = False
+        torch.cuda.empty_cache()

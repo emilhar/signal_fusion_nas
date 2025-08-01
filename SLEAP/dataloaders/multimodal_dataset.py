@@ -43,6 +43,13 @@ class MultimodalLazyDataset(Dataset):
 
         return output_dict, labels.pop()
         
+    def clear_all(self):
+        for lazy_dataset in self.data_dict.values():
+            lazy_dataset.clear_cache()
+        self.data_dict.clear()
+
+
+
 def get_dataloaders_with_multimodal_datasets(targets, signals) -> tuple[DataLoader, DataLoader]:
     # Load data
     train_dataset, test_dataset = make_training_and_testing_data(signals)
@@ -87,8 +94,6 @@ def create_dataloaders(train_dataset, test_dataset):
         batch_size=128,
         shuffle=True,
         pin_memory=True if torch.cuda.is_available() else False,
-        num_workers=1,
-        persistent_workers=True
     )
 
     test_loader = DataLoader(
@@ -99,3 +104,5 @@ def create_dataloaders(train_dataset, test_dataset):
     )
 
     return train_loader, test_loader
+
+    
