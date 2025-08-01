@@ -21,9 +21,7 @@ class Main:
         self.ea_controller = EA_Controller()
         self.ensemble_controller = EnsembleController(self.targets, self.signals, debug=True)
         self.max_filters = 2
-        if os.path.exists("temp_models"):
-            shutil.rmtree("temp_models")
-            os.makedirs("temp_models")
+        self.clear_temp_models()
 
     def run(self):
         patience = 2
@@ -31,6 +29,7 @@ class Main:
         Logger.log_new_experiment_heading()
         #self.ensemble_controller.get_initial_models()
         while True:
+            self.clear_temp_models()
             progress = False
             target_ranking = self.ensemble_controller.create_ensemble(use_temp=False)
             Logger.log_ensemble(target_ranking, fake=False)
@@ -83,7 +82,7 @@ class Main:
                 Logger.log_completion(target_ranking)
                 break
 
-    def move_from_temp_to_saved():
+    def move_from_temp_to_saved(self):
         """
         Replace everything in the "saved_models" folder with files of the same name
         from the "temp_models" folder.
@@ -102,9 +101,12 @@ class Main:
             if os.path.isfile(temp_path):
                 shutil.copy2(temp_path, saved_path)
 
-        if os.path.exists(temp_folder):
-            shutil.rmtree(temp_folder)
-        os.makedirs(temp_folder)
+        self.clear_temp_models()
+
+    def clear_temp_models(self):
+        if os.path.exists("temp_models"):
+            shutil.rmtree("temp_models")
+            os.makedirs("temp_models")
 
     def update_filters(self):
         if TrainedModelMaker.NUM_FILTERS * 2 > self.max_filters:
