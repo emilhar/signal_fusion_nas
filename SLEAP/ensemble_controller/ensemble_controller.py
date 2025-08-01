@@ -35,7 +35,7 @@ class EnsembleController:
         train_loader, test_loader = get_dataloaders_with_multimodal_datasets(self.targets, self.signals)
 
         print("🧠 Loading Models...")
-        models_dict = self.load_each_model(given_folder)
+        models_dict = self.load_each_model(use_temp)
 
         print("🚀 Training Model...")
         model = EnsembleModel(models_dict)
@@ -49,18 +49,15 @@ class EnsembleController:
 
         #self.save_ensemble(f"./_misc/ensemble_models/{???}")
 
-    def load_each_model(self, given_folder):
+    def load_each_model(self, use_temp):
 
-            if given_folder:
-                data_dir = given_folder
-            else:
-                data_dir = f"ea_controller/saved_models"
+            
 
             all_model_files = [f for f in os.listdir(data_dir)]
             models_dict = {}
             for signal in self.signals:
                 signal = signal.name
-                models_dict[signal] =[self.load_model(os.path.join(data_dir, model_path)) for model_path in all_model_files if signal in model_path]
+                models_dict[signal] = [self.load_model(os.path.join(data_dir, model_path)) for model_path in all_model_files if signal in model_path]
 
             if len(models_dict.keys()) != len(Data.get_all_signal_names()):
                 raise ValueError("Contact support")
