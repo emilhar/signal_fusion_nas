@@ -1,16 +1,14 @@
-import os
 import random
 import torch
 import numpy as np
 from deap import base, creator, tools
+from deap.algorithms import eaMuPlusLambda
 from dataloaders.data_loader import SDataLoader
-from ea_controller.ea_algorithm import EA_Algorithm
+from logger import Logger
 
 from utils.trained_model_maker import TrainedModelMaker
 from Globals import EvolutionManager, LoggingHelper
 from ea_controller.fitness_functions import FitnessFunctions
-
-from log_manager.log_manager import LogManager
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2
@@ -48,11 +46,6 @@ class KernelSizeEvolutionaryOptimizer:
             classification_class=self.classification_class,
             batch_size=self.batch_size,
         )
-
-        if LoggingHelper.LOGGING:
-            self.log_manager = LogManager()
-        else:
-            self.log_manager = None
 
         self.setup_deap()
     
@@ -320,21 +313,25 @@ class KernelSizeEvolutionaryOptimizer:
         # Create initial population
         population = self.get_grid_individuals()
         
-        # Run evolution
-        algorithm = EA_Algorithm(
+
+        pop, logbook = eaMuPlusLambda(
             population=population,
             toolbox=self.toolbox,
+            mu=EvolutionManager.POPULATION_SIZE,
+            lambda_= max(1, EvolutionManager.POPULATION_SIZE // 2),
+            cxpb= EvolutionManager.CX_PROB,
+            mutpb= EvolutionManager.MUTATION_PROB,
+            ngen= EvolutionManager.GENERATIONS,
+            stats=self.stats,
             halloffame= self.hall_of_fame,
-            log_manager= self.log_manager,
+            verbose= EvolutionManager.VERBOSE
         )
-        
-        algorithm.eaMuPlusLambda(
-            stats= self.stats,
-        )
+
+        Logger.log_ea_completion(self.stats)
 
         if part_of_bigger_run:
             
-            save_dir = "temp_models"
+            temp_dir = "temp_models"
             best_individual = self.hall_of_fame[0]
 
             torch.save(
@@ -342,20 +339,5 @@ class KernelSizeEvolutionaryOptimizer:
                     "state_dict": best_individual.model_performance["state_dict"],
                     "model_args": best_individual.model_args,
                 },
-                f"{save_dir}/{self.classification_class.given_name}_{self.signal_type}_classifier.pt"
+                f"{temp_dir}/{self.classification_class.given_name}_{self.signal_type}_classifier.pt"
             )
-
-    # def log_results(self, part_of_bigger_run):
-        
-    #     def get_hall_of_fame_format(i):
-    #         individual = self.hall_of_fame[i]
-    #         return f"{i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}"
-
-    #     self.log_manager.log_experiment(
-    #         classification_class= self.classification_class.given_name,
-    #         signal_type= self.signal_type,
-    #         max_kernel_size= self.max_kernel_size,
-    #         best= get_hall_of_fame_format(0),
-    #         second_best= get_hall_of_fame_format(0),
-    #         third_best= get_hall_of_fame_format(0),
-    #     )

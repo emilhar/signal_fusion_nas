@@ -17,11 +17,6 @@ class EA_Controller:
         if target_to_update.given_name not in Data.get_all_target_names():
             raise ValueError(f"Target does not exist: {target_to_update}")
 
-        temp_file_path = "temp_models"
-        if os.path.exists(temp_file_path):
-            shutil.rmtree(temp_file_path)
-        os.makedirs(temp_file_path)
-
         da = Data()
         for signal in da.signal_objects:
             self.__single_ea(signal, target_to_update, part_of_bigger_ea=True)
