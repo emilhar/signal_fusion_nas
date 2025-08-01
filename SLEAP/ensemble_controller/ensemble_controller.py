@@ -16,15 +16,13 @@ import numpy as np
 
 
 
-import matplotlib.pyplot as fogb
-import sklearn.metrics as fobg
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 
 
 
 class EnsembleController:
-    NUM___FILTERS = 0 # Temporary for test TODO:
-
     def __init__(self, targets, signals, debug=False):
         self.targets = targets
         self.signals = signals
@@ -43,30 +41,65 @@ class EnsembleController:
         assert device.type == "cuda", "Device is not CUDA"
         model.to(device).load_state_dict(trained_state)
 
-        print("📊 Plotting Results...")
-        self.plot(model, test_loader)
-        self.NUM___FILTERS += 1
+        cm = self.get_confusion_matrix(model, test_loader)
+        print(cm.shape)
+        target_ranking = []
+        for i, target in enumerate(self.targets):
+            target_ranking.append(
+                (target, cm[i][i])
+            )
+        
+        return sorted(target_ranking, key=lambda x: x[1])
 
-        #self.save_ensemble(f"./_misc/ensemble_models/{???}")
 
     def load_each_model(self, use_temp):
+        # saved_models/
+        # temp_models/
+        #
+        # load from temp models if use_temp=True
+        # load from saved_models, but not files with the same prefix as those loaded from temp if use_temp=True
+        # Prefix is anything that comes before the first underline: prefix_something_else.pt
 
+        # Determine which directory to load from
+        base_dir = "temp_models" if use_temp else "saved_models"
+        all_model_files = [f for f in os.listdir(base_dir) if f.endswith('.pt')]
+        
+        # If loading from temp, get the prefixes to exclude from saved_models
+        temp_prefixes = set()
+        if use_temp:
+            for f in all_model_files:
+                prefix = f.split('_')[0]
+                temp_prefixes.add(prefix)
+        
+        models_dict = {}
+        for signal in self.signals:
+            signal_name = signal.name
+            models_dict[signal_name] = []
             
-
-            all_model_files = [f for f in os.listdir(data_dir)]
-            models_dict = {}
-            for signal in self.signals:
-                signal = signal.name
-                models_dict[signal] = [self.load_model(os.path.join(data_dir, model_path)) for model_path in all_model_files if signal in model_path]
-
-            if len(models_dict.keys()) != len(Data.get_all_signal_names()):
-                raise ValueError("Contact support")
+            # First load from temp if use_temp is True
+            if use_temp:
+                for model_path in all_model_files:
+                    if signal_name in model_path:
+                        print("LOADING TEMPORARY MODEL")
+                        full_path = os.path.join("temp_models", model_path)
+                        models_dict[signal_name].append(self.load_model(full_path))
             
-            for k in models_dict.keys():
-                assert len(models_dict[k]) == len(Data.get_all_target_names()), "Turn yourself into goo"
+            # Then load from saved_models, excluding files with prefixes found in temp
+            saved_model_files = [f for f in os.listdir("saved_models") 
+                            if f.endswith('.pt') and 
+                            (not use_temp or f.split('_')[0] not in temp_prefixes)]
             
+            for model_path in saved_model_files:
+                if signal_name in model_path:
+                    full_path = os.path.join("saved_models", model_path)
+                    models_dict[signal_name].append(self.load_model(full_path))
 
-            return models_dict
+        assert len(models_dict.keys()) == len(Data.get_all_signal_names()), "Not enough models"
+        
+        for k in models_dict.keys():
+            assert len(models_dict[k]) == len(Data.get_all_target_names()), "Not all signals have all targets"
+        
+        return models_dict
 
     def load_model(self, model_path):
         with warnings.catch_warnings():
@@ -99,7 +132,7 @@ class EnsembleController:
         return trained_state
 
 
-    def plot(self, model: torch.nn.Module, test_loader: DataLoader, model_marker):
+    def plot(self, model: torch.nn.Module, test_loader: DataLoader):
         all_true = []
         all_preds = []
 
@@ -132,27 +165,65 @@ class EnsembleController:
 
         # analyze_predictions(all_true, all_preds, self.targets, model_marker, EnsembleController.NUM___FILTERS)
 
-        print("Turning you into sludge... loading ensludginator")
+        # print("Turning you into sludge... loading ensludginator")
 
-        cm = fobg.confusion_matrix(all_true, all_preds, labels=range(len(Data.get_all_target_names())), normalize="true")
+        # cm = fobg.confusion_matrix(all_true, all_preds, labels=range(len(Data.get_all_target_names())), normalize="true")
 
 
-        fogb.figure(figsize=(10, 8))
+        # fogb.figure(figsize=(10, 8))
 
-        disp = fobg.ConfusionMatrixDisplay(
-            confusion_matrix=cm,
-            display_labels=Data.get_all_target_names()
-        )
-        disp.plot(cmap="Blues", values_format=".2f")
+        # disp = fobg.ConfusionMatrixDisplay(
+        #     confusion_matrix=cm,
+        #     display_labels=Data.get_all_target_names()
+        # )
+        # disp.plot(cmap="Blues", values_format=".2f")
 
-        fogb.xlabel("Predicted")
-        fogb.ylabel("True")
-        fogb.title("Confusion Matrix")
+        # fogb.xlabel("Predicted")
+        # fogb.ylabel("True")
+        # fogb.title("Confusion Matrix")
 
-        fogb.tight_layout()
-        fogb.show()
+        # fogb.tight_layout()
+        # fogb.show()
 
-    def save_ensemble(ensemble_model, path):
+    
+    def get_confusion_matrix(self, model, test_loader):
+        all_true = []
+        all_preds = []
+
+        model.eval()
+        model.to(device)  # Ensure model is on the right device
+
+        with torch.inference_mode():
+            for (datas, labels) in test_loader:
+                # Move data to the same device as model
+                datas = {k: v.to(device) for k, v in datas.items()}
+                labels = labels.to(device)
+                
+                output = model(datas)
+                pred_label = torch.argmax(output, dim=1).cpu()
+                all_true.extend(labels.cpu().numpy())
+                all_preds.extend(pred_label)
+
+        all_true = np.array(all_true)
+        all_preds = np.array(all_preds)
+
+        # print("\nTest Classification Report:")
+        # print(classification_report(
+        #     all_true,
+        #     all_preds,
+        #     target_names=[target.given_name for target in self.targets],
+        #     digits=4,
+        #     zero_division=0
+        # ))
+        # print()
+
+        # analyze_predictions(all_true, all_preds, self.targets, model_marker, EnsembleController.NUM___FILTERS)
+
+        return confusion_matrix(all_true, all_preds, labels=range(len(Data.get_all_target_names())), normalize="true")
+
+
+
+    def save_ensemble(self, ensemble_model, path):
         save_data = {
             "mlp_state_dict": ensemble_model.mlp.state_dict(),
             "binary_classifier_configs": {
@@ -162,7 +233,7 @@ class EnsembleController:
         }
         torch.save(save_data, path)
 
-    def load_ensemble(path, device="cuda"):
+    def load_ensemble(self, path, device="cuda"):
         data = torch.load(path, map_location=device)
         
         models = {}
