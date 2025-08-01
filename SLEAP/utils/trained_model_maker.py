@@ -7,6 +7,7 @@ from models.cnn_binary_classifier import CNN_BinaryClassifier
 from Globals import EvolutionManager, LoggingHelper, device
 
 class TrainedModelMaker:
+    NUM_FILTERS = 1
 
     def __init__(
             self, 
@@ -17,12 +18,11 @@ class TrainedModelMaker:
             test_loader: DataLoader,
             epochs,
             batch_size,
-            filters=32
         ):
 
-        assert device.type == "cuda", f"WHAT: {device.type}"
+        self.filters = TrainedModelMaker.NUM_FILTERS
 
-        self.model_args = self.get_branch_configs(branches, N_SAMPLES, filters) # See ModelManager
+        self.model_args = self.get_branch_configs(branches, N_SAMPLES, filters=self.filters) # See ModelManager
         self.model_args["batch_size"] = batch_size
         self.model = CNN_BinaryClassifier(**self.model_args).to( device )
 

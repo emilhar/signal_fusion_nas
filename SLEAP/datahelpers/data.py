@@ -7,6 +7,7 @@ class Data:
     __ALL_TARGET_NAMES = None
     DIRECTORY = "dataset"
     max_memory = (2**10) * (2**3)
+    batch_size = 128
     
 
     def __init__(self):

@@ -5,7 +5,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 class EvolutionManager:
 
     # Overview Manager
-    POPULATION_SIZE: int = 1
+    POPULATION_SIZE: int = 2
     GENERATIONS: int = 2
 
     # Evolution Manager

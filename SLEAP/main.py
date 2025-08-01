@@ -4,6 +4,7 @@ from datahelpers.datahelper import prepare_data
 #from grid_search_controller.grid_search_controller import QKernel_GridSearch
 from ea_controller.ea_controller import EA_Controller
 from ensemble_controller.ensemble_controller import EnsembleController
+from utils.trained_model_maker import TrainedModelMaker
 
 from datahelpers.data import Data
 from utils.clr import Clr
@@ -15,32 +16,65 @@ class Main:
         # self.grid_search = QKernel_GridSearch()
         self.ea_controller = EA_Controller()
         self.ensemble_controller = EnsembleController(self.targets, self.signals, debug=True)
+        self.max_filters = 2
 
     def run(self):
+        patience = 2
+        target_run_count = {target.given_name: 0 for target in self.targets}
+        #self.ensemble_controller.get_initial_models()
         while True:
+            progress = False
             target_ranking = self.ensemble_controller.create_ensemble(use_temp=False)
+    
             for target in target_ranking:
+                if target_run_count[target.given_name] >= patience:
+                    continue
+
                 self.ea_controller.run_ea(target)
                 new_target_ranking = self.ensemble_controller.create_ensemble(use_temp=True)
+
+                target_change = 0
+                other_change = 0
                 for original, new in zip(target_ranking, new_target_ranking):
-                    original_name, original_score = original
-                    new_name, new_score = new
+                    original, original_score = original
+                    new, new_score = new
                     
                     arrow_color = "green" if new_score >= original_score else "red"
                     colored_arrow = Clr("--->", arrow_color)
                     
                     print(
-                        f"Original: {original_name}: {original_score:.2f} "
+                        f"Original: {original}: {original_score:.2f} "
                         f"{colored_arrow} "
-                        f"New: {new_name}: {new_score:.2f}\n\n"
+                        f"New: {new}: {new_score:.2f}\n"
                     )
+                    if original == target:
+                        target_change = (new_score - original_score) / original_score
+                    else:
+                        other_change += (new_score - original_score) / original_score
+
+                if target_change >= 1 and other_change >= -1:
+                    progress = True
+                    break
+                
+                target_run_count[target] += 1
+
+            else:
+                progress = self.update_filters()
+
+            # if no meaningful progress, terminate main loop.
+            if not progress:
                 break
 
-                # if better, replace AND others have not suffered
-                    # break
-                    # save new target to saved_models
-            break
 
+    def update_filters(self):
+        if TrainedModelMaker.NUM_FILTERS * 2 > self.max_filters:
+            return False
+        
+        TrainedModelMaker.NUM_FILTERS *= 2
+
+        self.ensemble_controller.update_filters_for_binary_models()
+        quit()
+        return True
 
     def __debug(self, t):
         if t == "grid":

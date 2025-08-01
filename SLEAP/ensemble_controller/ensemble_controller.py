@@ -1,32 +1,36 @@
 from models.cnn_binary_classifier import CNN_BinaryClassifier
+
 from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
+from dataloaders.data_loader import SDataLoader
+
 from models.ensemble_model import EnsembleModel
-from ensemble_controller.ensemble_plotter import analyze_predictions
-from Globals import LoggingHelper, device
-from torch.utils.data import DataLoader
-from sklearn.metrics import classification_report
-from log_manager.log_manager import LogManager
+
+from utils.trained_model_maker import TrainedModelMaker
+
 from datahelpers.data import Data
+from datahelpers.signal import Signal
+from datahelpers.target import Target
+
+from Globals import LoggingHelper, device
 
 import os
 import torch
 import warnings
 import numpy as np
 
-
-
-
-import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
-
+class SmartBranchGenerator():
+    def get_branch(self):
+        return [[81, 3, 3]]
 
 
 class EnsembleController:
-    def __init__(self, targets, signals, debug=False):
+    def __init__(self, targets, signals: list[Signal], debug=False):
         self.targets = targets
         self.signals = signals
         self.debug = debug
+        self.branch_generator = SmartBranchGenerator()
 
     def create_ensemble(self, use_temp=False):
         print("📦 Loading Data...")
@@ -37,12 +41,18 @@ class EnsembleController:
 
         print("🚀 Training Model...")
         model = EnsembleModel(models_dict)
-        trained_state = self.ensomnia(models_dict, train_loader, test_loader)
-        assert device.type == "cuda", "Device is not CUDA"
+        model.to(device)
+        trained_state = EnsembleModel.train_model(
+            model=model,
+            train_loader=train_loader,
+            test_loader=test_loader,
+            epochs=1 if self.debug else 5,
+            lr=5e-5,
+            wd=1e-4,
+        )
         model.to(device).load_state_dict(trained_state)
 
         cm = self.get_confusion_matrix(model, test_loader)
-        print(cm.shape)
         target_ranking = []
         for i, target in enumerate(self.targets):
             target_ranking.append(
@@ -53,14 +63,6 @@ class EnsembleController:
 
 
     def load_each_model(self, use_temp):
-        # saved_models/
-        # temp_models/
-        #
-        # load from temp models if use_temp=True
-        # load from saved_models, but not files with the same prefix as those loaded from temp if use_temp=True
-        # Prefix is anything that comes before the first underline: prefix_something_else.pt
-
-        # Determine which directory to load from
         base_dir = "temp_models" if use_temp else "saved_models"
         all_model_files = [f for f in os.listdir(base_dir) if f.endswith('.pt')]
         
@@ -101,6 +103,7 @@ class EnsembleController:
         
         return models_dict
 
+
     def load_model(self, model_path):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=FutureWarning)
@@ -116,74 +119,14 @@ class EnsembleController:
 
         model.load_state_dict(checkpoint["state_dict"])
         return model
+    
 
-    def ensomnia(self, models_dict, train_loader, test_loader):
-        model = EnsembleModel(models_dict).to(device)
+    def load_model_config(self, model_path):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=FutureWarning)
+            checkpoint = torch.load(model_path, map_location=device)
 
-        trained_state = EnsembleModel.train_model(
-            model=model,
-            train_loader=train_loader,
-            test_loader=test_loader,
-            epochs=1 if self.debug else 5,
-            lr=5e-5,
-            wd=1e-4,
-        )
-        
-        return trained_state
-
-
-    def plot(self, model: torch.nn.Module, test_loader: DataLoader):
-        all_true = []
-        all_preds = []
-
-        model.eval()
-        model.to(device)  # Ensure model is on the right device
-
-        with torch.inference_mode():
-            for (datas, labels) in test_loader:
-                # Move data to the same device as model
-                datas = {k: v.to(device) for k, v in datas.items()}
-                labels = labels.to(device)
-                
-                output = model(datas)
-                pred_label = torch.argmax(output, dim=1).cpu()
-                all_true.extend(labels.cpu().numpy())
-                all_preds.extend(pred_label)
-
-        all_true = np.array(all_true)
-        all_preds = np.array(all_preds)
-
-        # print("\nTest Classification Report:")
-        # print(classification_report(
-        #     all_true,
-        #     all_preds,
-        #     target_names=[target.given_name for target in self.targets],
-        #     digits=4,
-        #     zero_division=0
-        # ))
-        # print()
-
-        # analyze_predictions(all_true, all_preds, self.targets, model_marker, EnsembleController.NUM___FILTERS)
-
-        # print("Turning you into sludge... loading ensludginator")
-
-        # cm = fobg.confusion_matrix(all_true, all_preds, labels=range(len(Data.get_all_target_names())), normalize="true")
-
-
-        # fogb.figure(figsize=(10, 8))
-
-        # disp = fobg.ConfusionMatrixDisplay(
-        #     confusion_matrix=cm,
-        #     display_labels=Data.get_all_target_names()
-        # )
-        # disp.plot(cmap="Blues", values_format=".2f")
-
-        # fogb.xlabel("Predicted")
-        # fogb.ylabel("True")
-        # fogb.title("Confusion Matrix")
-
-        # fogb.tight_layout()
-        # fogb.show()
+        return checkpoint["model_args"]
 
     
     def get_confusion_matrix(self, model, test_loader):
@@ -207,18 +150,6 @@ class EnsembleController:
         all_true = np.array(all_true)
         all_preds = np.array(all_preds)
 
-        # print("\nTest Classification Report:")
-        # print(classification_report(
-        #     all_true,
-        #     all_preds,
-        #     target_names=[target.given_name for target in self.targets],
-        #     digits=4,
-        #     zero_division=0
-        # ))
-        # print()
-
-        # analyze_predictions(all_true, all_preds, self.targets, model_marker, EnsembleController.NUM___FILTERS)
-
         return confusion_matrix(all_true, all_preds, labels=range(len(Data.get_all_target_names())), normalize="true")
 
 
@@ -233,6 +164,7 @@ class EnsembleController:
         }
         torch.save(save_data, path)
 
+
     def load_ensemble(self, path, device="cuda"):
         data = torch.load(path, map_location=device)
         
@@ -243,3 +175,83 @@ class EnsembleController:
         ensemble = EnsembleModel(models)
         ensemble.mlp.load_state_dict(data["mlp_state_dict"])
         return ensemble
+    
+
+    def get_initial_models(self):
+        for signal in self.signals:
+            for target in self.targets:
+                sdl = SDataLoader(signal, target, batch_size=Data.batch_size)
+                indi = self.branch_generator.get_branch()
+                m = TrainedModelMaker(
+                    branches=indi,
+                    N_SAMPLES=signal.n_samples,
+                    pos_weight=sdl.pos_weight,
+                    train_loader=sdl.train_loader,
+                    test_loader=sdl.test_loader,
+                    epochs=3,
+                    batch_size=Data.batch_size,
+                )
+                self.save_binary_model(m, signal, target)
+
+
+    def update_filters_for_binary_models(self):
+        for (target, signal), model_config in self.load_each_model_config().items():
+            sdl = SDataLoader(signal, target, batch_size=Data.batch_size)
+
+            indi = [
+                model_config["branch_configs"][f"branch_{i}"]["kernel_sizes"]
+                for i in range(len(model_config["branch_configs"]))
+            ]
+            m = TrainedModelMaker(
+                branches=indi,
+                N_SAMPLES=signal.n_samples,
+                pos_weight=sdl.pos_weight,
+                train_loader=sdl.train_loader,
+                test_loader=sdl.test_loader,
+                epochs=3,
+                batch_size=Data.batch_size,
+            )
+            self.save_binary_model(m, signal, target)
+
+
+    def load_each_model_config(self):
+        model_configs = {}
+        for signal in self.signals:
+            signal_name = signal.name
+            
+            saved_model_files = [
+                f for f in os.listdir("saved_models") 
+                if f.endswith('.pt')
+            ]
+            
+            for model_path in saved_model_files:
+                if signal_name in model_path:
+                    full_path = os.path.join("saved_models", model_path)
+                    model_configs.append(self.load_model_config(full_path))
+
+        return model_configs
+        
+    def load_each_model_config(self):
+        model_configs = {}
+
+        saved_model_files = [
+                f for f in os.listdir("saved_models") 
+                if f.endswith('.pt')
+            ]
+            
+        for model_path in saved_model_files:
+            model_target = [t for t in self.targets if t.given_name in model_path][0]
+            model_signal = [s for s in self.signals if s.name in model_path][0]
+            full_path = os.path.join("saved_models", model_path)
+            model_configs[(model_target, model_signal)] = self.load_model_config(full_path)
+
+        return model_configs
+    
+    def save_binary_model(self, tmm, signal, target):
+        os.makedirs(f"saved_models", exist_ok=True)
+        
+        model_path = f"saved_models/{target}_{signal}_model.pt"
+        torch.save({
+            'state_dict': tmm.model_performance["state_dict"],
+            'model_args': tmm.model_args
+        }, model_path)
