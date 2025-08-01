@@ -20,7 +20,7 @@ class Main:
         while True:
             target_ranking = self.ensemble_controller.create_ensemble(use_temp=False)
             for target in target_ranking:
-                # self.ea_controller.run_ea(target)
+                self.ea_controller.run_ea(target)
                 new_target_ranking = self.ensemble_controller.create_ensemble(use_temp=True)
                 for original, new in zip(target_ranking, new_target_ranking):
                     original_name, original_score = original
