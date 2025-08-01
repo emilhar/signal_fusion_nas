@@ -71,3 +71,11 @@ class Logger:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             ranking_str = ", ".join([f"{t[0]}:{t[1]}" for t in target_ranking])
             f.write(f"\n## [{timestamp}] Experiment completed with final ranking: {ranking_str}\n")
+
+    @classmethod
+    def log_line(cls, line:str):
+        """Say that we failed to upgrade, so we're moving from the old filter count to the new one"""
+        cls._ensure_log_file_exists()
+        with open(cls._current_log_file, 'a') as f:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"- [{timestamp}] {line}\n")
