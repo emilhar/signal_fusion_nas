@@ -237,13 +237,13 @@ class CNN_BinaryClassifier(nn.Module):
             "lr": current_lr,
             "branches": kernel_sizes,
             "best_f1": best_f1,
-            "best_auc": best_auc,
-            "best_true": best_true,
-            "best_scores": best_scores,
+            # "best_auc": best_auc,
+            # "best_true": best_true,
+            # "best_scores": best_scores,
             "time": elapsed,
             "state_dict": best_state_dict,
-            "train_loss_history": train_losses_data,
-            "test_loss_history": test_losses_data,
+            # "train_loss_history": train_losses_data,
+            # "test_loss_history": test_losses_data,
         }
         
         return output

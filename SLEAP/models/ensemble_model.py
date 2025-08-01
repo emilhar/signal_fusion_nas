@@ -162,14 +162,14 @@ class EnsembleModel(nn.Module):
             print(f"  Test:  Loss={test_loss:.4f}, Acc={test_acc:.4f}, "
                 f"Precision={test_precision:.4f}, Recall={test_recall:.4f}, F1={test_f1:.4f}")
 
-            print("\nTest Classification Report:")
-            print(classification_report(
-                all_test_targets,
-                all_test_preds,
-                target_names=class_names,
-                digits=4,
-                zero_division=0
-                ))
+            # print("\nTest Classification Report:")
+            # print(classification_report(
+            #     all_test_targets,
+            #     all_test_preds,
+            #     target_names=class_names,
+            #     digits=4,
+            #     zero_division=0
+            #     ))
             
             print(f"\nCumulative run time: {elapsed:.4f} seconds")
 

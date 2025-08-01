@@ -38,6 +38,8 @@ class TrainedModelMaker:
             epochs=epochs,
         )
 
+        
+
     def get_branch_configs(self, branches:list[list[int]], sample_count:int, filters):
         """ 
         Get full Manager for a model given

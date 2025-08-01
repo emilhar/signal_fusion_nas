@@ -14,6 +14,7 @@ from datahelpers.target import Target
 from Globals import LoggingHelper, device
 
 import os
+import multiprocessing
 import torch
 import warnings
 import numpy as np
@@ -33,9 +34,27 @@ class EnsembleController:
         self.branch_generator = SmartBranchGenerator()
 
     def create_ensemble(self, use_temp=False):
-        print("📦 Loading Data...")
-        train_loader, test_loader = get_dataloaders_with_multimodal_datasets(self.targets, self.signals)
+        ctx = multiprocessing.get_context('spawn')
+        queue = ctx.Queue()
+        p = ctx.Process(
+            target=self._create_ensemble_in_process,
+            args=(queue, use_temp, self.targets, self.signals, self.debug)
+        )
+        p.start()
+        p.join()
+        if p.exitcode != 0:
+            raise RuntimeError("Subprocess for ensemble creation failed")
+        return queue.get()
 
+    def _create_ensemble_in_process(self, queue, use_temp, targets, signals, debug):
+        # Reinitialize necessary components in subprocess
+        from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
+        from models.ensemble_model import EnsembleModel
+        from Globals import device
+        
+        print("📦 Loading Data...")
+        train_loader, test_loader = get_dataloaders_with_multimodal_datasets(targets, signals)
+        
         print("🧠 Loading Models...")
         models_dict = self.load_each_model(use_temp)
 
@@ -46,27 +65,33 @@ class EnsembleController:
             model=model,
             train_loader=train_loader,
             test_loader=test_loader,
-            epochs=1 if self.debug else 5,
+            epochs=1 if debug else 5,
             lr=5e-5,
             wd=1e-4,
         )
-        model.to(device).load_state_dict(trained_state)
+        model.load_state_dict(trained_state)
 
         cm = self.get_confusion_matrix(model, test_loader)
         target_ranking = []
-        for i, target in enumerate(self.targets):
-            target_ranking.append(
-                (target, cm[i][i])
-            )
+        for i, target in enumerate(targets):
+            target_ranking.append((target, cm[i][i]))
 
+        # Aggressive cleanup
         train_loader.dataset.clear_all()
         test_loader.dataset.clear_all()
-
+        del train_loader
+        del test_loader
+        del model
+        for signal_models in models_dict.values():
+            for m in signal_models:
+                del m
+        models_dict.clear()
+        
+        import gc
+        gc.collect()
         torch.cuda.empty_cache()
         
-        
-        return sorted(target_ranking, key=lambda x: x[1])
-
+        queue.put(sorted(target_ranking, key=lambda x: x[1]))
 
     def load_each_model(self, use_temp):
         base_dir = "temp_models" if use_temp else "saved_models"
@@ -113,7 +138,7 @@ class EnsembleController:
     def load_model(self, model_path):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=FutureWarning)
-            checkpoint = torch.load(model_path, map_location=device)
+            checkpoint = torch.load(model_path, map_location=device, weights_only=True, mmap=True)
 
         model_args = checkpoint["model_args"]
 

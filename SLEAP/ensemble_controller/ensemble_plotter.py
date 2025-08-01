@@ -3,7 +3,6 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from Globals import device
-from log_manager.log_manager import LogManager
 from datetime import datetime
 from datahelpers.signal import Signal
 from datahelpers.target import Target
