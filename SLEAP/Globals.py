@@ -24,3 +24,5 @@ class LoggingHelper:
     population_size = 0
 
     experiment_name = "Unnamed"
+
+    CONF_SAVE_DIR = None

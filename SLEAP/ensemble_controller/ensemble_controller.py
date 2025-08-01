@@ -1,6 +1,5 @@
 from models.cnn_binary_classifier import CNN_BinaryClassifier
 
-from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
 from dataloaders.data_loader import SDataLoader
 
 from models.ensemble_model import EnsembleModel
@@ -9,9 +8,10 @@ from utils.trained_model_maker import TrainedModelMaker
 
 from datahelpers.data import Data
 from datahelpers.signal import Signal
-from datahelpers.target import Target
 
 from Globals import LoggingHelper, device
+
+from ensemble_controller.ensemble_plotter import analyze_predictions
 
 import os
 import multiprocessing
@@ -180,6 +180,8 @@ class EnsembleController:
 
         all_true = np.array(all_true)
         all_preds = np.array(all_preds)
+
+        analyze_predictions(all_true, all_preds, self.targets)
 
         return confusion_matrix(all_true, all_preds, labels=range(len(Data.get_all_target_names())), normalize="true")
 

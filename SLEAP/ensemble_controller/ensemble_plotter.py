@@ -1,11 +1,13 @@
 import numpy as np
 import torch
+import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from Globals import device
+from Globals import *
 from datetime import datetime
 from datahelpers.signal import Signal
 from datahelpers.target import Target
+
 
 def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=None, pred_label=None):
     signals = {}
@@ -43,7 +45,7 @@ def plot_sample_predictions(model, X, y, sample_idx, class_names, true_label=Non
 
     return true_label, pred_label
 
-def analyze_predictions(all_true, all_preds, targets:list[Target], filters=None):
+def analyze_predictions(all_true, all_preds, targets:list[Target]):
     class_names = [target.given_name for target in targets]
 
     cm = confusion_matrix(all_true, all_preds, labels=range(len(class_names)), normalize="true")
@@ -61,25 +63,26 @@ def analyze_predictions(all_true, all_preds, targets:list[Target], filters=None)
     plt.title("Confusion Matrix")
 
     a = str(datetime.now().replace(microsecond=0)).replace(" ", "_").replace(":", "-")
-    fig_path = f"_misc/confusion_matrices/Experiment_{a}.png"
+    fig_path = f"_misc/confusion_matrices/test/Experiment_{a}.png"
+    os.makedirs("_misc/confusion_matrices/test", exist_ok=True)
     plt.savefig(fig_path)
     print(f"Ensemble model plot saved at: {fig_path}")
 
-    for class_idx, class_name in enumerate(class_names):
-        print(f"\n===== {class_name} Analysis =====")
+    # for class_idx, class_name in enumerate(class_names):
+    #     print(f"\n===== {class_name} Analysis =====")
 
-        # True Positives (TP): Correctly predicted as this class
-        tp_indices = np.where((all_true == class_idx) & (all_preds == class_idx))[0]
-        print(f"True Positives: {len(tp_indices)} samples")
+    #     # True Positives (TP): Correctly predicted as this class
+    #     tp_indices = np.where((all_true == class_idx) & (all_preds == class_idx))[0]
+    #     print(f"True Positives: {len(tp_indices)} samples")
 
-        # False Positives (FP): Predicted as this class but actually not
-        fp_indices = np.where((all_true != class_idx) & (all_preds == class_idx))[0]
-        print(f"False Positives: {len(fp_indices)} samples")
+    #     # False Positives (FP): Predicted as this class but actually not
+    #     fp_indices = np.where((all_true != class_idx) & (all_preds == class_idx))[0]
+    #     print(f"False Positives: {len(fp_indices)} samples")
 
-        # False Negatives (FN): Actually this class but predicted as something else
-        fn_indices = np.where((all_true == class_idx) & (all_preds != class_idx))[0]
-        print(f"False Negatives: {len(fn_indices)} samples")
+    #     # False Negatives (FN): Actually this class but predicted as something else
+    #     fn_indices = np.where((all_true == class_idx) & (all_preds != class_idx))[0]
+    #     print(f"False Negatives: {len(fn_indices)} samples")
 
-        # True Negatives (TN): Not this class and not predicted as that class
-        tn_indices = np.where((all_true != class_idx) & (all_preds == all_true))[0]
-        print(f"True Negatives: {len(tn_indices)} samples")
+    #     # True Negatives (TN): Not this class and not predicted as that class
+    #     tn_indices = np.where((all_true != class_idx) & (all_preds == all_true))[0]
+    #     print(f"True Negatives: {len(tn_indices)} samples")

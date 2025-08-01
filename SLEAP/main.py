@@ -21,6 +21,8 @@ class Main:
         self.max_filters = 2
         self.clear_temp_models()
 
+        LoggingHelper.CONF_SAVE_DIR = "_misc/confusion_matrices/" + input("_misc/confusion_matrices/")
+
     def run(self):
         patience = 2
         target_run_count = {target.given_name: 0 for target in self.targets}
@@ -110,6 +112,8 @@ class Main:
         if os.path.exists("temp_models"):
             shutil.rmtree("temp_models")
             os.makedirs("temp_models")
+        else:
+            raise ValueError("TEMP MODELS???")
 
     def update_filters(self):
         if TrainedModelMaker.NUM_FILTERS * 2 > self.max_filters:
