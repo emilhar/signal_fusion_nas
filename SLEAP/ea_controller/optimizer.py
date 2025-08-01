@@ -327,8 +327,6 @@ class KernelSizeEvolutionaryOptimizer:
             verbose= EvolutionManager.VERBOSE
         )
 
-        Logger.log_ea_completion(self.stats)
-
         if part_of_bigger_run:
             
             temp_dir = "temp_models"
@@ -341,3 +339,5 @@ class KernelSizeEvolutionaryOptimizer:
                 },
                 f"{temp_dir}/{self.classification_class.given_name}_{self.signal_type}_classifier.pt"
             )
+
+        return str(self.stats)

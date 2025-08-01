@@ -39,7 +39,8 @@ class Main:
                     continue
 
                 Logger.log_ea_start(target)
-                self.ea_controller.run_ea(target)
+                ea_stats = self.ea_controller.run_ea(target)
+                Logger.log_ea_completion(ea_stats)
 
                 new_target_ranking = self.ensemble_controller.create_ensemble(use_temp=True)
                 Logger.log_ensemble(new_target_ranking, fake=True)
