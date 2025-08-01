@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score, roc_auc_score
-from Globals import LoggingTemplate, device
+from Globals import device
 
 class _Branch(nn.Module):
     def __init__(self, num_kernels, kernel_sizes, paddings, strides, pool_sizes, pool_strides, dropout_rates):
@@ -227,22 +227,21 @@ class CNN_BinaryClassifier(nn.Module):
         for branch in model.branches.values():
             kernel_sizes.append(_get_kernel_sizes(branch))
         
-        it = LoggingTemplate
         output = {
-            it.epoch: epoch,
-            it.train_loss: train_loss,
-            it.test_loss: test_loss,
-            it.precision: precision,
-            it.recall: recall,
-            it.accuracy: accuracy,
-            it.lr: current_lr,
-            it.branches: kernel_sizes,
-            it.best_f1: best_f1,
-            it.best_auc: best_auc,
-            it.best_true: best_true,
-            it.best_scores: best_scores,
-            it.time: elapsed,
-            it.state_dict: best_state_dict,
+            "epoch": epoch,
+            "train_loss": train_loss,
+            "test_loss": test_loss,
+            "precision": precision,
+            "recall": recall,
+            "accuracy": accuracy,
+            "lr": current_lr,
+            "branches": kernel_sizes,
+            "best_f1": best_f1,
+            "best_auc": best_auc,
+            "best_true": best_true,
+            "best_scores": best_scores,
+            "time": elapsed,
+            "state_dict": best_state_dict,
             "train_loss_history": train_losses_data,
             "test_loss_history": test_losses_data,
         }

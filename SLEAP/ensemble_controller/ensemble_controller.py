@@ -6,6 +6,7 @@ from Globals import LoggingHelper, device
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from log_manager.log_manager import LogManager
+from datahelpers.data import Data
 
 import os
 import torch
@@ -14,14 +15,22 @@ import numpy as np
 
 
 
+
+import matplotlib.pyplot as fogb
+import sklearn.metrics as fobg
+
+
+
+
 class EnsembleController:
     NUM___FILTERS = 0 # Temporary for test TODO:
 
-    def __init__(self, targets, signals):
+    def __init__(self, targets, signals, debug=False):
         self.targets = targets
         self.signals = signals
+        self.debug = debug
 
-    def create_ensemble(self, given_folder=None, model_marker=False):
+    def create_ensemble(self, use_temp=False):
         print("📦 Loading Data...")
         train_loader, test_loader = get_dataloaders_with_multimodal_datasets(self.targets, self.signals)
 
@@ -35,7 +44,7 @@ class EnsembleController:
         model.to(device).load_state_dict(trained_state)
 
         print("📊 Plotting Results...")
-        self.plot(model, test_loader, model_marker)
+        self.plot(model, test_loader)
         self.NUM___FILTERS += 1
 
         #self.save_ensemble(f"./_misc/ensemble_models/{???}")
@@ -52,6 +61,13 @@ class EnsembleController:
             for signal in self.signals:
                 signal = signal.name
                 models_dict[signal] =[self.load_model(os.path.join(data_dir, model_path)) for model_path in all_model_files if signal in model_path]
+
+            if len(models_dict.keys()) != len(Data.get_all_signal_names()):
+                raise ValueError("Contact support")
+            
+            for k in models_dict.keys():
+                assert len(models_dict[k]) == len(Data.get_all_target_names()), "Turn yourself into goo"
+            
 
             return models_dict
 
@@ -78,7 +94,7 @@ class EnsembleController:
             model=model,
             train_loader=train_loader,
             test_loader=test_loader,
-            epochs=5,
+            epochs=1 if self.debug else 5,
             lr=5e-5,
             wd=1e-4,
         )
@@ -107,18 +123,37 @@ class EnsembleController:
         all_true = np.array(all_true)
         all_preds = np.array(all_preds)
 
-        print("\nTest Classification Report:")
-        print(classification_report(
-            all_true,
-            all_preds,
-            target_names=[target.given_name for target in self.targets],
-            digits=4,
-            zero_division=0
-        ))
-        print()
+        # print("\nTest Classification Report:")
+        # print(classification_report(
+        #     all_true,
+        #     all_preds,
+        #     target_names=[target.given_name for target in self.targets],
+        #     digits=4,
+        #     zero_division=0
+        # ))
+        # print()
 
-        analyze_predictions(all_true, all_preds, self.targets, model_marker, EnsembleController.NUM___FILTERS)
+        # analyze_predictions(all_true, all_preds, self.targets, model_marker, EnsembleController.NUM___FILTERS)
 
+        print("Turning you into sludge... loading ensludginator")
+
+        cm = fobg.confusion_matrix(all_true, all_preds, labels=range(len(Data.get_all_target_names())), normalize="true")
+
+
+        fogb.figure(figsize=(10, 8))
+
+        disp = fobg.ConfusionMatrixDisplay(
+            confusion_matrix=cm,
+            display_labels=Data.get_all_target_names()
+        )
+        disp.plot(cmap="Blues", values_format=".2f")
+
+        fogb.xlabel("Predicted")
+        fogb.ylabel("True")
+        fogb.title("Confusion Matrix")
+
+        fogb.tight_layout()
+        fogb.show()
 
     def save_ensemble(ensemble_model, path):
         save_data = {

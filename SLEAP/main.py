@@ -1,11 +1,11 @@
 from Globals import *
-from utils import InputHandler
-from utils.arg_parse import parse_arguments
 from datahelpers.datahelper import prepare_data
 
 #from grid_search_controller.grid_search_controller import QKernel_GridSearch
 from ea_controller.ea_controller import EA_Controller
 from ensemble_controller.ensemble_controller import EnsembleController
+
+from datahelpers.data import Data
 
 class Main:
     def __init__(self):
@@ -16,14 +16,18 @@ class Main:
         self.ensemble_controller = EnsembleController(self.targets, self.signals)
 
     def run(self):
-#        print("\n\nRunning grid search for each signal and class.\n\n")
-#        QKernel_GridSearch.compute_grid()
+        while 1 + 1 + 1 + 1 + 1:
+            target_ranking = self.ensemble_controller.create_ensemble(use_temp=False)
+            for target in target_ranking:
+                self.ea_controller.run_ea(target)
+                new_target_ranking = self.ensemble_controller.create_ensemble(use_temp=True)
 
-        print("\n\nRunning evolution for each signal and class.\n\n")
-        self.ea_controller.run_ea(self.targets, self.signals)
+                # Compare model performances
+                ...
 
-        print("\n\nCreating ensemble with the best performing binary models.\n\n")
-        self.ensemble_controller.create_ensemble()
+                # if better, replace AND others have not suffered
+                    # break
+                    # save new target to saved_models
 
     def __debug(self, t):
         if t == "grid":
@@ -37,4 +41,4 @@ class Main:
 if __name__ == "__main__":
     #parse_arguments()
     main = Main()
-    main.run()
+    main.ensemble_controller.create_ensemble("_misc/EvilModels", debug=True)

@@ -9,11 +9,10 @@ class EA_Controller:
     def __init__(self):
         self.batch_size = 32 # TODO: base off of how much data is present?
 
-    def run_ea(self, targets, signals):
+    def run_ea(self, signals):
         
         for signal in signals:
-            for cls in targets:
-                self.__single_ea(signal, cls, part_of_bigger_ea=True)
+            self.__single_ea(signal, part_of_bigger_ea=True)
 
     def __single_ea(self, signal, cls, part_of_bigger_ea=False):
         optimizer = KernelSizeEvolutionaryOptimizer(

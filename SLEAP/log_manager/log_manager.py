@@ -144,11 +144,11 @@ class LogManager:
         """Fill in the individual template with provided values"""
         
         individual_template = {
-            "experiment_id: self.experiment_id,
-            "generation: generation,
-            "indi_id: ind_id,
+            "experiment_id": self.experiment_id,
+            "generation": generation,
+            "indi_id": ind_id,
             "model_performance": {
-                k: round(v, rounding_number) if isinstance(v, float) else v 
+                k: round(v, 1) if isinstance(v, float) else v 
                 for k, v in model_performance.items()
                 if isinstance(v, int) or isinstance(v, str) or isinstance(v, float) or isinstance(v, list)
             },
