@@ -165,9 +165,8 @@ class KernelSizeEvolutionaryOptimizer:
             pos_weight=pos_weight,
             train_loader=individual_training_set,
             test_loader=individual_test_set,
-            batch_size=self.batch_size,
             epochs=self.epochs_per_individual,
-            learning_rate=self.learning_rate,
+            batch_size=self.batch_size,
         )
 
         return new_model
@@ -316,10 +315,7 @@ class KernelSizeEvolutionaryOptimizer:
         """Run the evolutionary algorithm"""
 
         if EvolutionManager.VERBOSE:
-            print(
-                f"Starting evolution with {EvolutionManager.POPULATION_SIZE}" 
-                "individuals for {EvolutionManager.GENERATIONS} generations"
-            )
+            print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE} individuals for {EvolutionManager.GENERATIONS} generations")
 
         # Create initial population
         population = self.get_grid_individuals()
@@ -336,81 +332,30 @@ class KernelSizeEvolutionaryOptimizer:
             stats= self.stats,
         )
 
-        self.log_results(part_of_bigger_run)
-        self.print_results()
-
-    def log_results(self, part_of_bigger_run):
-        
-        def get_hall_of_fame_format(i):
-            individual = self.hall_of_fame[i]
-            return f"{i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}"
-
-        self.log_manager.log_experiment(
-            classification_class= self.classification_class.given_name,
-            signal_type= self.signal_type,
-            max_kernel_size= self.max_kernel_size,
-            best= get_hall_of_fame_format(0),
-            second_best= get_hall_of_fame_format(0),
-            third_best= get_hall_of_fame_format(0),
-        )
-
         if part_of_bigger_run:
             
-            save_dir = os.path.join(f"ea_controller/saved_models/")
-            os.makedirs(save_dir, exist_ok=True)
-
+            save_dir = "temp_models"
             best_individual = self.hall_of_fame[0]
+
             torch.save(
                 {
                     "state_dict": best_individual.model_performance["state_dict"],
                     "model_args": best_individual.model_args,
                 },
-                os.path.join(save_dir, f"{self.signal_type}_{self.classification_class.given_name}_classifier.pt")
+                f"{save_dir}/{self.classification_class.given_name}_{self.signal_type}_classifier.pt"
             )
 
+    # def log_results(self, part_of_bigger_run):
+        
+    #     def get_hall_of_fame_format(i):
+    #         individual = self.hall_of_fame[i]
+    #         return f"{i+1}. Branches={individual}, Fitness={individual.fitness.values[0]:.4f}"
 
-    def print_results(self):
-        """Print evolution results in a dynamically sized table"""
-        title = "EVOLUTION RESULTS"
-        border = "=" * 80
-        
-        max_branch_len = max(len(str(ind)) for ind in self.hall_of_fame) if self.hall_of_fame else 20
-        max_branch_len = min(max_branch_len, 50)
-        
-        rank_width = 6
-        fitness_width = 12
-        branches_width = max_branch_len + 2
-        
-        # Header
-        print("\n\n" + border)
-        print(title.center(len(border)))
-        print(border)
-        
-        # Table
-        print(f"\nHall of Fame (Top {len(self.hall_of_fame)}):")
-        print("-" * (rank_width + branches_width + fitness_width + 6))  # +6 for separators
-        
-        # Column headers (dynamically spaced)
-        header = (
-            f"{'Rank':<{rank_width}} | "
-            f"{'Branches':<{branches_width}} | "
-            f"{'Fitness':<{fitness_width}}"
-        )
-        print(header)
-        print("-" * (rank_width + branches_width + fitness_width + 6))
-        
-        # Rows
-        for i, ind in enumerate(self.hall_of_fame):
-            # Truncate long branch strings if needed
-            branches_str = str(ind)
-            if len(branches_str) > branches_width:
-                branches_str = branches_str[:branches_width-3] + "..."
-            
-            row = (
-                f"{i+1:<{rank_width}} | "
-                f"{branches_str:<{branches_width}} | "
-                f"{ind.fitness.values[0]:<{fitness_width}.4f}"
-            )
-            print(row)
-        
-        print("-" * (rank_width + branches_width + fitness_width + 6))
+    #     self.log_manager.log_experiment(
+    #         classification_class= self.classification_class.given_name,
+    #         signal_type= self.signal_type,
+    #         max_kernel_size= self.max_kernel_size,
+    #         best= get_hall_of_fame_format(0),
+    #         second_best= get_hall_of_fame_format(0),
+    #         third_best= get_hall_of_fame_format(0),
+    #     )
