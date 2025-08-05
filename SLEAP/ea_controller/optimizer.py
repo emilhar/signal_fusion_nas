@@ -124,7 +124,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         return new_indi
         
-    def evaluate_individual(self, individual, filters=None,_debug=False):
+    def evaluate_individual(self, individual, filters=None, _debug=False):
         """Evaluate an individual by training a model
         arg: individual"""
 
@@ -351,7 +351,6 @@ class KernelSizeEvolutionaryOptimizer:
 
         if part_of_bigger_run:
             best_individual = self.hall_of_fame[0]
-            self.evaluate_individual(best_individual, filters=32)
 
             temp_dir = "temp_models"
 
