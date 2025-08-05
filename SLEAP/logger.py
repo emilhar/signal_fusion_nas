@@ -85,14 +85,18 @@ class Logger:
         cls._ensure_log_file_exists()
         with open(cls._current_log_file, 'a') as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"\n- [{timestamp}]({signal}, {target}) EA Generations Summary:\n")
-            f.write(f"{" | ".join(logbook[0].keys())}\n")
-            f.write("-" * 70 + "\n")
+            f.write(f"\n- [{timestamp}]({signal}, {target}) EA Generations Summary:\n\n")
+            
+            # Write table header
+            headers = logbook[0].keys()
+            f.write("| " + " | ".join(headers) + " |\n")
+            
+            # Write header separator
+            f.write("|" + "|".join(["---"] * len(headers)) + "|\n")
+            
+            # Write table rows
             for gen_data in logbook:
-                line = []
-                for key in gen_data.keys():
-                    line.append(str(gen_data[key]))
-
-                
-                f.write(f"{" ".join(line)}")
-                f.write("\n")
+                row = "| " + " | ".join(str(gen_data[key]) for key in headers) + " |\n"
+                f.write(row)
+            f.write("\n")
+            
