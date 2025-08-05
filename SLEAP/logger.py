@@ -28,8 +28,16 @@ class Logger:
         with open(cls._current_log_file, 'a') as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             fake_status = "FAKE" if fake else "REAL"
-            ranking_str = ", ".join([f"{t[0]}:{t[1]}" for t in target_ranking])
-            f.write(f"- [{timestamp}] Ensemble ranking ({fake_status}): {ranking_str}\n")
+            
+            # Write table header
+            f.write(f"\n- [{timestamp}] Ensemble ranking ({fake_status}):\n\n")
+            f.write("| Target | Score |\n")
+            f.write("|--------|-------|\n")
+            
+            # Write table rows
+            for target, score in target_ranking:
+                f.write(f"| {target} | {round(score, 2)} |\n")
+            f.write("\n")
 
     @classmethod
     def log_ea_start(cls, target: str):
@@ -37,15 +45,7 @@ class Logger:
         cls._ensure_log_file_exists()
         with open(cls._current_log_file, 'a') as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"- [{timestamp}] Starting EA for target: {target}\n")
-
-    @classmethod
-    def log_ea_completion(cls, stats):
-        """Place a line in the file with the current datetime and stating that the evolutionary algorithm has completed with some stats"""
-        cls._ensure_log_file_exists()
-        with open(cls._current_log_file, 'a') as f:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"- [{timestamp}] EA completed. Stats: {stats}\n")
+            f.write(f"- [{timestamp}] **Starting EA for target: {target}**\n")
 
     @classmethod
     def log_successful_upgrade(cls):
@@ -99,4 +99,3 @@ class Logger:
                 row = "| " + " | ".join(str(gen_data[key]) for key in headers) + " |\n"
                 f.write(row)
             f.write("\n")
-            
