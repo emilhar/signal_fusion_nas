@@ -33,12 +33,12 @@ class EnsembleController:
         self.debug = debug
         self.branch_generator = SmartBranchGenerator()
 
-    def create_ensemble(self, use_temp=False):
+    def create_ensemble(self, weights, use_temp=False):
         ctx = multiprocessing.get_context('spawn')
         queue = ctx.Queue()
         p = ctx.Process(
             target=self._create_ensemble_in_process,
-            args=(queue, use_temp, self.targets, self.signals, self.debug)
+            args=(queue, weights, use_temp, self.targets, self.signals, self.debug)
         )
         p.start()
         p.join()
@@ -46,7 +46,7 @@ class EnsembleController:
             raise RuntimeError("Subprocess for ensemble creation failed")
         return queue.get()
 
-    def _create_ensemble_in_process(self, queue, use_temp, targets, signals, debug):
+    def _create_ensemble_in_process(self, queue, weights, use_temp, targets, signals, debug):
         # Reinitialize necessary components in subprocess
         from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
         from models.ensemble_model import EnsembleModel
@@ -65,9 +65,8 @@ class EnsembleController:
             model=model,
             train_loader=train_loader,
             test_loader=test_loader,
-            epochs=15,
-            lr=5e-5,
-            wd=1e-4,
+            weights=weights,
+            epochs=10,
         )
         model.load_state_dict(trained_state)
 

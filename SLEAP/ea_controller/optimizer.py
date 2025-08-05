@@ -32,6 +32,8 @@ class KernelSizeEvolutionaryOptimizer:
         self.min_kernel_size, self.max_kernel_size = self.MIN_KERNEL_SIZE, self.MAX_KERNEL_SIZE
         self.min_branches, self.max_branches = self.MIN_BRANCHES, self.MAX_BRANCHES
         self.min_kernels, self.max_kernels = self.MIN_KERNELS, self.MAX_KERNELS
+
+        self.minmax = min if FitnessFunctions.MINIMIZE_FITNESS else max
         
         self.epochs_per_individual = self.EPOCHS_PER_INDIVIDUAL
 
@@ -214,7 +216,7 @@ class KernelSizeEvolutionaryOptimizer:
         tournsize = max(3, int(len(population) * 0.2))
         for _ in range(remaining_to_select):
             aspirants = [random.choice(population) for _ in range(tournsize)]
-            best = max(aspirants, key= lambda x: x.fitness.values[0])
+            best = self.minmax(aspirants, key= lambda x: x.fitness.values[0])
             chosen_for_next_generation.append(best)
         
         return chosen_for_next_generation
@@ -347,8 +349,6 @@ class KernelSizeEvolutionaryOptimizer:
             verbose= EvolutionManager.VERBOSE
         )
 
-        Logger.log_ea_logbook(logbook)
-
         if part_of_bigger_run:
             best_individual = self.hall_of_fame[0]
 
@@ -362,6 +362,6 @@ class KernelSizeEvolutionaryOptimizer:
                 f"{temp_dir}/{self.classification_class.given_name}_{self.signal_type}_model.pt"
             )
 
-        print(f"Best individual for {self.classification_class} with {self.signal_type}: {self.hall_of_fame[0]}")
+        print(f"Best individual for {self.classification_class} with {self.signal_type}: {self.hall_of_fame[0]} with fitness = {self.hall_of_fame[0].fitness.values[0]}")
 
-        return str(self.stats.compile(pop))
+        return logbook

@@ -22,26 +22,21 @@ class Main:
         self.clear_temp_models()
 
     def run(self):
-        patience = 2
-        target_run_count = {target.given_name: 0 for target in self.targets}
         Logger.log_new_experiment_heading()
-        self.ensemble_controller.get_initial_models()
+        #self.ensemble_controller.get_initial_models()
         while True:
-            progress = False
-            target_ranking = self.ensemble_controller.create_ensemble(use_temp=False)
-            Logger.log_ensemble(target_ranking, fake=False)
-    
-            for x in target_ranking:
+            for target in self.targets:
+                weights = [1.0] * len(self.targets)
+                weights[self.targets.index(target)] *= 10.
+                weights = torch.tensor(weights).float().to(device)
+                target_ranking = self.ensemble_controller.create_ensemble(weights=weights, use_temp=False)
+                Logger.log_ensemble(target_ranking, fake=False)
                 self.clear_temp_models()
-                target, score = x
-                if target_run_count[target.given_name] >= patience:
-                    continue
-
                 Logger.log_ea_start(target)
-                ea_stats = self.ea_controller.run_ea(target)
-                Logger.log_ea_completion(ea_stats)
-
-                new_target_ranking = self.ensemble_controller.create_ensemble(use_temp=True)
+                for (logbook, signal, t) in self.ea_controller.run_ea(target):
+                    Logger.log_ea_logbook(logbook, signal, t)
+                    
+                new_target_ranking = self.ensemble_controller.create_ensemble(weights=weights, use_temp=True)
                 Logger.log_ensemble(new_target_ranking, fake=True)
 
                 target_change = 0
@@ -76,23 +71,17 @@ class Main:
                     Logger.log_line(print_str)
                     Logger.log_successful_upgrade()
                     self.move_from_temp_to_saved()
-                    progress = True
-                    break
                 
                 print_str = f"TARGET {target} NOT IMPROVED, MOVING TO NEXT"
                 print(print_str)
                 Logger.log_line(print_str)
-                target_run_count[target.given_name] += 1
 
-            else:
-                print_str = "ADDING MORE FILTERS..."
-                print(print_str)
-                Logger.log_line(print_str)
-                for k in target_run_count.keys():
-                    target_run_count[k] = 0
-                old_filter_count = TrainedModelMaker.NUM_FILTERS
-                progress = self.update_filters()
-                Logger.log_failed_upgrade(old_filter_count, new_filter_count=TrainedModelMaker.NUM_FILTERS)
+            print_str = "ADDING MORE FILTERS..."
+            print(print_str)
+            Logger.log_line(print_str)
+            old_filter_count = TrainedModelMaker.NUM_FILTERS
+            progress = self.update_filters()
+            Logger.log_failed_upgrade(old_filter_count, new_filter_count=TrainedModelMaker.NUM_FILTERS)
 
             # if no meaningful progress, terminate main loop.
             if not progress:

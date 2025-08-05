@@ -75,21 +75,21 @@ class EnsembleModel(nn.Module):
     
 
     @staticmethod
-    def train_model(model, train_loader, test_loader, epochs=5, lr=1e-4, wd=1e-4, class_names=None):
+    def train_model(model, train_loader, test_loader, weights, epochs=5, class_names=None):
         training_time_start = datetime.datetime.now()
 
         print(f"Running for {epochs} epochs...")
         model = model.to(device)
         if device.type == "cpu":
             raise ValueError("Training with CPU")
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss(weight=weights)
         optimizer = optim.AdamW(model.parameters())
 
         best_test_f1 = 0.0
         best_model_state = model.state_dict()
 
         if class_names is None:
-            class_names = [f"Class {i}" for i in range(5)]
+            class_names = [f"Class {i}" for i in range(len(weights))]
 
         for epoch in range(epochs):
             model.train()

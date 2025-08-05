@@ -2,36 +2,49 @@ from Globals import *
 from ea_controller.optimizer import KernelSizeEvolutionaryOptimizer
 from datahelpers.data import Data
 import multiprocessing
+import os
 
 class EA_Controller:
     def __init__(self):
         self.batch_size = 32
+        # Determine the number of processes to use (leave one CPU free)
+        self.max_workers = max(1, os.cpu_count() - 1)
 
     def run_ea(self, target_to_update):
         if target_to_update.given_name not in Data.get_all_target_names():
             raise ValueError(f"Target does not exist: {target_to_update}")
 
         da = Data()
-        stats_for_runs = []
-        for signal in da.signal_objects:
-            stats_for_runs.append(self._run_single_ea_in_process(signal, target_to_update))
-        return stats_for_runs  # Return the collected statistics
-
-    def _run_single_ea_in_process(self, signal, target):
-        """Run EA optimization in a separate process to isolate memory"""
-        ctx = multiprocessing.get_context('spawn')
-        queue = ctx.Queue()
-        p = ctx.Process(
-            target=self._run_single_ea_worker,
-            args=(queue, signal, target, self.batch_size)
-        )
-        p.start()
-        # Get the results from the queue
-        result = queue.get()
-        p.join()
-        if p.exitcode != 0:
-            raise RuntimeError(f"EA process failed for {signal.name}/{target.given_name}")
-        return result  # Return the result from the worker process
+        signals = da.signal_objects
+        
+        # Create a list to hold all processes and queues
+        processes = []
+        queues = []
+        results = [None] * len(signals)  # Pre-allocate result list
+        
+        # Start all processes
+        for i, signal in enumerate(signals):
+            ctx = multiprocessing.get_context('spawn')
+            queue = ctx.Queue()
+            p = ctx.Process(
+                target=self._run_single_ea_worker,
+                args=(queue, signal, target_to_update, self.batch_size)
+            )
+            p.start()
+            processes.append((i, p))
+            queues.append((i, queue))
+        
+        # Collect results from queues
+        for i, queue in queues:
+            results[i] = queue.get()
+        
+        # Join all processes
+        for i, p in processes:
+            p.join()
+            if p.exitcode != 0:
+                raise RuntimeError(f"EA process failed for {signals[i].name}/{target_to_update.given_name}")
+        
+        return results
 
     @staticmethod
     def _run_single_ea_worker(queue, signal, target, batch_size):
@@ -45,7 +58,7 @@ class EA_Controller:
         )
         result = optimizer.run_evolution(part_of_bigger_run=True)
         
-        queue.put(result)
+        queue.put((result, signal, target))
         
         del optimizer
         import gc
