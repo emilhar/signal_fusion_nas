@@ -124,7 +124,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         return new_indi
         
-    def evaluate_individual(self, individual, _debug=False):
+    def evaluate_individual(self, individual, filters=None,_debug=False):
         """Evaluate an individual by training a model
         arg: individual"""
 
@@ -135,7 +135,7 @@ class KernelSizeEvolutionaryOptimizer:
 
             return (FitnessFunctions.fitness_function(individual),)
 
-        model = self.create_trained_individual(individual)
+        model = self.create_trained_individual(individual, filters)
         fitness = FitnessFunctions.fitness_function(model.model_performance)
 
         individual.model_performance = model.model_performance
@@ -166,7 +166,7 @@ class KernelSizeEvolutionaryOptimizer:
 
         return output
     
-    def create_trained_individual(self, individual):
+    def create_trained_individual(self, individual, filters=None):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
         individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(dataset_percentage=0.2)
@@ -179,6 +179,7 @@ class KernelSizeEvolutionaryOptimizer:
             test_loader=individual_test_set,
             epochs=self.epochs_per_individual,
             batch_size=self.batch_size,
+            filters=filters           
         )
 
         return new_model
@@ -347,9 +348,10 @@ class KernelSizeEvolutionaryOptimizer:
         )
 
         if part_of_bigger_run:
-            
-            temp_dir = "temp_models"
             best_individual = self.hall_of_fame[0]
+            self.evaluate_individual(best_individual, filters=32)
+
+            temp_dir = "temp_models"
 
             torch.save(
                 {

@@ -18,9 +18,13 @@ class TrainedModelMaker:
             test_loader: DataLoader,
             epochs,
             batch_size,
+            filters=None        
         ):
 
-        self.filters = TrainedModelMaker.NUM_FILTERS
+        if filters == None:
+            self.filters = TrainedModelMaker.NUM_FILTERS
+        else:
+            self.filters = filters
 
         self.model_args = self.get_branch_configs(branches, N_SAMPLES, filters=self.filters) # See ModelManager
         self.model_args["batch_size"] = batch_size
