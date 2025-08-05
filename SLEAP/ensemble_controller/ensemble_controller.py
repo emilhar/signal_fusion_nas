@@ -23,7 +23,7 @@ from sklearn.metrics import confusion_matrix
 
 class SmartBranchGenerator():
     def get_branch(self):
-        return [[81, 3, 3]]
+        return [[3, 3, 3]]
 
 
 class EnsembleController:
@@ -65,7 +65,7 @@ class EnsembleController:
             model=model,
             train_loader=train_loader,
             test_loader=test_loader,
-            epochs=1 if debug else 5,
+            epochs=15,
             lr=5e-5,
             wd=1e-4,
         )
@@ -94,43 +94,44 @@ class EnsembleController:
         queue.put(sorted(target_ranking, key=lambda x: x[1]))
 
     def load_each_model(self, use_temp):
-        base_dir = "temp_models" if use_temp else "saved_models"
-        all_model_files = [f for f in os.listdir(base_dir) if f.endswith('.pt')]
-        
-        # If loading from temp, get the prefixes to exclude from saved_models
-        temp_prefixes = set()
-        if use_temp:
-            for f in all_model_files:
-                prefix = f.split('_')[0]
-                temp_prefixes.add(prefix)
-        
         models_dict = {}
-        for signal in self.signals:
-            signal_name = signal.name
-            models_dict[signal_name] = []
+        
+        # First handle temp models if needed
+        if use_temp and os.path.exists("temp_models"):
+            temp_model_files = [f for f in os.listdir("temp_models") if f.endswith('.pt')]
+            temp_prefixes = {f.split('_')[0] for f in temp_model_files}
             
-            # First load from temp if use_temp is True
-            if use_temp:
-                for model_path in all_model_files:
-                    if signal_name in model_path:
-                        print("LOADING TEMPORARY MODEL")
-                        full_path = os.path.join("temp_models", model_path)
+            for signal in self.signals:
+                signal_name = signal.name
+                models_dict[signal_name] = []
+                
+                for model_file in temp_model_files:
+                    if signal_name in model_file:
+                        full_path = os.path.join("temp_models", model_file)
                         models_dict[signal_name].append(self.load_model(full_path))
-            
-            # Then load from saved_models, excluding files with prefixes found in temp
+        else:
+            temp_prefixes = set()
+        
+        # Then handle saved models, excluding any with prefixes found in temp
+        if os.path.exists("saved_models"):
             saved_model_files = [f for f in os.listdir("saved_models") 
                             if f.endswith('.pt') and 
                             (not use_temp or f.split('_')[0] not in temp_prefixes)]
             
-            for model_path in saved_model_files:
-                if signal_name in model_path:
-                    full_path = os.path.join("saved_models", model_path)
-                    models_dict[signal_name].append(self.load_model(full_path))
-
-        assert len(models_dict.keys()) == len(Data.get_all_signal_names()), "Not enough models"
+            for signal in self.signals:
+                signal_name = signal.name
+                if signal_name not in models_dict:
+                    models_dict[signal_name] = []
+                    
+                for model_file in saved_model_files:
+                    if signal_name in model_file:
+                        full_path = os.path.join("saved_models", model_file)
+                        models_dict[signal_name].append(self.load_model(full_path))
         
+        # Verify we have all expected models
+        assert len(models_dict.keys()) == len(Data.get_all_signal_names()), "Not enough models"
         for k in models_dict.keys():
-            assert len(models_dict[k]) == len(Data.get_all_target_names()), "Not all signals have all targets"
+            assert len(models_dict[k]) == len(Data.get_all_target_names()), f"Not all signals have all targets (signal {k} has {len(models_dict[k])})"
         
         return models_dict
 
@@ -211,20 +212,53 @@ class EnsembleController:
     
 
     def get_initial_models(self):
+        ctx = multiprocessing.get_context('spawn')
+        processes = []
+        
         for signal in self.signals:
             for target in self.targets:
-                sdl = SDataLoader(signal, target, batch_size=Data.batch_size)
-                indi = self.branch_generator.get_branch()
-                m = TrainedModelMaker(
-                    branches=indi,
-                    N_SAMPLES=signal.n_samples,
-                    pos_weight=sdl.pos_weight,
-                    train_loader=sdl.train_loader,
-                    test_loader=sdl.test_loader,
-                    epochs=3,
-                    batch_size=Data.batch_size,
+                p = ctx.Process(
+                    target=self._train_and_save_model_in_process,
+                    args=(signal, target)
                 )
-                self.save_binary_model(m, signal, target)
+                p.start()
+                processes.append(p)
+                p.join()
+                if p.exitcode != 0:
+                    raise RuntimeError("Subprocess for model training failed")
+
+    def _train_and_save_model_in_process(self, signal, target):
+        # Reinitialize necessary components in subprocess
+        from dataloaders.data_loader import SDataLoader
+        from utils.trained_model_maker import TrainedModelMaker
+        from datahelpers.data import Data
+        
+        sdl = SDataLoader(signal, target, batch_size=Data.batch_size)
+        indi = self.branch_generator.get_branch()
+        m = TrainedModelMaker(
+            branches=indi,
+            N_SAMPLES=signal.n_samples,
+            pos_weight=sdl.pos_weight,
+            train_loader=sdl.train_loader,
+            test_loader=sdl.test_loader,
+            epochs=30,
+            batch_size=Data.batch_size,
+        )
+        
+        # Save the model
+        os.makedirs("saved_models", exist_ok=True)
+        model_path = f"saved_models/{target}_{signal}_model.pt"
+        torch.save({
+            'state_dict': m.model_performance["state_dict"],
+            'model_args': m.model_args
+        }, model_path)
+        
+        # Cleanup
+        del sdl
+        del m
+        import gc
+        gc.collect()
+        torch.cuda.empty_cache()
 
 
     def update_filters_for_binary_models(self):
@@ -241,7 +275,7 @@ class EnsembleController:
                 pos_weight=sdl.pos_weight,
                 train_loader=sdl.train_loader,
                 test_loader=sdl.test_loader,
-                epochs=3,
+                epochs=30,
                 batch_size=Data.batch_size,
             )
             self.save_binary_model(m, signal, target)

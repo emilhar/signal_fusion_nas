@@ -63,8 +63,9 @@ def analyze_predictions(all_true, all_preds, targets:list[Target]):
     plt.title("Confusion Matrix")
 
     a = str(datetime.now().replace(microsecond=0)).replace(" ", "_").replace(":", "-")
-    fig_path = f"_misc/confusion_matrices/test/Experiment_{a}.png"
-    os.makedirs("_misc/confusion_matrices/test", exist_ok=True)
+    d = "new_generator"
+    fig_path = f"_misc/confusion_matrices/{d}/Experiment_{a}.png"
+    os.makedirs(f"_misc/confusion_matrices/{d}", exist_ok=True)
     plt.savefig(fig_path)
     print(f"Ensemble model plot saved at: {fig_path}")
 

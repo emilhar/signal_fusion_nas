@@ -156,11 +156,11 @@ class EnsembleModel(nn.Module):
 
             elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
 
-            print(f"Epoch {epoch+1}/{epochs}")
-            print(f"  Train: Loss={train_loss:.4f}, Acc={train_acc:.4f}, "
-                f"Precision={train_precision:.4f}, Recall={train_recall:.4f}, F1={train_f1:.4f}")
-            print(f"  Test:  Loss={test_loss:.4f}, Acc={test_acc:.4f}, "
-                f"Precision={test_precision:.4f}, Recall={test_recall:.4f}, F1={test_f1:.4f}")
+            # print(f"Epoch {epoch+1}/{epochs}")
+            # print(f"  Train: Loss={train_loss:.4f}, Acc={train_acc:.4f}, "
+            #     f"Precision={train_precision:.4f}, Recall={train_recall:.4f}, F1={train_f1:.4f}")
+            # print(f"  Test:  Loss={test_loss:.4f}, Acc={test_acc:.4f}, "
+            #     f"Precision={test_precision:.4f}, Recall={test_recall:.4f}, F1={test_f1:.4f}")
 
             # print("\nTest Classification Report:")
             # print(classification_report(
@@ -171,6 +171,6 @@ class EnsembleModel(nn.Module):
             #     zero_division=0
             #     ))
             
-            print(f"\nCumulative run time: {elapsed:.4f} seconds")
+            # print(f"\nCumulative run time: {elapsed:.4f} seconds")
 
         return model.state_dict()

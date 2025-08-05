@@ -17,24 +17,22 @@ class Main:
     def __init__(self):
         self.targets, self.signals = prepare_data(mb_per_part=0.5)
         self.ea_controller = EA_Controller()
-        self.ensemble_controller = EnsembleController(self.targets, self.signals, debug=True)
-        self.max_filters = 2
+        self.ensemble_controller = EnsembleController(self.targets, self.signals)
+        self.max_filters = 32
         self.clear_temp_models()
-
-        LoggingHelper.CONF_SAVE_DIR = "_misc/confusion_matrices/" + input("_misc/confusion_matrices/")
 
     def run(self):
         patience = 2
         target_run_count = {target.given_name: 0 for target in self.targets}
         Logger.log_new_experiment_heading()
-        #self.ensemble_controller.get_initial_models()
+        self.ensemble_controller.get_initial_models()
         while True:
-            self.clear_temp_models()
             progress = False
             target_ranking = self.ensemble_controller.create_ensemble(use_temp=False)
             Logger.log_ensemble(target_ranking, fake=False)
     
             for x in target_ranking:
+                self.clear_temp_models()
                 target, score = x
                 if target_run_count[target.given_name] >= patience:
                     continue
@@ -56,9 +54,15 @@ class Main:
                     arrow_color = "green" if new_score >= original_score else "red"
                     colored_arrow = Clr("--->", arrow_color)
                     
-                    print(
+                    print_str = (
                         f"Original: {original}: {original_score:.2f} "
                         f"{colored_arrow} "
+                        f"New: {new}: {new_score:.2f}\n"
+                    )
+                    print(print_str)
+                    Logger.log_line(
+                        f"Original: {original}: {original_score:.2f} "
+                        f"---> "
                         f"New: {new}: {new_score:.2f}\n"
                     )
                     if original == target:
@@ -66,25 +70,35 @@ class Main:
                     else:
                         other_change += (new_score - original_score) / original_score
 
-                if target_change >= 1 and other_change >= -1:
-                    print(f"TARGET {target} IMPROVED")
+                if target_change > 0.0:
+                    print_str = f"TARGET {target} IMPROVED"
+                    print(print_str)
+                    Logger.log_line(print_str)
                     Logger.log_successful_upgrade()
                     self.move_from_temp_to_saved()
                     progress = True
                     break
                 
-                print(f"TARGET {target} NOT IMPROVED, MOVING TO NEXT")
+                print_str = f"TARGET {target} NOT IMPROVED, MOVING TO NEXT"
+                print(print_str)
+                Logger.log_line(print_str)
                 target_run_count[target.given_name] += 1
 
             else:
-                print("ADDING MORE FILTERS...")
+                print_str = "ADDING MORE FILTERS..."
+                print(print_str)
+                Logger.log_line(print_str)
+                for k in target_run_count.keys():
+                    target_run_count[k] = 0
                 old_filter_count = TrainedModelMaker.NUM_FILTERS
                 progress = self.update_filters()
                 Logger.log_failed_upgrade(old_filter_count, new_filter_count=TrainedModelMaker.NUM_FILTERS)
 
             # if no meaningful progress, terminate main loop.
             if not progress:
-                print("NO PROGRESS MADE, TERMINATING.")
+                print_str = "NO PROGRESS MADE, TERMINATING."
+                print(print_str)
+                Logger.log_line(print_str)
                 Logger.log_completion(target_ranking)
                 break
 
@@ -118,7 +132,9 @@ class Main:
 
     def update_filters(self):
         if TrainedModelMaker.NUM_FILTERS * 2 > self.max_filters:
-            print("REACHED MAX FILTERS PER CONVOLUTION")
+            print_str = "REACHED MAX FILTERS PER CONVOLUTION"
+            print(print_str)
+            Logger.log_line(print_str)
             return False
         
         TrainedModelMaker.NUM_FILTERS *= 2
@@ -126,14 +142,6 @@ class Main:
         self.ensemble_controller.update_filters_for_binary_models()
         return True
     
-
-    def __debug(self, t):
-        if t == "grid":
-            raise NotImplementedError(":)")
-        if t == "ea":
-            self.ea_controller.__single_ea("EEG_Fpz-Cz", "wake")
-        if t == "ensemble":
-            self.ensemble_controller.create_ensemble()
 
 
 if __name__ == "__main__":

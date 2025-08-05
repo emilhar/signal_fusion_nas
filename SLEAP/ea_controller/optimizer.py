@@ -12,7 +12,7 @@ from ea_controller.fitness_functions import FitnessFunctions
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2
-    MAX_KERNEL_SIZE = 5
+    MAX_KERNEL_SIZE = None
 
     MIN_BRANCHES = 1
     MAX_BRANCHES = 3
@@ -20,8 +20,7 @@ class KernelSizeEvolutionaryOptimizer:
     MIN_KERNELS = 2
     MAX_KERNELS = 4
 
-    EPOCHS_PER_INDIVIDUAL = 1
-    LEARNING_RATE = 5e-4
+    EPOCHS_PER_INDIVIDUAL = 3
 
     def __init__(self, classification_class, signal_type: str, n_samples:int, batch_size):
 
@@ -35,11 +34,10 @@ class KernelSizeEvolutionaryOptimizer:
         self.min_kernels, self.max_kernels = self.MIN_KERNELS, self.MAX_KERNELS
         
         self.epochs_per_individual = self.EPOCHS_PER_INDIVIDUAL
-        self.learning_rate = self.LEARNING_RATE
 
         if self.max_kernel_size is None:
             self.max_kernel_size = n_samples // 2
-            if EvolutionManager.VERBOSE: print(f"Max kernel size set at {self.max_kernel_size}")
+            print(f"Max kernel size set at {self.max_kernel_size}")
         
         self.SDL = SDataLoader(
             signal_type=self.signal_type, 
@@ -89,17 +87,38 @@ class KernelSizeEvolutionaryOptimizer:
         return population
     
     def generate_individual(self):
+        CHOICES = [
+            max(self.n_samples // 5, 3), 
+            max(self.n_samples // 10, 3),
+            max(self.n_samples // 30, 3),
+            max(self.n_samples // 90, 3),
+            max(self.n_samples // 270, 3),
+            max(self.n_samples // 810, 3),
+            max(self.n_samples // 2430, 3)
+        ]
+        choices = list(set(x+1 if x%2==0 else x for x in CHOICES))
+        choices.sort(reverse=True)
+        
         new_indi = []
-
+        
+        # Select first number from all available choices
+        first_num = random.choice(choices)
+        current_max_index = choices.index(first_num)
+        
         for _ in range(random.randint(self.min_branches, self.max_branches)):
-            new_indi.append(
-                [
-                    random.randint(self.min_kernel_size, self.max_kernel_size)
-                    for _ in range(random.randint(self.min_kernels, self.max_kernels))
-                ]
-            )
-            #new_indi.append(self.KRNL.theta())
-
+            branch = []
+            for _ in range(random.randint(self.min_kernels, self.max_kernels)):
+                # Select from available choices (current_max_index and higher indices)
+                available_choices = choices[current_max_index:]
+                num = random.choice(available_choices)
+                branch.append(num)
+                # Update current_max_index - can't go back to earlier indices
+                current_max_index = max(current_max_index, choices.index(num))
+            
+            new_indi.append(branch)
+            # Reset current_max_index for the next branch
+            current_max_index = choices.index(first_num)
+        
         # Individual format: [[branch1_kernels], [branch2_kernels], ..., [branchN_kernels]]
         new_indi = creator.Individual(new_indi)
         
@@ -150,7 +169,7 @@ class KernelSizeEvolutionaryOptimizer:
     def create_trained_individual(self, individual):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
-        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(dataset_percentage=0.3) 
+        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(dataset_percentage=0.2)
 
         new_model = TrainedModelMaker(
             branches=individual,
@@ -210,6 +229,7 @@ class KernelSizeEvolutionaryOptimizer:
 
     def mutate(self, mutant:list[list[int]]):
         """Mutate an individual by randomly modifying branches or kernel sizes."""
+        return (mutant,)
 
         max_number_of_mutations = 3
         mutation_number_options = [i + 1 for i in range(max_number_of_mutations)
@@ -307,8 +327,7 @@ class KernelSizeEvolutionaryOptimizer:
     def run_evolution(self, part_of_bigger_run=False):
         """Run the evolutionary algorithm"""
 
-        if EvolutionManager.VERBOSE:
-            print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE} individuals for {EvolutionManager.GENERATIONS} generations")
+        print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE} individuals for {EvolutionManager.GENERATIONS} generations")
 
         # Create initial population
         population = self.get_grid_individuals()
@@ -337,7 +356,9 @@ class KernelSizeEvolutionaryOptimizer:
                     "state_dict": best_individual.model_performance["state_dict"],
                     "model_args": best_individual.model_args,
                 },
-                f"{temp_dir}/{self.classification_class.given_name}_{self.signal_type}_classifier.pt"
+                f"{temp_dir}/{self.classification_class.given_name}_{self.signal_type}_model.pt"
             )
 
-        return str(self.stats)
+        print(f"Best individual for {self.classification_class} with {self.signal_type}: {self.hall_of_fame[0]}")
+
+        return str(self.stats.compile(pop))

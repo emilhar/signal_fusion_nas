@@ -12,8 +12,10 @@ class EA_Controller:
             raise ValueError(f"Target does not exist: {target_to_update}")
 
         da = Data()
+        stats_for_runs = []
         for signal in da.signal_objects:
-            self._run_single_ea_in_process(signal, target_to_update)
+            stats_for_runs.append(self._run_single_ea_in_process(signal, target_to_update))
+        return stats_for_runs  # Return the collected statistics
 
     def _run_single_ea_in_process(self, signal, target):
         """Run EA optimization in a separate process to isolate memory"""
@@ -24,13 +26,15 @@ class EA_Controller:
             args=(queue, signal, target, self.batch_size)
         )
         p.start()
+        # Get the results from the queue
+        result = queue.get()
         p.join()
         if p.exitcode != 0:
             raise RuntimeError(f"EA process failed for {signal.name}/{target.given_name}")
+        return result  # Return the result from the worker process
 
     @staticmethod
     def _run_single_ea_worker(queue, signal, target, batch_size):
-        """Worker function that runs in a separate process"""
         from ea_controller.optimizer import KernelSizeEvolutionaryOptimizer
         
         optimizer = KernelSizeEvolutionaryOptimizer(
@@ -39,12 +43,10 @@ class EA_Controller:
             classification_class=target,
             batch_size=batch_size,
         )
-        optimizer.run_evolution(part_of_bigger_run=True)
+        result = optimizer.run_evolution(part_of_bigger_run=True)
         
-        # Signal completion
-        queue.put(True)
+        queue.put(result)
         
-        # Explicit cleanup before process exit
         del optimizer
         import gc
         gc.collect()
