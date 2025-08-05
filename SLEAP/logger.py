@@ -79,3 +79,24 @@ class Logger:
         with open(cls._current_log_file, 'a') as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             f.write(f"- [{timestamp}] {line}\n")
+
+    @classmethod
+    def log_ea_logbook(cls, logbook):
+        cls._ensure_log_file_exists()
+        with open(cls._current_log_file, 'a') as f:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"\n- [{timestamp}] EA Generations Summary:\n")
+            f.write(f"{'Gen':<5} {'Evals':<7} {'Avg':<12} {'Std':<12} {'Min':<12} {'Max':<12} {'Time':<8}\n")
+            f.write("-" * 70 + "\n")
+            
+            for gen_data in logbook:
+                f.write(
+                    f"{gen_data['gen']:<5} "
+                    f"{gen_data['nevals']:<7} "
+                    f"{gen_data['avg']:<12.2f} "
+                    f"{gen_data['std']:<12.2f} "
+                    f"{gen_data['min']:<12.2f} "
+                    f"{gen_data['max']:<12.2f} "
+                    f"{gen_data['time']:<8.2f}\n"
+                )
+            f.write("\n")

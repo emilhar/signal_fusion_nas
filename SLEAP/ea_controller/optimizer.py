@@ -347,6 +347,8 @@ class KernelSizeEvolutionaryOptimizer:
             verbose= EvolutionManager.VERBOSE
         )
 
+        Logger.log_ea_logbook(logbook)
+
         if part_of_bigger_run:
             best_individual = self.hall_of_fame[0]
             self.evaluate_individual(best_individual, filters=32)
