@@ -6,7 +6,7 @@ class Data:
     __ALL_SIGNAL_NAMES = None
     __ALL_TARGET_NAMES = None
     DIRECTORY = "dataset"
-    max_memory = (2**10) * (2**3)
+    max_memory = (2**10) * (2**5)
     batch_size = 128
     
 
