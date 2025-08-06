@@ -6,7 +6,6 @@ import os
 class EA_Controller:
     def __init__(self):
         self.batch_size = 32
-        # Determine the number of processes to use (leave one CPU free)
         self.max_workers = max(1, os.cpu_count() - 1)
 
     def run_ea(self, target_to_update):
@@ -16,10 +15,9 @@ class EA_Controller:
         da = Data()
         signals = da.signal_objects
         
-        # Create a list to hold all processes and queues
         processes = []
         queues = []
-        results = [None] * len(signals)  # Pre-allocate result list
+        results = [None] * len(signals)
         
         # Start all processes
         for i, signal in enumerate(signals):

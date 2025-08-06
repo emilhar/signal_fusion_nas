@@ -8,7 +8,6 @@ from deap.algorithms import eaMuPlusLambda
 from dataloaders.data_loader import SDataLoader
 from utils.trained_model_maker import TrainedModelMaker
 from Globals import EvolutionManager
-from ea_controller.fitness_functions import FitnessFunctions
 
 class KernelSizeEvolutionaryOptimizer:
     MIN_KERNEL_SIZE = 2
@@ -21,6 +20,8 @@ class KernelSizeEvolutionaryOptimizer:
     MAX_KERNELS = 4
 
     EPOCHS_PER_INDIVIDUAL = 3
+
+    MINIMIZE_FITNESS = True
 
     def __init__(self, classification_class, signal_type: str, n_samples:int, batch_size):
         ctx = multiprocessing.get_context('spawn')
@@ -35,7 +36,7 @@ class KernelSizeEvolutionaryOptimizer:
         self.min_branches, self.max_branches = self.MIN_BRANCHES, self.MAX_BRANCHES
         self.min_kernels, self.max_kernels = self.MIN_KERNELS, self.MAX_KERNELS
 
-        self.minmax = min if FitnessFunctions.MINIMIZE_FITNESS else max
+        self.minmax = min if self.MINIMIZE_FITNESS else max
         
         self.epochs_per_individual = self.EPOCHS_PER_INDIVIDUAL
 
@@ -52,14 +53,12 @@ class KernelSizeEvolutionaryOptimizer:
         self.setup_deap()
     
     def setup_deap(self):
-        """Setup DEAP framework"""
 
         for attr in ['FitnessMinMax', 'Individual']:
             if hasattr(creator, attr):
                 delattr(creator, attr)
 
-        # Create fitness and individual classes
-        if FitnessFunctions.MINIMIZE_FITNESS:
+        if KernelSizeEvolutionaryOptimizer.MINIMIZE_FITNESS:
             creator.create("FitnessMinMax", base.Fitness, weights=(-1.0,))
         else:
             creator.create("FitnessMinMax", base.Fitness, weights=(1.0,))
@@ -68,13 +67,11 @@ class KernelSizeEvolutionaryOptimizer:
 
         self.toolbox = base.Toolbox()
         
-        # Genetic operators
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
         self.toolbox.register("select", self.select)
         self.toolbox.register("evaluate", self.evaluate_individual)
         
-        # Statistics and Hall of Fame
         self.stats = tools.Statistics(lambda ind: ind.fitness.values)
         self.stats.register("avg", np.mean)
         self.stats.register("std", np.std)
@@ -135,15 +132,20 @@ class KernelSizeEvolutionaryOptimizer:
         if _debug:
             individual.model_performance = self._debug_model_performance(individual)
 
-            return (FitnessFunctions.fitness_function(individual),)
+            return (self.fitness_function(individual),)
 
         model = self.create_trained_individual(individual, fully)
-        fitness = FitnessFunctions.fitness_function(model.model_performance)
+        fitness = self.fitness_function(model.model_performance)
 
         individual.model_performance = model.model_performance
         individual.model_args = model.model_args
 
         return (fitness,)
+    
+    def fitness_function(self, individual_performance):
+        # Remember to change MINIMIZE_FITNESS if changing this
+        fitness = individual_performance.get("train_loss", 0.0)
+        return fitness
     
     def _debug_model_performance(self, indi):
         output = {
@@ -196,8 +198,6 @@ class KernelSizeEvolutionaryOptimizer:
         if number_of_people_to_select <= 0:
             return []
         
-        # Normalize fitness values
-        map(lambda x: FitnessFunctions.normalization_function(x, population), population)
 
         chosen_for_next_generation = []
         elitism = 1
@@ -206,7 +206,7 @@ class KernelSizeEvolutionaryOptimizer:
             sorted_pop = sorted(
                 population, 
                 key=lambda x: x.fitness.values[0], 
-                reverse=not FitnessFunctions.MINIMIZE_FITNESS
+                reverse=not KernelSizeEvolutionaryOptimizer.MINIMIZE_FITNESS
             )
             elites = sorted_pop[:elitism]
             chosen_for_next_generation.extend(elites)
