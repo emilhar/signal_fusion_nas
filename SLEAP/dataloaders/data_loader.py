@@ -66,13 +66,13 @@ class SDataLoader:
             
         return torch.tensor([label_counts[0] / max(1, label_counts[1])])
 
-    def get_random_subset(self, dataset_percentage):
+    def get_random_subset(self, datapoints_per_individual):
         train_dataset = self.train_loader.dataset
         test_dataset = self.test_loader.dataset
 
         # Calculate subset sizes
-        train_size = int(len(train_dataset) * dataset_percentage * SDataLoader.TRAINING_SPLIT)
-        test_size = int(len(test_dataset) * dataset_percentage * (1 - SDataLoader.TRAINING_SPLIT))
+        train_size = int(datapoints_per_individual * SDataLoader.TRAINING_SPLIT)
+        test_size = int(datapoints_per_individual * (1 - SDataLoader.TRAINING_SPLIT))
         
         train_subset = Subset(train_dataset, sample(range(len(train_dataset)), train_size))
         test_subset = Subset(test_dataset, sample(range(len(test_dataset)), test_size))

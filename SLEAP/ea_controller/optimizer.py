@@ -2,11 +2,10 @@ import random
 import torch
 import multiprocessing
 import numpy as np
+from Globals import Globals
 from deap import base, creator, tools
 from deap.algorithms import eaMuPlusLambda
 from dataloaders.data_loader import SDataLoader
-from logger import Logger
-
 from utils.trained_model_maker import TrainedModelMaker
 from Globals import EvolutionManager, LoggingHelper
 from ea_controller.fitness_functions import FitnessFunctions
@@ -175,11 +174,13 @@ class KernelSizeEvolutionaryOptimizer:
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
         if fully:
-            epochs = 20
+            epochs = Globals.epochs_for_fully_training_binary_models
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.train_loader, self.SDL.test_loader, self.SDL.n_samples, self.SDL.pos_weight
+            batch_size = 128
         else:
             epochs = self.epochs_per_individual
-            individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(0.2)
+            individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(Globals.ea_datapoints_per_individual)
+            batch_size = self.batch_size
 
 
         new_model = TrainedModelMaker(
@@ -189,7 +190,7 @@ class KernelSizeEvolutionaryOptimizer:
             train_loader=individual_training_set,
             test_loader=individual_test_set,
             epochs=epochs,
-            batch_size=self.batch_size,    
+            batch_size=batch_size,    
         )
 
         return new_model

@@ -63,7 +63,7 @@ def analyze_predictions(all_true, all_preds, targets:list[Target]):
     plt.title("Confusion Matrix")
 
     a = str(datetime.now().replace(microsecond=0)).replace(" ", "_").replace(":", "-")
-    d = "debug"
+    d = Globals.confusion_matrix_folder_name
     fig_path = f"_misc/confusion_matrices/{d}/Experiment_{a}.png"
     os.makedirs(f"_misc/confusion_matrices/{d}", exist_ok=True)
     plt.savefig(fig_path)

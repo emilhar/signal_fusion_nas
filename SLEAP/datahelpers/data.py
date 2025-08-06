@@ -1,12 +1,13 @@
 import os
 from datahelpers.signal import Signal
 from datahelpers.target import Target
+from Globals import Globals
 
 class Data:
     __ALL_SIGNAL_NAMES = None
     __ALL_TARGET_NAMES = None
     DIRECTORY = "dataset"
-    max_memory = (2**10) * (2**5)
+    max_memory = Globals.lazy_data_max_memory
     batch_size = 128
     
 

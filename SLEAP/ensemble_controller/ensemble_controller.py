@@ -6,7 +6,7 @@ from utils.trained_model_maker import TrainedModelMaker
 from datahelpers.data import Data
 from datahelpers.signal import Signal
 
-from Globals import LoggingHelper, device
+from Globals import *
 
 from ensemble_controller.ensemble_plotter import analyze_predictions
 
@@ -31,7 +31,7 @@ class EnsembleController:
         self.debug = debug
         self.branch_generator = SmartBranchGenerator()
 
-        self.epochs_for_full = 20
+        self.epochs_for_full = Globals.epochs_for_fully_training_binary_models
 
     def create_ensemble(self, pos_idx, use_temp=False):
         ctx = multiprocessing.get_context('spawn')
@@ -66,7 +66,7 @@ class EnsembleController:
             train_loader=train_loader,
             test_loader=test_loader,
             pos_idx=pos_idx,
-            epochs=10,
+            epochs=Globals.epochs_for_training_ensemble_models,
         )
         model.load_state_dict(trained_state)
 

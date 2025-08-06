@@ -1,5 +1,4 @@
 from Globals import *
-from ea_controller.optimizer import KernelSizeEvolutionaryOptimizer
 from datahelpers.data import Data
 import multiprocessing
 import os

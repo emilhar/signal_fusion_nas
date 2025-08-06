@@ -20,7 +20,7 @@ class Main:
         self.targets, self.signals = prepare_data(mb_per_part=0.5)
         self.ea_controller = EA_Controller()
         self.ensemble_controller = EnsembleController(self.targets, self.signals)
-        self.max_filters = 4
+        self.max_filters = Globals.max_filters_for_theseus
         self.clear_temp_models()
 
     def run(self):
