@@ -1,36 +1,28 @@
-from models.cnn_binary_classifier import CNN_BinaryClassifier
-from dataloaders.data_loader import SDataLoader
-from models.ensemble_model import EnsembleModel
-from utils.trained_model_maker import TrainedModelMaker
-
+from Globals import *
 from datahelpers.data import Data
 from datahelpers.signal import Signal
-
-from Globals import *
-
+from models.ensemble_model import EnsembleModel
+from models.cnn_binary_classifier import CNN_BinaryClassifier
 from ensemble_controller.ensemble_plotter import analyze_predictions
 
 import os
-import multiprocessing
+import time
 import torch
 import warnings
 import numpy as np
-import time
-
+import multiprocessing
 from sklearn.metrics import confusion_matrix
 
-class SmartBranchGenerator():
+class DumBranchGenerator():
     def get_branch(self):
         return [[3, 3, 3]]
-
 
 class EnsembleController:
     def __init__(self, targets, signals: list[Signal], debug=False):
         self.targets = targets
         self.signals = signals
         self.debug = debug
-        self.branch_generator = SmartBranchGenerator()
-
+        self.branch_generator = DumBranchGenerator()
         self.epochs_for_full = Globals.epochs_for_fully_training_binary_models
 
     def create_ensemble(self, pos_idx, use_temp=False):
@@ -47,7 +39,6 @@ class EnsembleController:
         return queue.get()
 
     def _create_ensemble_in_process(self, queue, use_temp, targets, signals, pos_idx):
-        # Reinitialize necessary components in subprocess
         from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
         from models.ensemble_model import EnsembleModel
         from Globals import device
@@ -59,6 +50,7 @@ class EnsembleController:
         models_dict = self.load_each_model(use_temp)
 
         print("🚀 Training Model...")
+        import gc
         model = EnsembleModel(models_dict)
         model.to(device)
         trained_state = EnsembleModel.train_model(
@@ -75,7 +67,6 @@ class EnsembleController:
         for i, target in enumerate(targets):
             target_ranking.append((target, cm[i][i]))
 
-        # Aggressive cleanup
         train_loader.dataset.clear_all()
         test_loader.dataset.clear_all()
         del train_loader
@@ -86,12 +77,10 @@ class EnsembleController:
                 del m
         models_dict.clear()
         
-        import gc
         gc.collect()
         torch.cuda.empty_cache()
         
         queue.put(target_ranking)
-
 
     def load_each_model(self, use_temp):
         models_dict = {}
@@ -128,13 +117,11 @@ class EnsembleController:
                         full_path = os.path.join("saved_models", model_file)
                         models_dict[signal_name].append(self.load_model(full_path))
         
-        # Verify we have all expected models
         assert len(models_dict.keys()) == len(Data.get_all_signal_names()), "Not enough models"
         for k in models_dict.keys():
             assert len(models_dict[k]) == len(Data.get_all_target_names()), f"Not all signals have all targets (signal {k} has {len(models_dict[k])})"
         
         return models_dict
-
 
     def load_model(self, model_path):
         with warnings.catch_warnings():
@@ -152,7 +139,6 @@ class EnsembleController:
         model.load_state_dict(checkpoint["state_dict"])
         return model
     
-
     def load_model_config(self, model_path):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=FutureWarning)
@@ -160,17 +146,15 @@ class EnsembleController:
 
         return checkpoint["model_args"]
 
-    
     def get_confusion_matrix(self, model, test_loader):
         all_true = []
         all_preds = []
 
         model.eval()
-        model.to(device)  # Ensure model is on the right device
+        model.to(device)
 
         with torch.inference_mode():
             for (datas, labels) in test_loader:
-                # Move data to the same device as model
                 datas = {k: v.to(device) for k, v in datas.items()}
                 labels = labels.to(device)
                 
@@ -186,8 +170,6 @@ class EnsembleController:
 
         return confusion_matrix(all_true, all_preds, labels=range(len(Data.get_all_target_names())), normalize="true")
 
-
-
     def save_ensemble(self, ensemble_model, path):
         save_data = {
             "mlp_state_dict": ensemble_model.mlp.state_dict(),
@@ -197,7 +179,6 @@ class EnsembleController:
             }
         }
         torch.save(save_data, path)
-
 
     def load_ensemble(self, path, device="cuda"):
         data = torch.load(path, map_location=device)
@@ -210,7 +191,6 @@ class EnsembleController:
         ensemble.mlp.load_state_dict(data["mlp_state_dict"])
         return ensemble
     
-
     def get_initial_models(self):
         ctx = multiprocessing.get_context('spawn')
         max_processes = 4
@@ -218,12 +198,10 @@ class EnsembleController:
 
         for signal in self.signals:
             for target in self.targets:
-                # Wait if we've reached max concurrent processes
                 while len(active_processes) >= max_processes:
-                    # Check completed processes
-                    for p in active_processes[:]:  # Make a copy for iteration
+                    for p in active_processes[:]:
                         if not p.is_alive():
-                            p.join()  # Clean up the finished process
+                            p.join()
                             if p.exitcode != 0:
                                 raise RuntimeError("Subprocess for model training failed")
                             active_processes.remove(p)
@@ -231,7 +209,6 @@ class EnsembleController:
                     # Small sleep to prevent busy waiting
                     time.sleep(1)
                 
-                # Start a new process
                 p = ctx.Process(
                     target=self._train_and_save_model_in_process,
                     args=(signal, target)
@@ -245,7 +222,6 @@ class EnsembleController:
             if p.exitcode != 0:
                 raise RuntimeError("Subprocess for model training failed")
 
-    # Keep _train_and_save_model_in_process the same as original
     def _train_and_save_model_in_process(self, signal, target):
         from dataloaders.data_loader import SDataLoader
         from utils.trained_model_maker import TrainedModelMaker
@@ -263,7 +239,6 @@ class EnsembleController:
             batch_size=Data.batch_size,
         )
         
-        # Save the model
         os.makedirs("saved_models", exist_ok=True)
         model_path = f"saved_models/{target}_{signal}_model.pt"
         torch.save({
@@ -271,13 +246,11 @@ class EnsembleController:
             'model_args': m.model_args
         }, model_path)
         
-        # Cleanup
         del sdl
         del m
         import gc
         gc.collect()
         torch.cuda.empty_cache()
-
 
     def update_filters_for_binary_models(self):
         ctx = multiprocessing.get_context('spawn')
@@ -313,18 +286,16 @@ class EnsembleController:
                 raise RuntimeError("Subprocess for model update failed")
 
     def _update_and_save_model_in_process(self, signal, target, model_config):
-        # [Keep the same implementation as before]
         from dataloaders.data_loader import SDataLoader
         from utils.trained_model_maker import TrainedModelMaker
         from datahelpers.data import Data
         
         sdl = SDataLoader(signal, target, batch_size=Data.batch_size)
-        
         indi = [
             model_config["branch_configs"][f"branch_{i}"]["kernel_sizes"]
             for i in range(len(model_config["branch_configs"]))
         ]
-        
+
         m = TrainedModelMaker(
             branches=indi,
             N_SAMPLES=signal.n_samples,
@@ -337,15 +308,12 @@ class EnsembleController:
         
         self.save_binary_model(m, signal, target)
         
-        # Cleanup
         del sdl
         del m
         import gc
         gc.collect()
         torch.cuda.empty_cache()
 
-
-        
     def load_each_model_config(self):
         model_configs = {}
 
