@@ -8,9 +8,7 @@ from utils.trained_model_maker import TrainedModelMaker
 
 from utils.arg_parse import parse_arguments
 
-from datahelpers.data import Data
 from datahelpers.target import Target
-from datahelpers.signal import Signal
 from utils.clr import Clr
 import os
 import shutil
@@ -19,7 +17,7 @@ from logger import Logger
 
 class Main:
     def __init__(self):
-        self.targets, self.signals = prepare_data(mb_per_part=0.5)
+        self.targets, self.signals = prepare_data(mb_per_part=128)
         self.ea_controller = EA_Controller()
         self.ensemble_controller = EnsembleController(self.targets, self.signals)
         self.max_filters = Globals.max_filters_for_theseus
@@ -62,7 +60,7 @@ class Main:
                     else:
                         other_change += (new_score - original_score) / original_score
 
-                self.log_ranking_comparison(target_ranking, new_target_ranking, use_table=True)
+                Logger.log_ranking_comparison(target_ranking, new_target_ranking, use_table=True)
                 if target_change > 0.0:
                     print_str = f"TARGET {target} IMPROVED"
                     print(print_str)
@@ -128,44 +126,6 @@ class Main:
 
         self.ensemble_controller.update_filters_for_binary_models()
         return True
-    
-
-    def log_ranking_comparison(self, target_ranking, new_target_ranking, use_table=False):
-        if not target_ranking or not new_target_ranking:
-            Logger.log_line("> No ranking data to compare\n")
-            return
-        
-        # Header
-        Logger.log_line("\n## Ranking Comparison\n", use_timestamp=False)
-        
-        if use_table:
-            # Table version
-            Logger.log_line("| Original | Score | → | New | Score | Change |", use_timestamp=False)
-            Logger.log_line("|----------|-------|---|-----|-------|--------|", use_timestamp=False)
-            
-            for (original, original_score), (new, new_score) in zip(target_ranking, new_target_ranking):
-                color = "green" if new_score >= original_score else "red"
-                
-                Logger.log_line(
-                    f"| `{original}` | `{original_score:.2f}` | → | `{new}` | `{new_score:.2f}` | "
-                    f"<span style='color:{color}'>{"▅"}</span> |",
-                    use_timestamp=False
-                )
-        else:
-            # List version
-            Logger.log_line("### Changes:\n")
-            
-            for (original, original_score), (new, new_score) in zip(target_ranking, new_target_ranking):
-                direction = "↑" if new_score >= original_score else "↓"
-                color = "green" if new_score >= original_score else "red"
-                colored_arrow = Clr("→", color)
-                
-                Logger.log_line(
-                    f"- `{original}`: `{original_score:.2f}` {colored_arrow} "
-                    f"`{new}`: `{new_score:.2f}` {direction}",
-                    use_timestamp=False
-                )
-        
     
 
 

@@ -1,8 +1,5 @@
-from grid_search_controller.grid_search_controller import GridSearchController, GridSearchTimeoutError
+from grid_search_controller.grid_search_controller import GridSearchController
 from datahelpers.data import Data
-from datahelpers.signal import Signal
-from datahelpers.target import Target
-
 def main():
     data = Data()
     signal = data.signal_objects[0]

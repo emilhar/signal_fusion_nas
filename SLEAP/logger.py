@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from utils.clr import Clr
 
 class Logger:
     _log_directory = "_misc/long_reverse_experiments"
@@ -103,3 +104,40 @@ class Logger:
                 f.write(row)
             f.write("\n")
             
+    @classmethod
+    def log_ranking_comparison(cls, target_ranking, new_target_ranking, use_table=False):
+        if not target_ranking or not new_target_ranking:
+            Logger.log_line("> No ranking data to compare\n")
+            return
+        
+        # Header
+        Logger.log_line("\n## Ranking Comparison\n", use_timestamp=False)
+        
+        if use_table:
+            # Table version
+            Logger.log_line("| Original | Score | → | New | Score | Change |", use_timestamp=False)
+            Logger.log_line("|----------|-------|---|-----|-------|--------|", use_timestamp=False)
+            
+            for (original, original_score), (new, new_score) in zip(target_ranking, new_target_ranking):
+                color = "green" if new_score >= original_score else "red"
+                
+                Logger.log_line(
+                    f"| `{original}` | `{original_score:.2f}` | → | `{new}` | `{new_score:.2f}` | "
+                    f"<span style='color:{color}'>{"▅"}</span> |",
+                    use_timestamp=False
+                )
+        else:
+            # List version
+            Logger.log_line("### Changes:\n")
+            
+            for (original, original_score), (new, new_score) in zip(target_ranking, new_target_ranking):
+                direction = "↑" if new_score >= original_score else "↓"
+                color = "green" if new_score >= original_score else "red"
+                colored_arrow = Clr("→", color)
+                
+                Logger.log_line(
+                    f"- `{original}`: `{original_score:.2f}` {colored_arrow} "
+                    f"`{new}`: `{new_score:.2f}` {direction}",
+                    use_timestamp=False
+                )
+        
