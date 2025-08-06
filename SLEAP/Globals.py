@@ -12,11 +12,6 @@ class EvolutionManager:
     CX_PROB: float = 0.5
     MUTATION_PROB: float = 0.5
 
-    # Misc
-    VERBOSE = False
-    VERY_VERBOSE = True and False # Shows Individual Training sessions
-
-
 class Globals:
     epochs_for_fully_training_binary_models = 20
     epochs_for_training_ensemble_models = 10

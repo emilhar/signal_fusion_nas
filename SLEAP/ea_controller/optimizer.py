@@ -355,7 +355,6 @@ class KernelSizeEvolutionaryOptimizer:
             ngen= EvolutionManager.GENERATIONS,
             stats=self.stats,
             halloffame= self.hall_of_fame,
-            verbose= EvolutionManager.VERBOSE
         )
 
         if part_of_bigger_run:

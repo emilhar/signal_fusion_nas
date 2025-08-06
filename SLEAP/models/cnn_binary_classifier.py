@@ -127,7 +127,7 @@ class CNN_BinaryClassifier(nn.Module):
 
 
     @staticmethod
-    def train_model(model, train_loader, test_loader, pos_weight, verbose=False, p=5, f=0.5, epochs=50, output_period=1):
+    def train_model(model, train_loader, test_loader, pos_weight, p=5, f=0.5, epochs=50, output_period=1):
         def _get_kernel_sizes(branch):
             kernel_sizes = []
             for layer in branch.net:
@@ -213,15 +213,6 @@ class CNN_BinaryClassifier(nn.Module):
                 
 
             elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
-
-            if verbose:
-                if epoch % output_period == 0 or epoch == epochs-1:
-                    print(f"Epoch {epoch+1:2}/{epochs} -> "
-                        f"Train Loss: {train_loss:.4f} | Test Loss: {test_loss:2.4f} | "
-                        f"Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f} | "
-                        f"Time: {elapsed:.4f}sec | "
-                        f"AUC score: {auc_score:.4f} | "
-                        f"Accuracy: {accuracy:.3f} ---> Learning rate: \x1b[31m{current_lr}\x1b[0m")
 
         kernel_sizes = []
         for branch in model.branches.values():

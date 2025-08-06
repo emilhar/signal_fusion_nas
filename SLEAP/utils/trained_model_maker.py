@@ -30,15 +30,12 @@ class TrainedModelMaker:
         self.model_args["batch_size"] = batch_size
         self.model = CNN_BinaryClassifier(**self.model_args).to( device )
 
-        if EvolutionManager.VERY_VERBOSE:
-            print(f"\n\nTraining model: {branches=}, Generation: {LoggingHelper.current_generation_id}/{EvolutionManager.GENERATIONS}, Generation Completeness: {LoggingHelper.current_individual_id}/{LoggingHelper.population_size}")
 
         self.model_performance = CNN_BinaryClassifier.train_model(
             self.model, 
             train_loader, 
             test_loader, 
             pos_weight, 
-            verbose=EvolutionManager.VERY_VERBOSE, 
             epochs=epochs,
         )
 
