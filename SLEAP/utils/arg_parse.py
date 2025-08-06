@@ -1,7 +1,5 @@
 from Globals import *
-from ea_controller.ea_controller import KernelSizeEvolutionaryOptimizer
 import argparse
-from datahelpers.data import Data
 
 def parse_arguments():
     """Parse command line arguments to override global settings"""
@@ -17,9 +15,6 @@ def parse_arguments():
     parser.add_argument('--max-filters', type=int, help=f'Maximum filters for Theseus (default: {Globals.max_filters_for_theseus})')
     parser.add_argument('--confusion-folder', type=str, help=f'Confusion matrix folder name (default: {Globals.confusion_matrix_folder_name})')
     parser.add_argument('--lazy-mem', type=int, help=f'Maximum memory for lazy data loader (default: {Globals.lazy_data_max_memory // 2**10}GiB)')
-
-    parser.add_argument('--max-mem', type=int, help=f'Maximum memory for lazyloader cache (default: {Data.max_memory})')
-    parser.add_argument('--no-logging', action='store_true', help='Disable logging')    
 
     args = parser.parse_args()
     apply_arguments(args)
@@ -47,10 +42,3 @@ def apply_arguments(args):
     if args.lazy_mem:
         Globals.lazy_data_max_memory = args.lazy_mem
     
-    # Data settings
-    if args.max_mem:
-        Data.max_memory = args.max_mem
-    
-    # LoggingSettings settings
-    if args.no_logging:
-        LoggingHelper.LOGGING = False

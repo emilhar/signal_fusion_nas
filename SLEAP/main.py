@@ -6,6 +6,8 @@ from ea_controller.ea_controller import EA_Controller
 from ensemble_controller.ensemble_controller import EnsembleController
 from utils.trained_model_maker import TrainedModelMaker
 
+from utils.arg_parse import parse_arguments
+
 from datahelpers.data import Data
 from datahelpers.target import Target
 from datahelpers.signal import Signal
@@ -168,6 +170,7 @@ class Main:
 
 
 if __name__ == "__main__":
-    #parse_arguments()
-    main = Main()
-    main.run()
+    print("balls")
+    parse_arguments()
+    # main = Main()
+    # main.run()

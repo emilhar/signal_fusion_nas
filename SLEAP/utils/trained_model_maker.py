@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 
 # Model and Training imports
 from models.cnn_binary_classifier import CNN_BinaryClassifier
-from Globals import EvolutionManager, LoggingHelper, device
+from Globals import *
 
 class TrainedModelMaker:
     NUM_FILTERS = 1

@@ -7,7 +7,7 @@ from deap import base, creator, tools
 from deap.algorithms import eaMuPlusLambda
 from dataloaders.data_loader import SDataLoader
 from utils.trained_model_maker import TrainedModelMaker
-from Globals import EvolutionManager, LoggingHelper
+from Globals import EvolutionManager
 from ea_controller.fitness_functions import FitnessFunctions
 
 class KernelSizeEvolutionaryOptimizer:
@@ -134,8 +134,6 @@ class KernelSizeEvolutionaryOptimizer:
 
         if _debug:
             individual.model_performance = self._debug_model_performance(individual)
-            individual.individual_id = LoggingHelper.current_individual_id
-            LoggingHelper.current_individual_id += 1
 
             return (FitnessFunctions.fitness_function(individual),)
 
@@ -144,9 +142,6 @@ class KernelSizeEvolutionaryOptimizer:
 
         individual.model_performance = model.model_performance
         individual.model_args = model.model_args
-
-        individual.individual_id = LoggingHelper.current_individual_id
-        LoggingHelper.current_individual_id += 1
 
         return (fitness,)
     
