@@ -5,7 +5,6 @@ class Clr:
         self.bg_color = bg_color.lower() if bg_color else None
     
     def __str__(self):
-        # Foreground colors
         fg_colors = {
             "black": "\033[30m",
             "red": "\033[31m",
@@ -25,7 +24,6 @@ class Clr:
             "bright_white": "\033[97m",
         }
         
-        # Background colors
         bg_colors = {
             "black": "\033[40m",
             "red": "\033[41m",
@@ -47,15 +45,12 @@ class Clr:
         
         codes = []
         
-        # Add foreground color if specified
         if self.color and self.color in fg_colors:
             codes.append(fg_colors[self.color])
         
-        # Add background color if specified
         if self.bg_color and self.bg_color in bg_colors:
             codes.append(bg_colors[self.bg_color])
-        
-        
+            
         reset_code = "\033[0m"
         color_code = "".join(codes)
         

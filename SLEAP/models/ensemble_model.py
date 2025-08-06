@@ -1,17 +1,13 @@
-import datetime
-
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from sklearn.metrics import precision_recall_fscore_support
+import datetime
 import numpy as np
-
+import torch.nn as nn
 from Globals import device
+import torch.optim as optim
+from datahelpers.data import Data
+from sklearn.metrics import precision_recall_fscore_support
 
 class _FFE(nn.Module):
-    """Frozen Feature Extractinator
-    Freezes the Features and then Extractinates them
-    """
     def __init__(self, model):
         super().__init__()
         self.model = model
@@ -28,13 +24,6 @@ class _FFE(nn.Module):
 class EnsembleModel(nn.Module):
     WEIGHTS = None
     def __init__(self, models):
-        """
-        models = {
-            "s1": [m1, m2, m3, m4],
-            ...
-            "s4": [m13, m14, m15, m16]
-        }
-        """
         super().__init__()
         self.signal_names = models.keys()
 
@@ -44,14 +33,15 @@ class EnsembleModel(nn.Module):
                 _FFE(model) for model in model_list
             ])
 
+        assert Data.__ALL_SIGNAL_NAMES is not None, "Haven't initialized Data"
 
         self.mlp = nn.Sequential(
-            nn.Linear(20 * 32, 256), # (20 binary each outputting a 32 embedding) -> 256
+            nn.Linear(len(Data.__ALL_SIGNAL_NAMES) * len(Data.__ALL_TARGET_NAMES) * 32, 256), # (N binary models each outputting a 32 embedding) -> 256
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(256, 64),
             nn.ReLU(),
-            nn.Linear(64, 5)  # 5 sleep stages
+            nn.Linear(64, len(Data.__ALL_TARGET_NAMES))
         )
 
     def forward(self, x_data):
@@ -77,8 +67,7 @@ class EnsembleModel(nn.Module):
 
     @staticmethod
     def calculate_class_weights(train_loader):
-        """Calculate class weights based on the inverse of class frequencies."""
-        # Count class occurrences
+        
         if EnsembleModel.WEIGHTS is not None:
             return EnsembleModel.WEIGHTS
 
@@ -95,15 +84,14 @@ class EnsembleModel(nn.Module):
         classes = sorted(class_counts.keys())
         counts = [class_counts[c] for c in classes]
         
-        # Compute weights (inverse frequency)
         weights = 1. / torch.tensor(counts, dtype=torch.float32)
-        weights = weights / weights.sum()  # normalize
+        weights = weights / weights.sum()
         weights = weights.to(device)
         EnsembleModel.WEIGHTS = weights
         return weights.to(device)
 
     @staticmethod
-    def train_model(model, train_loader, test_loader, pos_idx, epochs=5, class_names=None):
+    def train_model(model, train_loader, test_loader, pos_idx, epochs=5):
         training_time_start = datetime.datetime.now()
 
         print(f"Running for {epochs} epochs...")
@@ -122,8 +110,8 @@ class EnsembleModel(nn.Module):
         best_test_f1 = 0.0
         best_model_state = model.state_dict()
 
-        if class_names is None:
-            class_names = [f"Class {i}" for i in range(len(weights))]
+        d = Data()
+        class_names = [t.given_name for t in d.target_objects]
 
         for epoch in range(epochs):
             model.train()

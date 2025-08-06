@@ -1,8 +1,4 @@
-"""
-This file defines the CNN binary classifier model and function for training it
-"""
-
-import datetime # For max training time
+import datetime
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -43,50 +39,6 @@ class _Branch(nn.Module):
         return self.net(x)
 
 class CNN_BinaryClassifier(nn.Module):
-    """
-    Two-branched convolutional neural network for binary sleep classification.
-    Input is arbitrary, whether it be EEG, EOG or EMG, even something else entirely.
-
-    An example of a model predicting N3 with 3000 samples as input:
-    X -> 3000 samples of whatever data
-    y -> 0 or 1
-      0 -> NOT N3
-      1 -> N3
-
-    branch_configs = {
-      "left": {
-          "num_kernels": [32, 64, 64],
-          "kernel_sizes": [22, 8, 8],
-          "paddings": [22//2, 3, 3],
-          "strides": [6, 1, 1],
-          "pool_sizes": [8, 4],
-          "pool_strides": [8, 4],
-          "dropout_rates": [0.1, 0.0]  # dropout only after first pool
-        },
-      "right": {
-          "num_kernels": [32, 64, 64],
-          "kernel_sizes": [400, 6, 6],
-          "paddings": [175, 2, 2],
-          "strides": [50, 1, 1],
-          "pool_sizes": [4, 2],
-          "pool_strides": [4, 2],
-          "dropout_rates": [0.1, 0.0]  # dropout only after first pool
-        }
-    }
-
-    model_args = {
-        "name": "MyN3Classifier",
-        "n_samples": 3000,
-        "branch_configs": branch_configs
-    }
-
-    model = CNN_BinaryClassifier(**model_args)
-    """
-    WAKE = 0
-    N1 = 1
-    N2 = 2
-    N3 = 3
-    REM = 4
 
     def __init__(self, n_samples, branch_configs, batch_size):
         super().__init__()
@@ -99,7 +51,7 @@ class CNN_BinaryClassifier(nn.Module):
             self.branches[name] = _Branch(**config)
 
         with torch.inference_mode():
-            dummy = torch.zeros((self.batch_size, 1, n_samples)) # L
+            dummy = torch.zeros((self.batch_size, 1, n_samples))
             for name, branch in self.branches.items():
                 branch.eval()
                 out = branch(dummy)
@@ -127,7 +79,8 @@ class CNN_BinaryClassifier(nn.Module):
 
 
     @staticmethod
-    def train_model(model, train_loader, test_loader, pos_weight, p=5, f=0.5, epochs=50, output_period=1):
+    def train_model(model, train_loader, test_loader, pos_weight, epochs=50):
+        
         def _get_kernel_sizes(branch):
             kernel_sizes = []
             for layer in branch.net:
