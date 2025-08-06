@@ -1,10 +1,7 @@
-# Base Imports
 import torch
+from Globals import device
 from torch.utils.data import DataLoader
-
-# Model and Training imports
 from models.cnn_binary_classifier import CNN_BinaryClassifier
-from Globals import *
 
 class TrainedModelMaker:
     NUM_FILTERS = 1
@@ -26,10 +23,9 @@ class TrainedModelMaker:
         else:
             self.filters = filters
 
-        self.model_args = self.get_branch_configs(branches, N_SAMPLES, filters=self.filters) # See ModelManager
+        self.model_args = self.get_branch_configs(branches, N_SAMPLES, filters=self.filters)
         self.model_args["batch_size"] = batch_size
         self.model = CNN_BinaryClassifier(**self.model_args).to( device )
-
 
         self.model_performance = CNN_BinaryClassifier.train_model(
             self.model, 
@@ -39,25 +35,13 @@ class TrainedModelMaker:
             epochs=epochs,
         )
 
-        
-
+    
     def get_branch_configs(self, branches:list[list[int]], sample_count:int, filters):
-        """ 
-        Get full Manager for a model given
-        left_kernel_size: A list of 3 numbers for the kernel sizes of the left branch. e.g. [1, 2, 3]
-        right_kernel_size: A list of 3 numbers for the kernel sizes of the right branch. e.g. [1, 2, 3]
-        name: The name of the model. e.g. "MyN3Classifier
-        sample_count = number with number of samples
-
-        Outputs model args for model
-        """
-        conv_stride, pool_size, pool_strides = self.__find_pool_sizes(sample_count)
-
         branch_configs = {}
 
         for i, branch in enumerate(branches):
             branch_configs[f"branch_{i}"] = {
-                "num_kernels": self.get_num_kernels(filters, branch),
+                "num_kernels": self.__get_num_kernels(filters, branch),
                 "kernel_sizes": branch,
                 "paddings": self.__kernel_to_pad(branch),
                 "strides": self.__get_strides(branch, sample_count),
@@ -77,9 +61,7 @@ class TrainedModelMaker:
         return max(1, num//2)
 
     def __kernel_to_pad(self, numbers: list[int]):
-        """Takes a kernel_sizes list and returns a corresponding paddings list"""
         new_list = []
-
         for num in numbers:
             fixed_num = (num // 2) - 1
             if fixed_num < 0:
@@ -88,15 +70,7 @@ class TrainedModelMaker:
 
         return new_list
 
-    def __find_pool_sizes(self, n_samples: int):
-        
-        conv_stride = max(n_samples // 30 // 16, 1)
-        pool_size = max(n_samples // 30 // 12, 1)
-        pool_strides = max(pool_size // 2, 1)
-
-        return conv_stride, pool_size, pool_strides
-
-    def get_num_kernels(self, filters, branch):
+    def __get_num_kernels(self, filters, branch):
         return [filters] * len(branch)
 
     def __get_strides(self, branch, n_samples):

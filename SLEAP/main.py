@@ -117,9 +117,9 @@ class Main:
 
     def update_filters(self):
         if TrainedModelMaker.NUM_FILTERS * 2 > self.max_filters:
-            print_str = "REACHED MAX FILTERS PER CONVOLUTION"
+            print_str = "## REACHED MAX FILTERS PER CONVOLUTION"
             print(print_str)
-            Logger.log_line(print_str)
+            Logger.log_line(print_str, use_timestamp=False)
             return False
         
         TrainedModelMaker.NUM_FILTERS *= 2
