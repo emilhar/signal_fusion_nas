@@ -6,3 +6,9 @@ class Target():
     def __str__(self):
         return self.given_name
     
+    def __hash__(self):
+        return hash(self.given_name)
+    
+    def __eq__(self, other):
+        return self.given_name == other.given_name
+    

@@ -3,7 +3,7 @@ import datetime
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.metrics import precision_recall_fscore_support, classification_report
+from sklearn.metrics import precision_recall_fscore_support
 import numpy as np
 
 from Globals import device
@@ -26,6 +26,7 @@ class _FFE(nn.Module):
 
 
 class EnsembleModel(nn.Module):
+    WEIGHTS = None
     def __init__(self, models):
         """
         models = {
@@ -75,13 +76,46 @@ class EnsembleModel(nn.Module):
     
 
     @staticmethod
-    def train_model(model, train_loader, test_loader, weights, epochs=5, class_names=None):
+    def calculate_class_weights(train_loader):
+        """Calculate class weights based on the inverse of class frequencies."""
+        # Count class occurrences
+        if EnsembleModel.WEIGHTS is not None:
+            return EnsembleModel.WEIGHTS
+
+        class_counts = {}
+        for _, labels in train_loader:
+            labels = labels.cpu().numpy()
+            for label in labels:
+                if label in class_counts:
+                    class_counts[label] += 1
+                else:
+                    class_counts[label] = 1
+        
+        # Sort classes and get counts in order
+        classes = sorted(class_counts.keys())
+        counts = [class_counts[c] for c in classes]
+        
+        # Compute weights (inverse frequency)
+        weights = 1. / torch.tensor(counts, dtype=torch.float32)
+        weights = weights / weights.sum()  # normalize
+        weights = weights.to(device)
+        EnsembleModel.WEIGHTS = weights
+        return weights.to(device)
+
+    @staticmethod
+    def train_model(model, train_loader, test_loader, pos_idx, epochs=5, class_names=None):
         training_time_start = datetime.datetime.now()
 
         print(f"Running for {epochs} epochs...")
         model = model.to(device)
         if device.type == "cpu":
             raise ValueError("Training with CPU")
+        
+        # Calculate weights if not provided
+        weights = EnsembleModel.calculate_class_weights(train_loader)
+        # weights[pos_idx] *= 2
+        print(f"Automatically calculated class weights: {weights.cpu().numpy()}")
+        
         criterion = nn.CrossEntropyLoss(weight=weights)
         optimizer = optim.AdamW(model.parameters())
 
@@ -153,24 +187,7 @@ class EnsembleModel(nn.Module):
                 best_test_f1 = test_f1
                 best_model_state = model.state_dict()
 
-
             elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
 
-            # print(f"Epoch {epoch+1}/{epochs}")
-            # print(f"  Train: Loss={train_loss:.4f}, Acc={train_acc:.4f}, "
-            #     f"Precision={train_precision:.4f}, Recall={train_recall:.4f}, F1={train_f1:.4f}")
-            # print(f"  Test:  Loss={test_loss:.4f}, Acc={test_acc:.4f}, "
-            #     f"Precision={test_precision:.4f}, Recall={test_recall:.4f}, F1={test_f1:.4f}")
-
-            # print("\nTest Classification Report:")
-            # print(classification_report(
-            #     all_test_targets,
-            #     all_test_preds,
-            #     target_names=class_names,
-            #     digits=4,
-            #     zero_division=0
-            #     ))
-            
-            # print(f"\nCumulative run time: {elapsed:.4f} seconds")
-
         return model.state_dict()
+

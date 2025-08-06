@@ -1,5 +1,6 @@
 import random
 import torch
+import multiprocessing
 import numpy as np
 from deap import base, creator, tools
 from deap.algorithms import eaMuPlusLambda
@@ -23,6 +24,8 @@ class KernelSizeEvolutionaryOptimizer:
     EPOCHS_PER_INDIVIDUAL = 3
 
     def __init__(self, classification_class, signal_type: str, n_samples:int, batch_size):
+        ctx = multiprocessing.get_context('spawn')
+        self.evaluation_lock = ctx.Lock()
 
         self.classification_class = classification_class
         self.signal_type = signal_type
@@ -126,7 +129,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         return new_indi
         
-    def evaluate_individual(self, individual, filters=None, _debug=False):
+    def evaluate_individual(self, individual, fully=False, _debug=False):
         """Evaluate an individual by training a model
         arg: individual"""
 
@@ -137,7 +140,7 @@ class KernelSizeEvolutionaryOptimizer:
 
             return (FitnessFunctions.fitness_function(individual),)
 
-        model = self.create_trained_individual(individual, filters)
+        model = self.create_trained_individual(individual, fully)
         fitness = FitnessFunctions.fitness_function(model.model_performance)
 
         individual.model_performance = model.model_performance
@@ -168,10 +171,16 @@ class KernelSizeEvolutionaryOptimizer:
 
         return output
     
-    def create_trained_individual(self, individual, filters=None):
+    def create_trained_individual(self, individual, fully=False):
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
-        individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(dataset_percentage=0.2)
+        if fully:
+            epochs = 20
+            individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.train_loader, self.SDL.test_loader, self.SDL.n_samples, self.SDL.pos_weight
+        else:
+            epochs = self.epochs_per_individual
+            individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(0.2)
+
 
         new_model = TrainedModelMaker(
             branches=individual,
@@ -179,9 +188,8 @@ class KernelSizeEvolutionaryOptimizer:
             pos_weight=pos_weight,
             train_loader=individual_training_set,
             test_loader=individual_test_set,
-            epochs=self.epochs_per_individual,
-            batch_size=self.batch_size,
-            filters=filters           
+            epochs=epochs,
+            batch_size=self.batch_size,    
         )
 
         return new_model
@@ -351,6 +359,14 @@ class KernelSizeEvolutionaryOptimizer:
 
         if part_of_bigger_run:
             best_individual = self.hall_of_fame[0]
+            a = best_individual.model_performance
+            with self.evaluation_lock:
+                print(f"Fully training best individual for {self.classification_class} with {self.signal_type}")
+                self.evaluate_individual(best_individual, fully=True)
+            b = best_individual.model_performance
+
+            if a == b:
+                raise ValueError("yo mama")
 
             temp_dir = "temp_models"
 

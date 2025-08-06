@@ -1,9 +1,6 @@
 from models.cnn_binary_classifier import CNN_BinaryClassifier
-
 from dataloaders.data_loader import SDataLoader
-
 from models.ensemble_model import EnsembleModel
-
 from utils.trained_model_maker import TrainedModelMaker
 
 from datahelpers.data import Data
@@ -18,6 +15,7 @@ import multiprocessing
 import torch
 import warnings
 import numpy as np
+import time
 
 from sklearn.metrics import confusion_matrix
 
@@ -33,12 +31,14 @@ class EnsembleController:
         self.debug = debug
         self.branch_generator = SmartBranchGenerator()
 
-    def create_ensemble(self, weights, use_temp=False):
+        self.epochs_for_full = 20
+
+    def create_ensemble(self, pos_idx, use_temp=False):
         ctx = multiprocessing.get_context('spawn')
         queue = ctx.Queue()
         p = ctx.Process(
             target=self._create_ensemble_in_process,
-            args=(queue, weights, use_temp, self.targets, self.signals, self.debug)
+            args=(queue, use_temp, self.targets, self.signals, pos_idx)
         )
         p.start()
         p.join()
@@ -46,7 +46,7 @@ class EnsembleController:
             raise RuntimeError("Subprocess for ensemble creation failed")
         return queue.get()
 
-    def _create_ensemble_in_process(self, queue, weights, use_temp, targets, signals, debug):
+    def _create_ensemble_in_process(self, queue, use_temp, targets, signals, pos_idx):
         # Reinitialize necessary components in subprocess
         from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
         from models.ensemble_model import EnsembleModel
@@ -65,7 +65,7 @@ class EnsembleController:
             model=model,
             train_loader=train_loader,
             test_loader=test_loader,
-            weights=weights,
+            pos_idx=pos_idx,
             epochs=10,
         )
         model.load_state_dict(trained_state)
@@ -90,7 +90,8 @@ class EnsembleController:
         gc.collect()
         torch.cuda.empty_cache()
         
-        queue.put(sorted(target_ranking, key=lambda x: x[1]))
+        queue.put(target_ranking)
+
 
     def load_each_model(self, use_temp):
         models_dict = {}
@@ -212,22 +213,40 @@ class EnsembleController:
 
     def get_initial_models(self):
         ctx = multiprocessing.get_context('spawn')
-        processes = []
-        
+        max_processes = 4
+        active_processes = []
+
         for signal in self.signals:
             for target in self.targets:
+                # Wait if we've reached max concurrent processes
+                while len(active_processes) >= max_processes:
+                    # Check completed processes
+                    for p in active_processes[:]:  # Make a copy for iteration
+                        if not p.is_alive():
+                            p.join()  # Clean up the finished process
+                            if p.exitcode != 0:
+                                raise RuntimeError("Subprocess for model training failed")
+                            active_processes.remove(p)
+                    
+                    # Small sleep to prevent busy waiting
+                    time.sleep(1)
+                
+                # Start a new process
                 p = ctx.Process(
                     target=self._train_and_save_model_in_process,
                     args=(signal, target)
                 )
                 p.start()
-                processes.append(p)
-                p.join()
-                if p.exitcode != 0:
-                    raise RuntimeError("Subprocess for model training failed")
+                active_processes.append(p)
+        
+        # Wait for all remaining processes to complete
+        for p in active_processes:
+            p.join()
+            if p.exitcode != 0:
+                raise RuntimeError("Subprocess for model training failed")
 
+    # Keep _train_and_save_model_in_process the same as original
     def _train_and_save_model_in_process(self, signal, target):
-        # Reinitialize necessary components in subprocess
         from dataloaders.data_loader import SDataLoader
         from utils.trained_model_maker import TrainedModelMaker
         from datahelpers.data import Data
@@ -240,7 +259,7 @@ class EnsembleController:
             pos_weight=sdl.pos_weight,
             train_loader=sdl.train_loader,
             test_loader=sdl.test_loader,
-            epochs=30,
+            epochs=self.epochs_for_full,
             batch_size=Data.batch_size,
         )
         
@@ -261,41 +280,71 @@ class EnsembleController:
 
 
     def update_filters_for_binary_models(self):
-        for (target, signal), model_config in self.load_each_model_config().items():
-            sdl = SDataLoader(signal, target, batch_size=Data.batch_size)
-
-            indi = [
-                model_config["branch_configs"][f"branch_{i}"]["kernel_sizes"]
-                for i in range(len(model_config["branch_configs"]))
-            ]
-            m = TrainedModelMaker(
-                branches=indi,
-                N_SAMPLES=signal.n_samples,
-                pos_weight=sdl.pos_weight,
-                train_loader=sdl.train_loader,
-                test_loader=sdl.test_loader,
-                epochs=30,
-                batch_size=Data.batch_size,
+        ctx = multiprocessing.get_context('spawn')
+        max_processes = 4
+        active_processes = []
+        
+        model_configs = self.load_each_model_config()
+        
+        for (target, signal), model_config in model_configs.items():
+            while len(active_processes) >= max_processes:
+                for p in active_processes[:]:
+                    if not p.is_alive():
+                        p.join()
+                        if p.exitcode != 0:
+                            raise RuntimeError("Subprocess for model update failed")
+                        active_processes.remove(p)
+                
+                # Small sleep to prevent busy waiting
+                time.sleep(1)
+            
+            # Start a new process
+            p = ctx.Process(
+                target=self._update_and_save_model_in_process,
+                args=(signal, target, model_config)
             )
-            self.save_binary_model(m, signal, target)
+            p.start()
+            active_processes.append(p)
+        
+        # Wait for all remaining processes to complete
+        for p in active_processes:
+            p.join()
+            if p.exitcode != 0:
+                raise RuntimeError("Subprocess for model update failed")
+
+    def _update_and_save_model_in_process(self, signal, target, model_config):
+        # [Keep the same implementation as before]
+        from dataloaders.data_loader import SDataLoader
+        from utils.trained_model_maker import TrainedModelMaker
+        from datahelpers.data import Data
+        
+        sdl = SDataLoader(signal, target, batch_size=Data.batch_size)
+        
+        indi = [
+            model_config["branch_configs"][f"branch_{i}"]["kernel_sizes"]
+            for i in range(len(model_config["branch_configs"]))
+        ]
+        
+        m = TrainedModelMaker(
+            branches=indi,
+            N_SAMPLES=signal.n_samples,
+            pos_weight=sdl.pos_weight,
+            train_loader=sdl.train_loader,
+            test_loader=sdl.test_loader,
+            epochs=self.epochs_for_full,
+            batch_size=Data.batch_size,
+        )
+        
+        self.save_binary_model(m, signal, target)
+        
+        # Cleanup
+        del sdl
+        del m
+        import gc
+        gc.collect()
+        torch.cuda.empty_cache()
 
 
-    def load_each_model_config(self):
-        model_configs = {}
-        for signal in self.signals:
-            signal_name = signal.name
-            
-            saved_model_files = [
-                f for f in os.listdir("saved_models") 
-                if f.endswith('.pt')
-            ]
-            
-            for model_path in saved_model_files:
-                if signal_name in model_path:
-                    full_path = os.path.join("saved_models", model_path)
-                    model_configs.append(self.load_model_config(full_path))
-
-        return model_configs
         
     def load_each_model_config(self):
         model_configs = {}

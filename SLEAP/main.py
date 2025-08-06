@@ -7,6 +7,8 @@ from ensemble_controller.ensemble_controller import EnsembleController
 from utils.trained_model_maker import TrainedModelMaker
 
 from datahelpers.data import Data
+from datahelpers.target import Target
+from datahelpers.signal import Signal
 from utils.clr import Clr
 import os
 import shutil
@@ -18,25 +20,23 @@ class Main:
         self.targets, self.signals = prepare_data(mb_per_part=0.5)
         self.ea_controller = EA_Controller()
         self.ensemble_controller = EnsembleController(self.targets, self.signals)
-        self.max_filters = 32
+        self.max_filters = 4
         self.clear_temp_models()
 
     def run(self):
         Logger.log_new_experiment_heading()
-        #self.ensemble_controller.get_initial_models()
+        self.ensemble_controller.get_initial_models()
         while True:
+            target: Target
             for target in self.targets:
-                weights = [1.0] * len(self.targets)
-                weights[self.targets.index(target)] *= 10.
-                weights = torch.tensor(weights).float().to(device)
-                target_ranking = self.ensemble_controller.create_ensemble(weights=weights, use_temp=False)
+                target_ranking = self.ensemble_controller.create_ensemble(pos_idx=target.data_label, use_temp=False)
                 Logger.log_ensemble(target_ranking, fake=False)
                 self.clear_temp_models()
                 Logger.log_ea_start(target)
                 for (logbook, signal, t) in self.ea_controller.run_ea(target):
                     Logger.log_ea_logbook(logbook, signal, t)
-                    
-                new_target_ranking = self.ensemble_controller.create_ensemble(weights=weights, use_temp=True)
+
+                new_target_ranking = self.ensemble_controller.create_ensemble(pos_idx=target.data_label, use_temp=True)
                 Logger.log_ensemble(new_target_ranking, fake=True)
 
                 target_change = 0
@@ -48,33 +48,29 @@ class Main:
                     
                     arrow_color = "green" if new_score >= original_score else "red"
                     colored_arrow = Clr("--->", arrow_color)
-                    
+
                     print_str = (
                         f"Original: {original}: {original_score:.2f} "
                         f"{colored_arrow} "
                         f"New: {new}: {new_score:.2f}\n"
                     )
                     print(print_str)
-                    Logger.log_line(
-                        f"Original: {original}: {original_score:.2f} "
-                        f"---> "
-                        f"New: {new}: {new_score:.2f}\n"
-                    )
-                    if original == target:
+                    if original.given_name == target.given_name:
                         target_change = (new_score - original_score) / original_score
                     else:
                         other_change += (new_score - original_score) / original_score
 
+                self.log_ranking_comparison(target_ranking, new_target_ranking, use_table=True)
                 if target_change > 0.0:
                     print_str = f"TARGET {target} IMPROVED"
                     print(print_str)
                     Logger.log_line(print_str)
                     Logger.log_successful_upgrade()
                     self.move_from_temp_to_saved()
-                
-                print_str = f"TARGET {target} NOT IMPROVED, MOVING TO NEXT"
-                print(print_str)
-                Logger.log_line(print_str)
+                else:
+                    print_str = f"TARGET {target} NOT IMPROVED, MOVING TO NEXT"
+                    print(print_str)
+                    Logger.log_line(print_str)
 
             print_str = "ADDING MORE FILTERS..."
             print(print_str)
@@ -130,6 +126,44 @@ class Main:
 
         self.ensemble_controller.update_filters_for_binary_models()
         return True
+    
+
+    def log_ranking_comparison(self, target_ranking, new_target_ranking, use_table=False):
+        if not target_ranking or not new_target_ranking:
+            Logger.log_line("> No ranking data to compare\n")
+            return
+        
+        # Header
+        Logger.log_line("\n## Ranking Comparison\n", use_timestamp=False)
+        
+        if use_table:
+            # Table version
+            Logger.log_line("| Original | Score | → | New | Score | Change |", use_timestamp=False)
+            Logger.log_line("|----------|-------|---|-----|-------|--------|", use_timestamp=False)
+            
+            for (original, original_score), (new, new_score) in zip(target_ranking, new_target_ranking):
+                color = "green" if new_score >= original_score else "red"
+                
+                Logger.log_line(
+                    f"| `{original}` | `{original_score:.2f}` | → | `{new}` | `{new_score:.2f}` | "
+                    f"<span style='color:{color}'>{"▅"}</span> |",
+                    use_timestamp=False
+                )
+        else:
+            # List version
+            Logger.log_line("### Changes:\n")
+            
+            for (original, original_score), (new, new_score) in zip(target_ranking, new_target_ranking):
+                direction = "↑" if new_score >= original_score else "↓"
+                color = "green" if new_score >= original_score else "red"
+                colored_arrow = Clr("→", color)
+                
+                Logger.log_line(
+                    f"- `{original}`: `{original_score:.2f}` {colored_arrow} "
+                    f"`{new}`: `{new_score:.2f}` {direction}",
+                    use_timestamp=False
+                )
+        
     
 
 

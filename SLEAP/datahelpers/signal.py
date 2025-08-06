@@ -12,5 +12,8 @@ class Signal:
             first_array = data[data.files[0]]
             self.n_samples = first_array.shape[1]
 
+    def __hash__(self):
+        return hash(self.name)
+
     def __str__(self):
         return self.name
