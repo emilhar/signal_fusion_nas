@@ -6,6 +6,7 @@ from models.cnn_binary_classifier import CNN_BinaryClassifier
 from ensemble_controller.ensemble_plotter import analyze_predictions
 
 import os
+import random
 import time
 import torch
 import warnings
@@ -13,24 +14,59 @@ import numpy as np
 import multiprocessing
 from sklearn.metrics import confusion_matrix
 
-class DumBranchGenerator():
-    def get_branch(self):
-        return [[3, 3, 3]]
+class BranchGenerator():
+    def get_branch(self, signal):
+        CHOICES = [
+            max(signal.n_samples // 5, 3), 
+            max(signal.n_samples // 10, 3),
+            max(signal.n_samples // 30, 3),
+            max(signal.n_samples // 90, 3),
+            max(signal.n_samples // 270, 3),
+            max(signal.n_samples // 810, 3),
+            max(signal.n_samples // 2430, 3)
+        ]
+        choices = list(set(x+1 if x%2==0 else x for x in CHOICES))
+        choices.sort(reverse=True)
+        
+        new_indi = []
+        
+        # Select first number from all available choices
+        first_num = random.choice(choices)
+        current_max_index = choices.index(first_num)
+        
+        for _ in range(random.randint(2, 4)):
+            branch = []
+            for _ in range(random.randint(2, 3)):
+                # Select from available choices (current_max_index and higher indices)
+                available_choices = choices[current_max_index:]
+                num = random.choice(available_choices)
+                branch.append(num)
+                # Update current_max_index - can't go back to earlier indices
+                current_max_index = max(current_max_index, choices.index(num))
+            
+            new_indi.append(branch)
+            # Reset current_max_index for the next branch
+            current_max_index = choices.index(first_num)
+                
+        return new_indi
+    
+
 
 class EnsembleController:
     def __init__(self, targets, signals: list[Signal], debug=False):
         self.targets = targets
         self.signals = signals
         self.debug = debug
-        self.branch_generator = DumBranchGenerator()
+        self.branch_generator = BranchGenerator()
         self.epochs_for_full = Globals.epochs_for_fully_training_binary_models
+        self.epochs_for_ensemble = Globals.epochs_for_training_ensemble_models
 
-    def create_ensemble(self, pos_idx, use_temp=False):
+    def create_ensemble(self, use_temp=False):
         ctx = multiprocessing.get_context('spawn')
         queue = ctx.Queue()
         p = ctx.Process(
             target=self._create_ensemble_in_process,
-            args=(queue, use_temp, self.targets, self.signals, pos_idx)
+            args=(queue, use_temp, self.targets, self.signals)
         )
         p.start()
         p.join()
@@ -38,7 +74,7 @@ class EnsembleController:
             raise RuntimeError("Subprocess for ensemble creation failed")
         return queue.get()
 
-    def _create_ensemble_in_process(self, queue, use_temp, targets, signals, pos_idx):
+    def _create_ensemble_in_process(self, queue, use_temp, targets, signals):
         from dataloaders.multimodal_dataset import get_dataloaders_with_multimodal_datasets
         from models.ensemble_model import EnsembleModel
         from Globals import device
@@ -57,8 +93,7 @@ class EnsembleController:
             model=model,
             train_loader=train_loader,
             test_loader=test_loader,
-            pos_idx=pos_idx,
-            epochs=Globals.epochs_for_training_ensemble_models,
+            epochs=self.epochs_for_ensemble,
         )
         model.load_state_dict(trained_state)
 
@@ -211,7 +246,7 @@ class EnsembleController:
                 
                 p = ctx.Process(
                     target=self._train_and_save_model_in_process,
-                    args=(signal, target)
+                    args=(signal, target, Globals.max_filters),
                 )
                 p.start()
                 active_processes.append(p)
@@ -222,13 +257,13 @@ class EnsembleController:
             if p.exitcode != 0:
                 raise RuntimeError("Subprocess for model training failed")
 
-    def _train_and_save_model_in_process(self, signal, target):
+    def _train_and_save_model_in_process(self, signal, target, filters):
         from dataloaders.data_loader import SDataLoader
         from utils.trained_model_maker import TrainedModelMaker
         from datahelpers.data import Data
         
         sdl = SDataLoader(signal, target, batch_size=Data.batch_size)
-        indi = self.branch_generator.get_branch()
+        indi = self.branch_generator.get_branch(signal)
         m = TrainedModelMaker(
             branches=indi,
             N_SAMPLES=signal.n_samples,
@@ -237,6 +272,7 @@ class EnsembleController:
             test_loader=sdl.test_loader,
             epochs=self.epochs_for_full,
             batch_size=Data.batch_size,
+            filters=filters
         )
         
         os.makedirs("saved_models", exist_ok=True)

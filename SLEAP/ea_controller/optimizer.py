@@ -23,7 +23,7 @@ class KernelSizeEvolutionaryOptimizer:
 
     MINIMIZE_FITNESS = True
 
-    def __init__(self, classification_class, signal_type: str, n_samples:int, batch_size):
+    def __init__(self, classification_class, signal_type: str, n_samples:int, batch_size, **kwargs):
         ctx = multiprocessing.get_context('spawn')
         self.evaluation_lock = ctx.Lock()
 
@@ -40,9 +40,13 @@ class KernelSizeEvolutionaryOptimizer:
         
         self.epochs_per_individual = self.EPOCHS_PER_INDIVIDUAL
 
+        self.full_training = Globals.epochs_for_fully_training_binary_models
+        self.pop_size = EvolutionManager.POPULATION_SIZE
+        self.generations = EvolutionManager.GENERATIONS
+
         if self.max_kernel_size is None:
             self.max_kernel_size = n_samples // 2
-            print(f"Max kernel size set at {self.max_kernel_size}")
+
         
         self.SDL = SDataLoader(
             signal_type=self.signal_type, 
@@ -171,13 +175,15 @@ class KernelSizeEvolutionaryOptimizer:
         """Creates trained individuals. Is used to create all individuals who aren't in the first-generation"""
 
         if fully:
-            epochs = Globals.epochs_for_fully_training_binary_models
+            epochs = self.full_training
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.train_loader, self.SDL.test_loader, self.SDL.n_samples, self.SDL.pos_weight
             batch_size = 128
+            filters = Globals.max_filters
         else:
             epochs = self.epochs_per_individual
             individual_training_set, individual_test_set, n_samples, pos_weight = self.SDL.get_random_subset(Globals.ea_datapoints_per_individual)
             batch_size = self.batch_size
+            filters = 1
 
 
         new_model = TrainedModelMaker(
@@ -188,6 +194,7 @@ class KernelSizeEvolutionaryOptimizer:
             test_loader=individual_test_set,
             epochs=epochs,
             batch_size=batch_size,    
+            filters=filters,
         )
 
         return new_model
@@ -334,7 +341,7 @@ class KernelSizeEvolutionaryOptimizer:
     def run_evolution(self, part_of_bigger_run=False):
         """Run the evolutionary algorithm"""
 
-        print(f"Starting evolution with {EvolutionManager.POPULATION_SIZE} individuals for {EvolutionManager.GENERATIONS} generations")
+        print(f"Starting evolution with {self.pop_size} individuals for {self.generations} generations")
 
         # Create initial population
         population = self.get_grid_individuals()
@@ -343,13 +350,14 @@ class KernelSizeEvolutionaryOptimizer:
         pop, logbook = eaMuPlusLambda(
             population=population,
             toolbox=self.toolbox,
-            mu=EvolutionManager.POPULATION_SIZE,
-            lambda_= max(1, EvolutionManager.POPULATION_SIZE // 2),
+            mu=self.pop_size,
+            lambda_= max(1, self.pop_size // 2),
             cxpb= EvolutionManager.CX_PROB,
             mutpb= EvolutionManager.MUTATION_PROB,
-            ngen= EvolutionManager.GENERATIONS,
+            ngen= self.generations,
             stats=self.stats,
-            halloffame= self.hall_of_fame,
+            halloffame=self.hall_of_fame,
+            verbose=False,
         )
 
         if part_of_bigger_run:

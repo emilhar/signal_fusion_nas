@@ -33,15 +33,16 @@ class EnsembleModel(nn.Module):
                 _FFE(model) for model in model_list
             ])
 
-        assert Data.__ALL_SIGNAL_NAMES is not None, "Haven't initialized Data"
+        assert Data.get_all_signal_names() is not None, "Haven't initialized Data"
+        assert Data.get_all_target_names() is not None, "Haven't initialized Data"
 
         self.mlp = nn.Sequential(
-            nn.Linear(len(Data.__ALL_SIGNAL_NAMES) * len(Data.__ALL_TARGET_NAMES) * 32, 256), # (N binary models each outputting a 32 embedding) -> 256
+            nn.Linear(len(Data.get_all_signal_names()) * len(Data.get_all_target_names()) * 32, 256), # (N binary models each outputting a 32 embedding) -> 256
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(256, 64),
             nn.ReLU(),
-            nn.Linear(64, len(Data.__ALL_TARGET_NAMES))
+            nn.Linear(64, len(Data.get_all_target_names()))
         )
 
     def forward(self, x_data):
@@ -91,7 +92,7 @@ class EnsembleModel(nn.Module):
         return weights.to(device)
 
     @staticmethod
-    def train_model(model, train_loader, test_loader, pos_idx, epochs=5):
+    def train_model(model, train_loader, test_loader, epochs=5):
         training_time_start = datetime.datetime.now()
 
         print(f"Running for {epochs} epochs...")
@@ -101,7 +102,6 @@ class EnsembleModel(nn.Module):
         
         # Calculate weights if not provided
         weights = EnsembleModel.calculate_class_weights(train_loader)
-        # weights[pos_idx] *= 2
         print(f"Automatically calculated class weights: {weights.cpu().numpy()}")
         
         criterion = nn.CrossEntropyLoss(weight=weights)
@@ -138,8 +138,8 @@ class EnsembleModel(nn.Module):
 
             train_loss /= len(train_loader.dataset)
             train_acc = np.mean(np.array(all_train_preds) == np.array(all_train_targets))
-            train_precision, train_recall, train_f1, _ = precision_recall_fscore_support(
-                all_train_targets, all_train_preds, average='weighted', zero_division=0
+            train_precision, train_recall, train_f1, train_support = precision_recall_fscore_support(
+                all_train_targets, all_train_preds, zero_division=0
             )
 
             model.eval()
@@ -167,15 +167,26 @@ class EnsembleModel(nn.Module):
 
             test_loss /= len(test_loader.dataset)
             test_acc = np.mean(np.array(all_test_preds) == np.array(all_test_targets))
-            test_precision, test_recall, test_f1, _ = precision_recall_fscore_support(
-                all_test_targets, all_test_preds, average='weighted', zero_division=0
+            test_precision, test_recall, test_f1, test_support = precision_recall_fscore_support(
+                all_test_targets, all_test_preds, zero_division=0
             )
 
-            if test_f1 > best_test_f1:
-                best_test_f1 = test_f1
-                best_model_state = model.state_dict()
+            # DOES NOT WORK.
+            # if test_f1 > best_test_f1:
+            #     best_test_f1 = test_f1
+            #     best_model_state = model.state_dict()
 
             elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
+
+            print("\nTraining Per-Class Metrics:")
+            for i, (prec, rec, f1, supp) in enumerate(zip(train_precision, train_recall, train_f1, train_support)):
+                print(f"Class {class_names[i]} ({i}):")
+                print(f"  Precision: {prec:.4f}, Recall: {rec:.4f}, F1: {f1:.4f}, Support: {supp}")
+
+            print("\nTest Per-Class Metrics:")
+            for i, (prec, rec, f1, supp) in enumerate(zip(test_precision, test_recall, test_f1, test_support)):
+                print(f"Class {class_names[i]} ({i}):")
+                print(f"  Precision: {prec:.4f}, Recall: {rec:.4f}, F1: {f1:.4f}, Support: {supp}")
 
         return model.state_dict()
 

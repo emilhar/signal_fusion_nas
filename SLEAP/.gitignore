@@ -1,2 +1,5 @@
 _misc
 dataset/*
+o.py
+t.py
+saved_models/*

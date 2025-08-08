@@ -1,4 +1,5 @@
 from Globals import *
+from ensemble_controller.ensemble_controller import EnsembleController
 import argparse
 
 def parse_arguments():
@@ -9,7 +10,7 @@ def parse_arguments():
     parser.add_argument('--binary-epochs', type=int, help=f'Epochs for fully training binary models (default: {Globals.epochs_for_fully_training_binary_models})')
     parser.add_argument('--ensemble-epochs', type=int, help=f'Epochs for training ensemble models (default: {Globals.epochs_for_training_ensemble_models})')
     parser.add_argument('--ea-datapoints', type=int, help=f'Number of datapoints per individual (default: {Globals.ea_datapoints_per_individual})')
-    parser.add_argument('--max-filters', type=int, help=f'Maximum filters for Theseus (default: {Globals.max_filters_for_theseus})')
+    parser.add_argument('--max-filters', type=int, help=f'Maximum filters for Theseus (default: {Globals.max_filters})')
     parser.add_argument('--confusion-folder', type=str, help=f'Confusion matrix folder name (default: {Globals.confusion_matrix_folder_name})')
     parser.add_argument('--lazy-mem', type=int, help=f'Maximum memory for lazy data loader (default: {Globals.lazy_data_max_memory // 2**10}GiB)')
 
@@ -29,7 +30,7 @@ def apply_arguments(args):
     if args.ea_datapoints:
         Globals.ea_datapoints_per_individual = args.ea_datapoints
     if args.max_filters:
-        Globals.max_filters_for_theseus = args.max_filters
+        Globals.max_filters = args.max_filters
     if args.confusion_folder:
         Globals.confusion_matrix_folder_name = args.confusion_folder
     if args.lazy_mem:
