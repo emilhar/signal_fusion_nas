@@ -73,7 +73,7 @@ class KernelSizeEvolutionaryOptimizer:
         
         self.toolbox.register("mate", self.crossover)
         self.toolbox.register("mutate", self.mutate)
-        self.toolbox.register("select", self.select)
+        self.toolbox.register("select", tools.selTournament, tournsize=5)
         self.toolbox.register("evaluate", self.evaluate_individual)
         
         self.stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -198,39 +198,6 @@ class KernelSizeEvolutionaryOptimizer:
         )
 
         return new_model
-    
-    def select(self, population, number_of_people_to_select):
-        """Tournament selection with elitism"""
-        
-        if number_of_people_to_select <= 0:
-            return []
-        
-
-        chosen_for_next_generation = []
-        elitism = 1
-
-        if elitism > 0:
-            sorted_pop = sorted(
-                population, 
-                key=lambda x: x.fitness.values[0], 
-                reverse=not KernelSizeEvolutionaryOptimizer.MINIMIZE_FITNESS
-            )
-            elites = sorted_pop[:elitism]
-            chosen_for_next_generation.extend(elites)
-            
-            remaining_to_select = number_of_people_to_select - elitism
-
-        else:
-            remaining_to_select = number_of_people_to_select
-    
-        # Perform tournament selection for remaining individuals
-        tournsize = max(3, int(len(population) * 0.2))
-        for _ in range(remaining_to_select):
-            aspirants = [random.choice(population) for _ in range(tournsize)]
-            best = self.minmax(aspirants, key= lambda x: x.fitness.values[0])
-            chosen_for_next_generation.append(best)
-        
-        return chosen_for_next_generation
 
     def crossover(self, ind1, ind2):
         """Custom crossover for variable-length kernel lists with multiple branches"""

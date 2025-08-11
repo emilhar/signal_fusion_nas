@@ -1,6 +1,7 @@
 import torch
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DATASET_PATH = "/mnt/datasets/shhs_preprocessed_chunks/"
 
 class EvolutionManager:
 
