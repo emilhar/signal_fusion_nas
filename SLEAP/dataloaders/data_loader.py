@@ -5,7 +5,7 @@ from random import sample, shuffle
 
 from dataloaders.lazy_dataset import LazyDataset
 from datahelpers.data import Data
-from Globals import EvolutionManager
+from Globals import DATASET_PATH
 
 
 class SDataLoader:
@@ -21,17 +21,17 @@ class SDataLoader:
     
     def prepare_data(self):
 
-        data_dir = f"{Data.DIRECTORY}/{Data.find_dataset()}/{self.signal_type}"
+        data_dir = f"{DATASET_PATH}/{self.signal_type}"
         all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.npz')])
-        subject_ids = sorted(set(f[:5] for f in all_files))
-        shuffle(subject_ids)
+        #subject_ids = sorted(set(f[:5] for f in all_files))
+        #shuffle(subject_ids)
 
-        split_idx = int(len(subject_ids) * SDataLoader.TRAINING_SPLIT)
-        train_subjects = subject_ids[:split_idx]
-        test_subjects = subject_ids[split_idx:]
+        split_idx = int(len(all_files) * SDataLoader.TRAINING_SPLIT)
+        #train_subjects = subject_ids[:split_idx]
+        #test_subjects = subject_ids[split_idx:]
 
-        train_files = [f for f in all_files if f[:5] in train_subjects]
-        test_files = [f for f in all_files if f[:5] in test_subjects]
+        train_files = all_files[:split_idx]
+        test_files = all_files[split_idx:]
 
         train_dataset = LazyDataset(train_files, data_dir, self.stage_map, max_memory=Data.max_memory)
         test_dataset = LazyDataset(test_files, data_dir, self.stage_map, max_memory=Data.max_memory)

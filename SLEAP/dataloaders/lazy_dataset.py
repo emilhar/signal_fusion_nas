@@ -49,7 +49,7 @@ class LazyDataset(Dataset):
         if self.fit:
             data_dict = self.cache[file]
             x: torch.Tensor = data_dict['x'][local_idx].astype(np.float32)
-            x = x.transpose()
+            #x = x.transpose()
             y = data_dict['y'][local_idx]
             y = self.stage_map.get(y, 0) if self.stage_map else y
             

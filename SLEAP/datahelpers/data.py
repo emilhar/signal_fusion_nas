@@ -18,6 +18,8 @@ class Data:
         signals = []
         data_dir = DATASET_PATH
         for signal_name in os.listdir(data_dir):
+            if signal_name == "label_map.txt":
+                continue
             new_signal = Signal(signal_name, f"{data_dir}/{signal_name}")
             signals.append(new_signal)
         
