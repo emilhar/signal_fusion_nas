@@ -27,11 +27,15 @@ class SDataLoader:
         #shuffle(subject_ids)
 
         split_idx = int(len(all_files) * SDataLoader.TRAINING_SPLIT)
-        #train_subjects = subject_ids[:split_idx]
-        #test_subjects = subject_ids[split_idx:]
+        # train_subjects = subject_ids[:split_idx]
+        # test_subjects = subject_ids[split_idx:]
+
 
         train_files = all_files[:split_idx]
         test_files = all_files[split_idx:]
+
+        # train_files = [f for f in all_files if f[:5] in train_subjects]
+        # test_files = [f for f in all_files if f[:5] in test_subjects]
 
         train_dataset = LazyDataset(train_files, data_dir, self.stage_map, max_memory=Data.max_memory)
         test_dataset = LazyDataset(test_files, data_dir, self.stage_map, max_memory=Data.max_memory)
@@ -62,6 +66,7 @@ class SDataLoader:
         for i in indices:
             _, label = dataset[i]
             label_counts[int(label)] += 1
+
             
         return torch.tensor([label_counts[0] / max(1, label_counts[1])])
 

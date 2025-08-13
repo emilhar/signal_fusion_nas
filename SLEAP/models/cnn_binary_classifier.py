@@ -80,6 +80,7 @@ class CNN_BinaryClassifier(nn.Module):
 
     @staticmethod
     def train_model(model, train_loader, test_loader, pos_weight, epochs=50):
+        #print("Training model...")
         
         def _get_kernel_sizes(branch):
             kernel_sizes = []
@@ -166,6 +167,7 @@ class CNN_BinaryClassifier(nn.Module):
                 
 
             elapsed = (datetime.datetime.now() - training_time_start).total_seconds()
+            #print(f"Elapsed: {elapsed:.2f}")
 
         kernel_sizes = []
         for branch in model.branches.values():

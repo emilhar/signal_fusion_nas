@@ -10,7 +10,7 @@ class Signal:
         
         with np.load(full_file_path, allow_pickle=True) as data:
             first_array = data[data.files[0]]
-            self.n_samples = first_array.shape[1]
+            self.n_samples = first_array.shape[2]
 
     def __hash__(self):
         return hash(self.name)

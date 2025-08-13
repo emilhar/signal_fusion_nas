@@ -7,6 +7,8 @@ class EA_Controller:
     def __init__(self):
         self.batch_size = 32
         self.max_workers = max(1, os.cpu_count() - 1)
+        ctx = multiprocessing.get_context('spawn')
+        self.evaluation_lock = ctx.Lock()
 
     def run_ea(self, target_to_update):
         if target_to_update.given_name not in Data.get_all_target_names():
@@ -25,7 +27,7 @@ class EA_Controller:
             queue = ctx.Queue()
             p = ctx.Process(
                 target=self._run_single_ea_worker,
-                args=(queue, signal, target_to_update, self.batch_size)
+                args=(queue, signal, target_to_update, self.batch_size, self.evaluation_lock)
             )
             p.start()
             processes.append((i, p))
@@ -44,7 +46,7 @@ class EA_Controller:
         return results
 
     @staticmethod
-    def _run_single_ea_worker(queue, signal, target, batch_size):
+    def _run_single_ea_worker(queue, signal, target, batch_size, evaluation_lock):
         from ea_controller.optimizer import KernelSizeEvolutionaryOptimizer
         
         optimizer = KernelSizeEvolutionaryOptimizer(
@@ -53,6 +55,9 @@ class EA_Controller:
             classification_class=target,
             batch_size=batch_size,
         )
+
+        optimizer.evaluation_lock = evaluation_lock # IMPORTANT! :)
+
         result = optimizer.run_evolution(part_of_bigger_run=True)
         
         queue.put((result, signal, target))

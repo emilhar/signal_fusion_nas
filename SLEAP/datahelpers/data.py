@@ -47,6 +47,8 @@ class Data:
     def get_all_signal_names():
         if Data.__ALL_SIGNAL_NAMES is None:
             Data.__ALL_SIGNAL_NAMES = os.listdir(DATASET_PATH)
+            if "label_map.txt" in Data.__ALL_SIGNAL_NAMES:
+                Data.__ALL_SIGNAL_NAMES.remove("label_map.txt")
 
         return Data.__ALL_SIGNAL_NAMES
 
@@ -59,7 +61,7 @@ class Data:
             return name
         
         if Data.__ALL_TARGET_NAMES is None:
-            with open(f'{Data.DIRECTORY}/label_map.txt', 'r') as file:
+            with open(f'{DATASET_PATH}/label_map.txt', 'r') as file:
                 Data.__ALL_TARGET_NAMES = [format_name(line) for line in file]
 
         return Data.__ALL_TARGET_NAMES
