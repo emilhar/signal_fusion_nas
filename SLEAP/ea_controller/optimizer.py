@@ -1,6 +1,5 @@
 import random
 import torch
-import multiprocessing
 import numpy as np
 from Globals import Globals
 from deap import base, creator, tools
@@ -24,9 +23,6 @@ class KernelSizeEvolutionaryOptimizer:
     MINIMIZE_FITNESS = True
 
     def __init__(self, classification_class, signal_type: str, n_samples:int, batch_size, **kwargs):
-        ctx = multiprocessing.get_context('spawn')
-        self.evaluation_lock = ctx.Lock()
-
         self.classification_class = classification_class
         self.signal_type = signal_type
         self.batch_size = batch_size
@@ -330,9 +326,10 @@ class KernelSizeEvolutionaryOptimizer:
         if part_of_bigger_run:
             best_individual = self.hall_of_fame[0]
             a = best_individual.model_performance
-            with self.evaluation_lock:
+            with self.evaluation_lock: # MUST BE SET.
                 print(f"Fully training best individual for {self.classification_class} with {self.signal_type}")
                 self.evaluate_individual(best_individual, fully=True)
+                print(f"Best individual for {self.classification_class} with {self.signal_type}: {self.hall_of_fame[0]} with fitness = {self.hall_of_fame[0].fitness.values[0]}")
             b = best_individual.model_performance
 
             if a == b:
@@ -348,6 +345,5 @@ class KernelSizeEvolutionaryOptimizer:
                 f"{temp_dir}/{self.classification_class.given_name}_{self.signal_type}_model.pt"
             )
 
-        print(f"Best individual for {self.classification_class} with {self.signal_type}: {self.hall_of_fame[0]} with fitness = {self.hall_of_fame[0].fitness.values[0]}")
 
         return logbook

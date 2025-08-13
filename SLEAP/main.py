@@ -20,20 +20,20 @@ class Main:
         self.targets, self.signals = prepare_data(mb_per_part=128)
         self.ea_controller = EA_Controller()
         self.ensemble_controller = EnsembleController(self.targets, self.signals)
-        #self.clear_saved_models()
-        #self.clear_temp_models()
+        self.clear_saved_models()
+        self.clear_temp_models()
 
     def run(self):
         avg_target_ranking = self._run_initial_ensemble_evaluation(num_evals=1)
         Logger.log_ensemble(avg_target_ranking, fake=False)
         
-        # self._run_evolutionary_algorithm()
+        self._run_evolutionary_algorithm()
         
-        # avg_new_target_ranking = self._run_post_ea_ensemble_evaluation(num_evals=5)
-        # Logger.log_ensemble(avg_new_target_ranking, fake=True)
+        avg_new_target_ranking = self._run_post_ea_ensemble_evaluation(num_evals=1)
+        Logger.log_ensemble(avg_new_target_ranking, fake=True)
         
-        # change = self._compare_rankings(avg_target_ranking, avg_new_target_ranking)
-        # self._log_results(change)
+        change = self._compare_rankings(avg_target_ranking, avg_new_target_ranking)
+        self._log_results(change)
 
     def _run_initial_ensemble_evaluation(self, num_evals):
         """Runs with filters = max_filters"""
@@ -54,6 +54,7 @@ class Main:
             Logger.log_ea_start(target)
             for (logbook, signal, t) in self.ea_controller.run_ea(target):
                 Logger.log_ea_logbook(logbook, signal, t)
+                pass
 
     def _run_post_ea_ensemble_evaluation(self, num_evals):
         """Runs with filters = max_filters"""

@@ -23,8 +23,8 @@ class TrainedModelMaker:
         else:
             self.filters = filters
         
-        if self.filters != 1:
-            print(f"Filters set at {self.filters}")
+        # if self.filters != 1:
+        #     print(f"Filters set at {self.filters}")
 
         self.model_args = self.get_branch_configs(branches, N_SAMPLES, filters=self.filters)
         self.model_args["batch_size"] = batch_size

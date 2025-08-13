@@ -130,9 +130,13 @@ class EnsembleController:
                 models_dict[signal_name] = []
                 
                 for model_file in temp_model_files:
-                    if signal_name in model_file:
-                        full_path = os.path.join("temp_models", model_file)
-                        models_dict[signal_name].append(self.load_model(full_path))
+                    if model_file.endswith("_model.pt"):
+                        without_suffix = model_file.removesuffix("_model.pt")
+                        *prefix_parts, extracted_name = without_suffix.split("_")
+                        
+                        if extracted_name == signal_name:
+                            full_path = os.path.join("temp_models", model_file)
+                            models_dict[signal_name].append(self.load_model(full_path))
         else:
             temp_prefixes = set()
         
@@ -148,9 +152,14 @@ class EnsembleController:
                     models_dict[signal_name] = []
                     
                 for model_file in saved_model_files:
-                    if signal_name in model_file:
-                        full_path = os.path.join("saved_models", model_file)
-                        models_dict[signal_name].append(self.load_model(full_path))
+                    if model_file.endswith("_model.pt"):
+                        without_suffix = model_file.removesuffix("_model.pt")
+                        *prefix_parts, extracted_name = without_suffix.split("_")
+                        
+                        if extracted_name == signal_name:
+                            full_path = os.path.join("saved_models", model_file)
+                            models_dict[signal_name].append(self.load_model(full_path))
+
         
         assert len(models_dict.keys()) == len(Data.get_all_signal_names()), "Not enough models"
         for k in models_dict.keys():
@@ -228,7 +237,7 @@ class EnsembleController:
     
     def get_initial_models(self):
         ctx = multiprocessing.get_context('spawn')
-        max_processes = 4
+        max_processes = Globals.max_processes
         active_processes = []
 
         for signal in self.signals:
@@ -274,7 +283,7 @@ class EnsembleController:
             batch_size=Data.batch_size,
             filters=filters
         )
-        
+
         os.makedirs("saved_models", exist_ok=True)
         model_path = f"saved_models/{target}_{signal}_model.pt"
         torch.save({
@@ -290,7 +299,7 @@ class EnsembleController:
 
     def update_filters_for_binary_models(self):
         ctx = multiprocessing.get_context('spawn')
-        max_processes = 4
+        max_processes = Globals.max_processes
         active_processes = []
         
         model_configs = self.load_each_model_config()

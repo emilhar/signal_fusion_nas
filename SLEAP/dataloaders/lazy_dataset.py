@@ -49,11 +49,11 @@ class LazyDataset(Dataset):
         if self.fit:
             data_dict = self.cache[file]
             x: torch.Tensor = data_dict['x'][local_idx].astype(np.float32)
-            #x = x.transpose()
+            #x = x.transpose() # TODO:
             y = data_dict['y'][local_idx]
             y = self.stage_map.get(y, 0) if self.stage_map else y
             
-            return torch.tensor(x), torch.tensor(y)
+            return x, torch.tensor(y)
         
         # Update cache if needed
         if file not in self.cache:
@@ -78,11 +78,11 @@ class LazyDataset(Dataset):
         # Get data from cache
         data_dict = self.cache[file]
         x: torch.Tensor = data_dict['x'][local_idx].astype(np.float32)
-        #x = x.transpose()
+        #x = x.transpose() # TODO:
         y = data_dict['y'][local_idx]
         y = self.stage_map.get(y, 0) if self.stage_map else y
 
-        return torch.tensor(x), torch.tensor(y)
+        return x, torch.tensor(y)
     
 
     def _evict_to_fit(self):

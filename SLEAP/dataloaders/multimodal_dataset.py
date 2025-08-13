@@ -4,6 +4,8 @@ import os
 from dataloaders.lazy_dataset import LazyDataset
 from datahelpers.data import Data
 
+from Globals import DATASET_PATH
+
 TRAIN_SPLIT = 0.8
 
 class MultimodalLazyDataset(Dataset):
@@ -68,18 +70,20 @@ def make_training_and_testing_data(signals):
     for signal in signals:
         signal = signal.name
         
-        # Find and split data
-        d = Data()
-        data_directory = f"{d.DIRECTORY}/{d.dataset}/{signal}"
+        data_directory = f"{DATASET_PATH}/{signal}"
         all_files = sorted([f for f in os.listdir(data_directory) if f.endswith('.npz')])
-        subject_ids = sorted(set(f[:5] for f in all_files))
 
-        split_idx = int(len(subject_ids) * TRAIN_SPLIT)
-        train_subjects = subject_ids[:split_idx]
-        test_subjects = subject_ids[split_idx:]
+        #subject_ids = sorted(set(f[:5] for f in all_files))
 
-        train_files = [f for f in all_files if f[:5] in train_subjects]
-        test_files = [f for f in all_files if f[:5] in test_subjects]
+        split_idx = int(len(all_files) * TRAIN_SPLIT)
+        train_files = all_files[:split_idx]
+        test_files = all_files[split_idx:]
+
+        #train_subjects = subject_ids[:split_idx]
+        #test_subjects = subject_ids[split_idx:]
+
+        # train_files = [f for f in all_files if f[:5] in train_subjects]
+        # test_files = [f for f in all_files if f[:5] in test_subjects]
 
         train_dataset.add_data(train_files, signal, data_directory, len(signals))
         test_dataset.add_data(test_files, signal, data_directory, len(signals))
