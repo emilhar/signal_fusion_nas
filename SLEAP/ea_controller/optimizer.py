@@ -210,7 +210,6 @@ class KernelSizeEvolutionaryOptimizer:
 
     def mutate(self, mutant:list[list[int]]):
         """Mutate an individual by randomly modifying branches or kernel sizes."""
-        return (mutant,)
 
         max_number_of_mutations = 3
         mutation_number_options = [i + 1 for i in range(max_number_of_mutations)
@@ -228,45 +227,26 @@ class KernelSizeEvolutionaryOptimizer:
             
             elif mutation_type == "add_branch":
                 if len(mutant) < self.max_branches:
-                    
-                    if random.random() < 0.5:
-                        mutant.append(
+                        mutant.append(sorted(
                             [
                                 random.randint(*kernel_size_range) 
-                                for _ in range(random.randint(self.min_kernels, self.max_kernels))
+                                for _ in range(random.randint(self.min_kernels, self.n_samples//5))
                             ]
-                        )
-                        #mutant.append(self.KRNL.theta())
-                    else:
-                        mutant.append(
-                            [
-                                random.randint(*kernel_size_range)
-                                for _ in range(random.randint(self.min_kernels, self.max_kernels))
-                            ]
-                        )
+                        ))
 
             elif mutation_type == "change_branch":
                 # Remove
                 if len(mutant) > self.min_branches:
                     mutant.pop(random.randrange(len(mutant)))
             
-                # Then add (or add an extra branch for single branched individuals)
                 if len(mutant) < self.max_branches:
                     if random.random() < 0.5:
-                        mutant.append(
+                        mutant.append(sorted(
                             [
                                 random.randint(*kernel_size_range)
-                                for _ in range(random.randint(self.min_kernels, self.max_kernels))
+                                for _ in range(random.randint(self.min_kernels, self.n_samples//5))
                             ]
-                        )
-                        #mutant.append(self.KRNL.theta())
-                    else:
-                        mutant.append(
-                            [
-                                random.randint(*kernel_size_range)
-                                for _ in range(random.randint(self.min_kernels, self.max_kernels))
-                            ]
-                        )
+                        ))
 
             elif mutation_type == "change_kernel":
 
@@ -296,11 +276,11 @@ class KernelSizeEvolutionaryOptimizer:
         """
         num = random.randint(1, 100)
 
-        if 1 <= num <= 15:       # 15%: Remove branch
+        if 1 <= num <= 10:       # 10%: Remove branch
             return "remove_branch"
-        elif 15 <= num <= 30:    # 15%: Add branch
+        elif 10 <= num <= 20:    # 10%: Add branch
             return "add_branch"
-        elif 30 <= num <= 60:    # 30% Change branch 
+        elif 20 <= num <= 60:    # 40% Change branch 
             return "change_branch"
         else:                    # 40%: Change kernel
             return "change_kernel"
